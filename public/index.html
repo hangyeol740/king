@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111b18">
+  <title>왕국과 반란 · KINGDOM</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E♛%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="왕국과 반란 홈"><span class="brand-mark">♛</span><span>왕국과 반란<small>KINGDOM & REBELLION</small></span></a>
+    <div class="top-actions"><span id="connection" class="connection"><i></i> 연결 중</span><button class="quiet" id="rules-open">플레이 가이드 <span>↗</span></button></div>
+  </header>
+  <main id="app"><div class="loading">왕국으로 가는 길을 열고 있습니다…</div></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="rules"><div class="dialog-head"><div><span class="eyebrow">FIELD GUIDE</span><h2>왕국의 법칙</h2></div><button class="icon-button" id="rules-close" aria-label="가이드 닫기">✕</button></div><div id="rules-content"></div></dialog>
+  <noscript>이 게임은 JavaScript가 활성화된 PC 브라우저에서 실행됩니다.</noscript>
+</body>
+</html>
