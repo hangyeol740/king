@@ -4,6 +4,7 @@ const app = $('#app');
 const socket = io({ reconnection: true });
 const STORAGE = 'kingdom.session.v1';
 let state = null, rules = null, busy = false, replaced = false, actionMode = null, selected = new Set(), turnKey = '';
+let freshCards = new Set(), freshTimer;
 const labels = { king: '왕', citizen: '시민', rebel: '반란군', neutral: '중립' };
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nameOf = id => state.players.find(p => p.id === id)?.name || '플레이어';
@@ -51,12 +52,29 @@ socket.on('replaced', () => {
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
 });
 socket.on('state', next => {
+  const previous = state;
+  if (previous?.code === next.code) {
+    const oldCards = new Set(previous.me.hand.map(c => c.id));
+    const added = next.me.hand.filter(c => !oldCards.has(c.id));
+    if (added.length) {
+      freshCards = new Set(added.map(c => c.id));
+      clearTimeout(freshTimer);
+      freshTimer = setTimeout(() => {
+        freshCards.clear();
+        document.querySelectorAll('.card.new-card').forEach(el => {
+          el.classList.remove('new-card');
+          el.querySelector('.card-top>span').textContent = el.classList.contains('eternal') ? 'PERMANENT' : 'KINGDOM';
+        });
+      }, 6000);
+    }
+  } else freshCards.clear();
   const key = `${next.status}/${next.game?.day}/${next.game?.phase}/${next.game?.round}/${next.game?.current}/${next.game?.pending?.kind}/${next.game?.pending?.accepted}`;
   if (key !== turnKey) { selected.clear(); actionMode = null; turnKey = key; }
   state = next;
   const available = new Set(state.me.hand.map(c => c.id));
   selected = new Set([...selected].filter(id => available.has(id)));
   render();
+  window.kingdomEffects.handle(previous, next);
 });
 fetch('/api/rules').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = data; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
 
@@ -127,9 +145,11 @@ function renderGame() {
     <div class="game-layout">
       <div class="game-main">
         <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="rebellion-track"><span>반란 성공</span>${[1, 2, 3].map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/3</b></div></div>
+        ${renderRevoltBanner()}
         <div class="table-players">${state.players.map(p => `<div class="table-player ${p.id === g.current && !ended ? 'active' : ''} ${p.id === me.id ? 'self' : ''}"><div class="player-top"><span class="avatar small-avatar ${p.role || 'hidden'}">${p.role ? roleIcon(p.role) : '?'}</span><span class="status-dot ${p.online ? '' : 'offline'}" title="${p.online ? '연결됨' : '재접속 대기'}"></span></div><strong>${esc(p.name)} ${p.id === me.id ? '<small>나</small>' : ''}</strong><span class="player-role ${p.role || ''}">${p.role ? labels[p.role] : '비공개 진영'}</span>${g.current === p.id && !ended ? '<span class="turn-indicator">현재 차례</span>' : ''}</div>`).join('')}</div>
         <section class="action-panel ${acting ? 'your-turn' : ''}"><div class="action-kicker"><span class="eyebrow">${ended ? 'THE FINAL CHAPTER' : acting ? 'YOUR MOVE' : 'THE KINGDOM MOVES'}</span>${g.revolt !== null && g.revolt > 0 ? `<span class="revolt-alert">⚑ 반란력 ${g.revolt}</span>` : ''}</div>${renderAction()}</section>
-        ${ended ? '' : `<section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>나의 손패 <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > 23 ? '<div class="hand-warning">손패가 23장을 초과했습니다. 다음 아침 재분배 단계에서 무작위로 22장까지 줄어듭니다.</div>' : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>`}
+        <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > 23 && !ended ? '<div class="hand-warning">손패가 23장을 초과했습니다. 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 이번 아침에 받은 원정 보상은 즉시 줄어들지 않습니다.</div>' : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
+        <section class="recipe-reference"><h2>전체 제작법 <span>${rules.recipes.length}종</span></h2><p class="small muted">낮 두 번째 바퀴에 제작할 수 있습니다. 재료가 부족한 제작법도 모두 표시합니다.</p><div class="guide-recipes">${rules.recipes.map(r => `<p>${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} 1장</p>`).join('')}</div><p class="small muted">철혈의 검 제작 즉시 해당 진영 승리 · 영구 카드도 제작 재료로 사용하면 소모됩니다.</p></section>
       </div>
       <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${roleIcon(me.role)}</span><h2>${labels[me.role]}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.role === 'rebel' ? '반란을 3일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.' : me.role === 'neutral' ? '현재 중립의 고유 능력과<br>별도 승리 조건은 없습니다.' : '정해진 마지막 날까지<br>반란 성공을 2일 이하로 막으세요.'}</p></section>
         <section class="panel journal"><div class="panel-heading"><h2>왕국의 기록</h2><span class="live-label">PUBLIC</span></div><div class="journal-scroll">${[...g.logs].reverse().map(l => `<div class="journal-entry"><span>DAY ${l.day}</span><p>${esc(l.text)}</p></div>`).join('')}</div></section>
@@ -138,7 +158,20 @@ function renderGame() {
       </aside>
     </div>`;
 }
+function renderRevoltBanner() {
+  const g = state.game;
+  if (g.revolt !== null) return `<section class="revolt-banner ${g.revolt ? 'danger' : 'peace'}" aria-label="아침 반란점수"><div class="revolt-emblem">${g.revolt ? '⚑' : '☀'}</div><div><span class="eyebrow">DAY ${g.day} · MORNING REPORT</span><h2>${g.revolt ? '밤사이 반란이 일어났습니다' : '발생한 반란이 없습니다'}</h2><p>${g.revolt ? '이 점수 이상의 중재력이 필요합니다. 동점이면 방어 성공.' : '왕이 오늘의 아침 행동을 선택합니다.'}</p></div><div class="revolt-number"><strong>${g.revolt}</strong><span>반란점수</span></div></section>`;
+  const result = g.lastRevolt;
+  if (result?.day !== g.day) return '';
+  return `<section class="revolt-result ${result.blocked ? 'blocked' : 'breached'}"><span>${result.blocked ? '♜' : '⚑'}</span><div><h2>${result.blocked ? '반란을 막았습니다!' : '반란을 막지 못했습니다!'}</h2><p>반란력 ${result.revolt} · ${result.strength === null ? '중재 미선택' : `중재력 ${result.strength}`} · 반란 성공 누적 ${g.successes}/3일</p></div></section>`;
+}
 const btn = (type, title, sub, extra = '', cls = '') => `<button class="action-choice ${cls}" data-cmd="${type}" ${extra}><strong>${title}<span>↗</span></strong><small>${sub}</small></button>`;
+function recipeMaterials(recipe) {
+  return (recipe.ingredients || [recipe]).map(m => `${rules.cards[m.input].name} ${m.count}장`).join(' + ');
+}
+function recipeAvailable(recipe, hand) {
+  return Math.min(...(recipe.ingredients || [recipe]).map(m => Math.floor(hand.filter(c => c.type === m.input).length / m.count)));
+}
 function targetSelect(label = '대상 선택') {
   return `<label class="target-label">${label}<select id="target">${state.players.filter(p => p.id !== state.me.id).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></label>`;
 }
@@ -151,7 +184,7 @@ function renderAction() {
   }
   if (g.phase === 'morning') {
     if (!isKing) return wait('왕의 아침 결정을 기다립니다.', `${esc(nameOf(g.king))}님이 왕국의 오늘을 결정합니다.${g.revolt > 0 ? ` 공개된 반란력은 <b>${g.revolt}점</b>입니다.` : ''}`);
-    return `<h2>폐하, 어떤 길을 택하시겠습니까?</h2><p class="action-description">${g.revolt > 0 ? `반란력 <b>${g.revolt}점</b>. 중재하지 않으면 반란 성공 1일이 기록되고 점수는 초기화됩니다.` : '발생한 반란이 없습니다. 원정 또는 공개처형을 선택하세요.'}</p><div class="action-choices">${btn('mediate', '반란 중재', '지원 후 왕이 제출 · 동점도 성공', g.revolt > 0 ? '' : 'disabled')}${btn('expedition', '원정', '11점 이상 성공 · 21점 이상 대성공')}${btn('execute', '공개처형', '지목한 사람의 손패를 전부 버림', state.players.length >= 4 ? 'data-target="true"' : 'disabled')}</div>${state.players.length >= 4 ? targetSelect('공개처형 대상') : ''}<p class="small muted">중재 선포와 확정한 카드 제출은 되돌릴 수 없습니다.</p>`;
+    return `<h2>폐하, 어떤 길을 택하시겠습니까?</h2><p class="action-description">${g.revolt > 0 ? `반란력 <b>${g.revolt}점</b>. 중재하지 않으면 반란 성공 1일이 기록되고 점수는 초기화됩니다.` : '발생한 반란이 없습니다. 원정 또는 공개처형을 선택하세요.'}</p><div class="action-choices">${btn('mediate', '반란 중재', '지원 후 왕이 제출 · 동점도 성공', g.revolt > 0 ? '' : 'disabled')}${btn('expedition', '원정', '25점 초과 성공 · 50점 초과 대성공')}${btn('execute', '공개처형', '지목한 사람의 손패를 전부 버림', state.players.length >= 4 ? 'data-target="true"' : 'disabled')}</div>${state.players.length >= 4 ? targetSelect('공개처형 대상') : ''}<p class="small muted">중재 선포와 확정한 카드 제출은 되돌릴 수 없습니다.</p>`;
   }
   if (g.phase === 'mediationSupport') {
     if (isKing || p.myDone) return wait(isKing ? '플레이어들의 지원을 기다립니다.' : '지원 선택을 확정했습니다.', `지원 카드는 왕의 손패로 가지 않고 즉시 중재에 사용됩니다.<br>지원자: ${p.supporters.length ? p.supporters.map(id => esc(nameOf(id))).join(', ') : '아직 없음'} · 지원 점수는 비교 전까지 비공개입니다.`);
@@ -167,7 +200,7 @@ function renderAction() {
   }
   if (g.phase === 'expeditionCards') {
     if (!p.participants.includes(me.id) || p.myDone) return wait('원정대가 힘을 모으고 있습니다.', `참가자: ${p.participants.map(id => esc(nameOf(id))).join(', ')}<br>다른 사람이 제출한 카드 종류와 수량은 공개되지 않습니다.`);
-    return `<h2>원정에 사용할 카드를 고르세요.</h2><p class="action-description">공격 카드와 보병(1점)·장교(3점)를 사용할 수 있습니다. 합계 <b>11점 이상</b>이면 전원 4장, <b>21점 이상</b>이면 전원 9장. 영구 카드는 남습니다.</p>${submitCards('contribute', '원정 카드 확정')}`;
+    return `<h2>원정에 사용할 카드를 고르세요.</h2><p class="action-description">칼·마법·병기·영구 카드, 보병(1점)·장교(3점)를 사용할 수 있습니다. 합계 <b>25점 초과(26점 이상)</b>이면 전원 15장, <b>50점 초과(51점 이상)</b>이면 전원 30장. 영구 카드는 남습니다.</p>${submitCards('contribute', '원정 카드 확정')}`;
   }
   if (g.phase === 'redistribute') {
     if (p.myDone) return wait('재분배 결정을 마쳤습니다.', '당신의 수락·거절 여부는 다른 플레이어에게 공개되지 않습니다.');
@@ -187,11 +220,11 @@ function renderAction() {
     if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><p class="action-description">거래·채집·카드받기 중 하나를 선택하세요. 행동은 다른 사람에게 공개되지 않습니다.</p><div class="action-choices">${btn('trade', '비밀 거래', '상대 응답 후 서로 비공개로 교환', 'data-target="true"')}${btn('gather', '채집', '자원 카드 4장 확정 획득')}${btn('draw3', '카드받기', '무작위 카드 3장 획득')}</div>${targetSelect('거래 신청 대상')}`;
     if (g.round === 2) {
       if (p?.kind === 'craft') return `<h2>필요한 만큼 제작하세요.</h2><p class="action-description">같은 차례에 반복·연속 제작할 수 있습니다. 영구 칼은 일반 칼 재료로 사용할 수 없습니다.</p><div class="recipes">${rules.recipes.map((r, i) => {
-        const available = Math.floor(me.hand.filter(c => c.type === r.input).length / r.count);
-        return `<div class="recipe"><span>${rules.cards[r.input].icon}</span><div><b>${rules.cards[r.input].name} ${r.count} → ${rules.cards[r.output].name} 1</b><small>현재 최대 ${available}개 제작 가능</small></div><input type="number" id="recipe-count-${i}" aria-label="${rules.cards[r.output].name} 제작 수량" value="1" min="1" max="${available || 1}" ${available ? '' : 'disabled'}><button class="secondary compact" data-cmd="craft" data-recipe="${i}" ${available ? '' : 'disabled'}>제작</button></div>`;
+        const available = recipeAvailable(r, me.hand);
+        return `<div class="recipe"><span>${rules.cards[r.output].icon}</span><div><b>${recipeMaterials(r)} → ${rules.cards[r.output].name} 1장</b><small>현재 최대 ${available}개 제작 가능${rules.cards[r.output].instantWin ? ' · 재료 전부 소모 · 제작 즉시 진영 승리' : ''}</small></div><input type="number" id="recipe-count-${i}" aria-label="${rules.cards[r.output].name} 제작 수량" value="1" min="1" max="${available || 1}" ${available ? '' : 'disabled'}><button class="secondary compact" data-cmd="craft" data-recipe="${i}" ${available ? '' : 'disabled'}>제작</button></div>`;
       }).join('')}</div><button class="primary" data-cmd="craftDone">제작 완료 · 다음 차례 →</button>`;
-      if (actionMode === 'hunt') return `<h2>사냥에 나설 카드를 고르세요.</h2><p class="action-description">공격력 <b>6점 이상</b>이면 카드 4장을 받습니다. 보병·장교는 사용할 수 없습니다. 영구 카드는 소모되지 않습니다.</p>${submitCards('hunt', '사냥 실행')}<button class="quiet" data-ui="cancelMode">선택으로 돌아가기</button>`;
-      return `<h2>두 번째 선택, 힘을 갖출 시간.</h2><p class="action-description">제작 또는 사냥을 선택하세요. 사냥은 한 번이며, 제작은 원하는 만큼 가능합니다.</p><div class="action-choices two">${btn('beginCraft', '제작', '재료를 바꿔 새 카드와 영구 장비 제작')}<button class="action-choice" data-ui="hunt"><strong>사냥<span>↗</span></strong><small>공격력 6점 이상 · 보상 카드 4장</small></button></div>`;
+      if (actionMode === 'hunt') return `<h2>사냥에 나설 카드를 고르세요.</h2><p class="action-description">공격력 <b>10점 이상</b>이면 카드 7장을 받습니다. 보병·장교는 사용할 수 없습니다. 영구 카드는 소모되지 않습니다.</p>${submitCards('hunt', '사냥 실행')}<button class="quiet" data-ui="cancelMode">선택으로 돌아가기</button>`;
+      return `<h2>두 번째 선택, 힘을 갖출 시간.</h2><p class="action-description">제작 또는 사냥을 선택하세요. 사냥은 한 번이며, 제작은 원하는 만큼 가능합니다.</p><div class="action-choices two">${btn('beginCraft', '제작', `전체 ${rules.recipes.length}종 제작법 · 반복·연속 제작`)}<button class="action-choice" data-ui="hunt"><strong>사냥<span>↗</span></strong><small>공격력 10점 이상 · 보상 카드 7장</small></button></div>`;
     }
     return `<h2>세 번째 선택, 손패와 정보.</h2><p class="action-description">네 가지 중 하나를 선택하세요. 확인한 정보는 당신에게만 보입니다.</p><div class="action-choices four">${btn('replace', '손패 전체 교체', `현재 ${me.hand.length}장을 버리고 같은 장수로 교체`)}${btn('draw2', '카드 2장 받기', '기존 손패에 무작위 2장 추가')}${btn('counts', '전체 손패 수 확인', '지금 순간의 모든 사람 손패 장수')}${btn('inspect', '타인 카드 1장 확인', '지목한 사람의 무작위 카드 1장', 'data-target="true"')}</div>${targetSelect('카드 확인 대상')}`;
   }
@@ -229,7 +262,8 @@ function renderHand() {
   return Object.entries(rules.cards).filter(([type]) => state.me.hand.some(c => c.type === type)).map(([type, def]) => {
     const cards = state.me.hand.filter(c => c.type === type), count = cards.filter(c => selected.has(c.id)).length;
     const allowed = context?.allowed(type);
-    return `<div class="card ${def.category} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-top"><span>${def.permanent ? 'PERMANENT' : 'KINGDOM'}</span><b>×${cards.length}</b></div><div class="card-symbol">${def.icon}</div><h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : `<div class="card-bottom">${def.chance ? `DRAW RATE ${def.chance}%` : def.instantWin ? 'LEGENDARY' : 'CRAFT ONLY'}</div>`}</div>`;
+    const newCount = cards.filter(c => freshCards.has(c.id)).length;
+    return `<div class="card ${def.category} ${newCount ? 'new-card' : ''} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-top"><span>${newCount ? `NEW +${newCount}` : def.permanent ? 'PERMANENT' : 'KINGDOM'}</span><b>×${cards.length}</b></div><div class="card-symbol">${def.icon}</div><h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : `<div class="card-bottom">${def.chance ? `DRAW RATE ${def.chance}%` : def.instantWin ? 'LEGENDARY' : 'CRAFT ONLY'}</div>`}</div>`;
   }).join('');
 }
 function selectionScore() {
@@ -309,9 +343,9 @@ function renderRules() {
     <div class="guide-banner">왕은 공개, 나머지 진영과 손패는 비밀. 반란군끼리는 서로를 압니다.</div>
     <h3>승리와 하루의 흐름</h3><p>3인은 7일, 4인은 6일, 5인 이상은 5일. 반란이 누적 3일 성공하면 즉시 반란군 승리. 마지막 저녁까지 2일 이하이면 왕·시민 승리. 마지막 날에는 밤이 없습니다. 중립은 현재 별도 승리 조건이 없습니다.</p>
     <div class="guide-phases"><div><b>☀ 아침</b><p>반란력 공개 → 왕의 중재 / 공개처형(4인 이상) / 원정 → 비공개 재분배. 첫날과 반란력 0인 날은 중재 불가.</p></div><div><b>◉ 낮</b><p>왕부터 고정 순서로 3바퀴. ① 거래 / 채집 / 3장 받기 ② 제작 / 사냥 ③ 전체 교체 / 2장 받기 / 손패 수 / 카드 1장 확인. 패스 버튼은 없습니다.</p></div><div><b>◒ 저녁</b><p>왕이 세금(각자 2장 납부) / 지명수배(반란·선동 발견 시 전부 버림) / 지원(왕 제외 전원 3장)을 선택.</p></div><div><b>☾ 밤</b><p>반란군이 반란·선동·병기를 비공개 제출. 다음 아침에 총 반란력만 공개. 0장 제출도 가능.</p></div></div>
-    <h3>중재 · 사냥 · 원정</h3><p>중재는 선포 → 다른 플레이어들의 지원 → 왕의 제출 → 판정. 중재력이 반란력 이상이면 성공. 중재하지 않거나 실패하면 반란 성공 1일. 판정 후 반란력은 초기화됩니다. 선포와 제출은 취소 불가.</p><p>사냥은 공격력 6점 이상이면 본인에게 4장. 원정은 11점 이상이면 전원 4장, 21점 이상이면 전원 9장. 원정에만 보병 1점·장교 3점 사용 가능. 원정 왕 필참, 보상은 불참자도 지급.</p>
-    <h3>손패 · 비밀 거래</h3><p>시작 카드 5장. 아침 재분배는 기존 손패 전부 버리고 12장 받기 또는 거절. 낮의 전체 교체는 기존 장수만큼 새로 받기. 23장을 초과한 손패는 다음 아침 재분배 선택 전에 무작위로 22장까지 줄어듭니다. 23장은 유지됩니다.</p><p>거래를 상대가 거절하면 차례 종료. 수락하면 양쪽이 줄 카드만 비공개로 선택하고 동시에 교환. 0장도 가능하며 교환 전에는 상대 카드 종류·장수가 보이지 않습니다. 낮 행동·평소 타인 손패 장수는 비공개입니다.</p>
+    <h3>중재 · 사냥 · 원정</h3><p>중재는 선포 → 다른 플레이어들의 지원 → 왕의 제출 → 판정. 중재력이 반란력 이상이면 성공. 중재하지 않거나 실패하면 반란 성공 1일. 판정 후 반란력은 초기화됩니다. 선포와 제출은 취소 불가.</p><p>사냥은 공격력 10점 이상이면 본인에게 7장. 원정은 25점 초과(26점 이상)이면 전원 15장, 50점 초과(51점 이상)이면 전원 30장. 원정에만 보병 1점·장교 3점 사용 가능. 원정 왕 필참, 보상은 불참자도 지급.</p>
+    <h3>손패 · 비밀 거래</h3><p>시작 카드 12장. 매일 아침 시작 시 손패 6장 이하는 카드 5장 추가 지급(왕 포함, 하루 한 번). 아침 재분배는 기존 손패 전부 버리고 12장 받기 또는 거절. 낮의 전체 교체는 기존 장수만큼 새로 받기. 23장을 초과한 손패는 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 23장은 유지되고, 이번 아침 원정 보상은 즉시 줄어들지 않습니다.</p><p>거래를 상대가 거절하면 차례 종료. 수락하면 양쪽이 줄 카드만 비공개로 선택하고 동시에 교환. 0장도 가능하며 교환 전에는 상대 카드 종류·장수가 보이지 않습니다. 낮 행동·평소 타인 손패 장수는 비공개입니다.</p>
     <h3>카드 도감</h3><div class="guide-card-list">${Object.values(rules.cards).map(c => `<div><span>${c.icon}</span><b>${c.name}</b><small>${c.chance}%</small><p>${cardStats(c).join(' · ') || '제작 재료'}</p></div>`).join('')}</div>
-    <h3>제작법</h3><div class="guide-recipes">${rules.recipes.map(r => `<p>${rules.cards[r.input].name} ${r.count}장 <span>→</span> ${rules.cards[r.output].name} 1장</p>`).join('')}</div><p>반복·연속 제작 가능. 일반 카드는 모두 일회용. 영구 칼·영구 마법은 사냥·원정 한 번에 각각 한 번 사용하고 손패에 남습니다. 영구 칼은 일반 칼 제작 재료로 취급하지 않습니다. 영구 카드도 재분배·몰수·제작 재료 사용 시에는 사라집니다.</p><p class="small muted">철혈의 검은 가진 즉시 해당 진영 승리지만 획득 경로가 아직 정해지지 않아 현재는 나오지 않습니다. 중립 직업 능력도 추후 추가 예정입니다. 행동 시간 제한은 없습니다.</p>`;
+    <h3>제작법</h3><div class="guide-recipes">${rules.recipes.map(r => `<p>${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} 1장</p>`).join('')}</div><p>반복·연속 제작 가능. 일반 카드는 모두 일회용. 영구 칼·영구 마법은 사냥·원정 한 번에 각각 한 번 사용하고 손패에 남습니다. 영구 칼은 일반 칼 제작 재료로 취급하지 않습니다. 영구 카드도 재분배·몰수·제작 재료 사용 시에는 사라집니다.</p><p class="small muted">철혈의 검은 영구 칼 10장 + 영구 마법 5장 + 자원 20장을 모두 소모해 제작합니다. 제작 즉시 해당 진영이 승리하며, 왕 또는 시민이 제작하면 왕·시민이 함께 승리합니다. 랜덤으로는 나오지 않습니다. 중립 직업 능력은 추후 추가 예정입니다. 행동 시간 제한은 없습니다.</p>`;
 }
 render();

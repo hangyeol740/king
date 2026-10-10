@@ -51,7 +51,7 @@ test('실제 WebSocket: 방 생성·코드 입장·권한 검증·게임 시작�
   assert.ok((await send(a, { type: 'start' })).ok);
   await sleep(30);
   for (const client of [a, b, c]) {
-    assert.equal(client.state.status, 'playing'); assert.equal(client.state.me.hand.length, 5);
+    assert.equal(client.state.status, 'playing'); assert.equal(client.state.me.hand.length, 12);
     assert.ok(client.state.players.every(p => !('hand' in p) && !('token' in p)));
     assert.equal(client.state.players.filter(p => p.role === 'king').length, 1);
   }
@@ -82,4 +82,41 @@ test('로컬 서버 재시작 후 저장된 방과 비공개 복귀 토큰으로
   const restored = await connect(); assert.ok((await send(restored, { type: 'resume', ...created.session })).ok);
   assert.deepEqual(restored.state.me.hand, previous.hand); assert.equal(restored.state.me.role, previous.role);
   assert.equal(restored.state.me.id, previous.id); assert.equal(restored.state.game.phase, 'morning');
+});
+test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 지급 없음, 제작법 8종 API', async () => {
+  const a = await connect(), b = await connect(), c = await connect();
+  const created = await send(a, { type: 'create', name: '지원확인' });
+  const br = await send(b, { type: 'join', code: created.session.code, name: '둘' });
+  const cr = await send(c, { type: 'join', code: created.session.code, name: '셋' });
+  const group = [a, b, c], sessions = [created, br, cr];
+  await send(a, { type: 'start' });
+  const k = group.find(s => s.state.me.role === 'king');
+  await send(k, { type: 'expedition' });
+  for (const p of group.filter(p => p !== k)) await send(p, { type: 'joinExpedition', join: false });
+  await send(k, { type: 'contribute', cards: [] });
+  for (const p of group) await send(p, { type: 'redistribute', accept: false });
+  const actor = () => group.find(s => s.state.me.id === s.state.game.current);
+  for (let i = 0; i < 3; i++) await send(actor(), { type: 'gather' });
+  for (let i = 0; i < 3; i++) {
+    const p = actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' });
+  }
+  for (let i = 0; i < 3; i++) await send(actor(), { type: 'draw2' });
+  const counts = new Map(group.map(s => [s.state.me.id, s.state.me.hand.length]));
+  assert.ok((await send(k, { type: 'aid' })).ok); await sleep(30);
+  for (const p of group) {
+    assert.equal(p.state.me.hand.length, counts.get(p.state.me.id) + (p === k ? 0 : 3));
+    if (p !== k) assert.match(p.state.me.notes.at(-1).text, /시민지원: 카드 \+3장/);
+  }
+  const recipient = group.find(p => p !== k), previous = structuredClone(recipient.state.me);
+  const session = sessions[group.indexOf(recipient)].session;
+  recipient.disconnect(); const restored = await connect();
+  assert.ok((await send(restored, { type: 'resume', ...session })).ok);
+  assert.deepEqual(restored.state.me.hand, previous.hand);
+  const rules = await (await fetch(`${url}/api/rules`)).json();
+  assert.equal(rules.recipes.length, 8);
+  assert.ok(rules.recipes.some(r => r.input === 'infantry' && r.output === 'rebellion'));
+  assert.ok(rules.recipes.some(r => r.input === 'eternalSword' && r.output === 'eternalMagic'));
+  assert.deepEqual(rules.recipes.find(r => r.output === 'ironSword').ingredients, [
+    { input: 'eternalSword', count: 10 }, { input: 'eternalMagic', count: 5 }, { input: 'resource', count: 20 }
+  ]);
 });
