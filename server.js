@@ -91,7 +91,12 @@ io.on('connection', socket => {
         p = room?.players.find(p => p.id === socket.data.player);
         if (!room || !p || sessions.get(p.token) !== socket.id) throw new RuleError('방에 먼저 접속하세요.');
         if (input.type === 'leave') {
-          if (room.status === 'playing') throw new RuleError('게임 중에는 자리를 유지합니다. 창을 닫았다가 재접속할 수 있습니다.');
+          if (room.status === 'playing') {
+            // 플레이 중에는 숨겨진 진영과 차례를 보존하고 연결만 분리합니다.
+            sessions.delete(p.token); socket.data = {}; p.online = false;
+            broadcast(room); await persist();
+            reply({ ok: true, left: true, resumeSession: { code: room.code, token: p.token } }); return;
+          }
           room.players = room.players.filter(v => v.id !== p.id);
           sessions.delete(p.token); socket.data = {};
           if (room.players.length === 0) rooms.delete(room.code);

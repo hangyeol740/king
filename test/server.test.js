@@ -95,12 +95,22 @@ test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 
   for (const p of group.filter(p => p !== k)) await send(p, { type: 'joinExpedition', join: false });
   await send(k, { type: 'contribute', cards: [] });
   for (const p of group) await send(p, { type: 'redistribute', accept: false });
-  const actor = () => group.find(s => s.state.me.id === s.state.game.current);
-  for (let i = 0; i < 3; i++) await send(actor(), { type: 'gather' });
+  const actor = async () => {
+    for (let i = 0; i < 100; i++) {
+      const g = group[0].state.game;
+      if (g.phase === 'day' && group.every(s => s.state.game.phase === g.phase && s.state.game.round === g.round && s.state.game.current === g.current)) {
+        return group.find(s => s.state.me.id === g.current);
+      }
+      await sleep(10);
+    }
+    throw new Error('플레이어 차례 상태 동기화 시간 초과');
+  };
+  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'gather' });
   for (let i = 0; i < 3; i++) {
-    const p = actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' });
+    const p = await actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' });
   }
-  for (let i = 0; i < 3; i++) await send(actor(), { type: 'draw2' });
+  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'draw2' });
+  for (let i = 0; i < 100 && group.some(s => s.state.game.phase !== 'evening'); i++) await sleep(10);
   const counts = new Map(group.map(s => [s.state.me.id, s.state.me.hand.length]));
   assert.ok((await send(k, { type: 'aid' })).ok); await sleep(30);
   for (const p of group) {
@@ -119,4 +129,38 @@ test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 
   assert.deepEqual(rules.recipes.find(r => r.output === 'ironSword').ingredients, [
     { input: 'eternalSword', count: 10 }, { input: 'eternalMagic', count: 5 }, { input: 'resource', count: 20 }
   ]);
+});
+test('게임 중 방 나가기로 연결 해제, 다른 사람에게 오프라인 표시·재입장으로 원래 손패·차례 복구', async () => {
+  const a = await connect(), b = await connect(), c = await connect();
+  const created = await send(a, { type: 'create', name: '나가기방장' });
+  await send(b, { type: 'join', code: created.session.code, name: '둘' });
+  await send(c, { type: 'join', code: created.session.code, name: '셋' });
+  await send(a, { type: 'start' }); await sleep(20);
+  const before = structuredClone(a.state);
+  const result = await send(a, { type: 'leave' });
+  assert.ok(result.ok); assert.ok(result.left); assert.deepEqual(result.resumeSession, created.session);
+  await sleep(20);
+  assert.equal(b.state.players.find(p => p.id === before.me.id).online, false);
+  assert.equal(b.state.players.length, 3); assert.equal(b.state.status, 'playing');
+  assert.equal((await send(a, { type: 'aid' })).ok, false);
+  assert.ok((await send(a, { type: 'resume', ...result.resumeSession })).ok);
+  assert.deepEqual(a.state.me.hand, before.me.hand); assert.equal(a.state.me.role, before.me.role);
+  assert.equal(a.state.game.phase, before.game.phase); assert.equal(a.state.host, before.host);
+  await sleep(20); assert.equal(b.state.players.find(p => p.id === before.me.id).online, true);
+  await send(a, { type: 'leave' });
+  const newRoom = await send(a, { type: 'create', name: '새로운방' });
+  assert.ok(newRoom.ok); assert.notEqual(newRoom.session.code, created.session.code);
+  assert.ok((await send(a, { type: 'leave' })).ok);
+  assert.ok((await send(a, { type: 'resume', ...result.resumeSession })).ok);
+  assert.equal(a.state.me.id, before.me.id);
+});
+test('대기실 방 나가기 시 참가자 제거·방장 위임·마지막 참가자 퇴장 시 방 삭제', async () => {
+  const a = await connect(), b = await connect();
+  const created = await send(a, { type: 'create', name: '대기실방장' });
+  await send(b, { type: 'join', code: created.session.code, name: '새방장' });
+  const result = await send(a, { type: 'leave' });
+  assert.ok(result.ok); assert.equal(result.resumeSession, undefined); await sleep(20);
+  assert.equal(b.state.players.length, 1); assert.equal(b.state.host, b.state.me.id);
+  await send(b, { type: 'leave' });
+  assert.equal((await send(a, { type: 'resume', ...created.session })).ok, false);
 });

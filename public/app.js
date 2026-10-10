@@ -3,12 +3,13 @@ const $ = selector => document.querySelector(selector);
 const app = $('#app');
 const socket = io({ reconnection: true });
 const STORAGE = 'kingdom.session.v1';
+const RETURN_STORAGE = 'kingdom.returnSession.v1';
 let state = null, rules = null, busy = false, replaced = false, actionMode = null, selected = new Set(), turnKey = '';
 let freshCards = new Set(), freshTimer;
 const labels = { king: '왕', citizen: '시민', rebel: '반란군', neutral: '중립' };
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nameOf = id => state.players.find(p => p.id === id)?.name || '플레이어';
-function savedSession() { try { return JSON.parse(localStorage.getItem(STORAGE)); } catch { return null; } }
+function savedSession(key = STORAGE) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
 function toast(message) {
   $('#toast').textContent = message; $('#toast').classList.add('show');
   clearTimeout(toast.timer); toast.timer = setTimeout(() => $('#toast').classList.remove('show'), 4200);
@@ -19,10 +20,20 @@ async function command(data) {
   busy = true; document.body.classList.add('busy');
   try {
     const result = await socket.timeout(15000).emitWithAck('command', data);
-    if (!result.ok) { toast(result.error); return false; }
-    if (result.session) localStorage.setItem(STORAGE, JSON.stringify(result.session));
+    if (!result.ok) {
+      toast(result.error);
+      if (data.type === 'resume' && !state) { localStorage.removeItem(RETURN_STORAGE); render(); }
+      return false;
+    }
+    if (result.session) {
+      localStorage.setItem(STORAGE, JSON.stringify(result.session));
+      if (data.type === 'resume') localStorage.removeItem(RETURN_STORAGE);
+    }
     if (result.left) {
-      localStorage.removeItem(STORAGE); state = null; selected.clear(); actionMode = null; render();
+      if (result.resumeSession) localStorage.setItem(RETURN_STORAGE, JSON.stringify(result.resumeSession));
+      localStorage.removeItem(STORAGE); state = null; selected.clear(); actionMode = null; freshCards.clear();
+      window.kingdomEffects.handle(null, {status:'lobby'}); render();
+      if (result.resumeSession) toast('홈으로 이동했습니다. 자리는 유지되며, 홈에서 원래 방으로 돌아갈 수 있습니다.');
     }
     return true;
   } catch {
@@ -87,6 +98,7 @@ function render() {
 }
 function renderHome() {
   const params = new URLSearchParams(location.search);
+  const returnSession = savedSession(RETURN_STORAGE);
   app.innerHTML = `
     <section class="home-layout">
       <div class="hero">
@@ -98,6 +110,7 @@ function renderHome() {
       </div>
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
+        ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>직업과 손패가 유지됩니다. 본인 차례에는 복귀를 기다립니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button></div>` : ''}
         <form id="entry-form">
           <label for="nickname">플레이어 이름</label><input id="nickname" name="name" maxlength="16" placeholder="왕국에서 사용할 닉네임" required autocomplete="nickname" value="${esc(localStorage.getItem('kingdom.nickname') || '')}">
           <button type="submit" name="entry" value="create" class="primary full">새로운 왕국 만들기 <span>→</span></button>
@@ -141,7 +154,7 @@ function renderGame() {
   const g = state.game, me = state.me, phase = phaseLabel(g.phase), ended = state.status === 'finished';
   const acting = g.current === me.id;
   app.innerHTML = `
-    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div>
+    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions"><button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
     <div class="game-layout">
       <div class="game-main">
         <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="rebellion-track"><span>반란 성공</span>${[1, 2, 3].map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/3</b></div></div>
@@ -204,7 +217,7 @@ function renderAction() {
   }
   if (g.phase === 'redistribute') {
     if (p.myDone) return wait('재분배 결정을 마쳤습니다.', '당신의 수락·거절 여부는 다른 플레이어에게 공개되지 않습니다.');
-    return `<h2>새로운 손패를 받으시겠습니까?</h2><p class="action-description">수락하면 기존 카드를 <b>모두 버리고 12장</b>을 새로 받습니다. 영구 카드도 교체됩니다. 거절하면 현재 손패를 유지합니다. 선택은 비공개입니다.</p><div class="button-row"><button class="primary" data-cmd="redistribute" data-accept="true">재분배 수락 · 새로 12장</button><button class="secondary" data-cmd="redistribute" data-accept="false">거절 · 현재 손패 유지</button></div>`;
+    return `<h2>새로운 손패를 받으시겠습니까?</h2><p class="action-description">수락하면 기존 카드를 <b>모두 버리고 12장</b>을 새로 받습니다. 영구 카드도 교체됩니다. 거절하면 현재 손패를 유지하고, <b>8장 미만이면 부족한 만큼 무작위 카드를 받아 8장</b>으로 채웁니다. 선택은 비공개입니다.</p><div class="button-row"><button class="primary" data-cmd="redistribute" data-accept="true">재분배 수락 · 새로 12장</button><button class="secondary" data-cmd="redistribute" data-accept="false">거절 · 손패 유지${me.hand.length < 8 ? ` +${8 - me.hand.length}장 보충` : ''}</button></div>`;
   }
   if (g.phase === 'day') {
     if (p?.kind === 'trade') {
@@ -217,7 +230,7 @@ function renderAction() {
       return `<h2>${esc(nameOf(other))}님에게 무엇을 주시겠습니까?</h2><p class="action-description">내가 줄 카드만 고르세요. <b>0장도 가능</b>합니다. 상대의 카드와 장수는 교환이 끝나야 알 수 있습니다.</p>${submitCards('tradeSubmit', '비공개 거래 카드 확정')}`;
     }
     if (g.current !== me.id) return wait(`${nameOf(g.current)}님의 차례입니다.`, `${g.round}번째 바퀴를 진행하고 있습니다. 선택한 행동과 카드 변화는 비공개입니다.`);
-    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><p class="action-description">거래·채집·카드받기 중 하나를 선택하세요. 행동은 다른 사람에게 공개되지 않습니다.</p><div class="action-choices">${btn('trade', '비밀 거래', '상대 응답 후 서로 비공개로 교환', 'data-target="true"')}${btn('gather', '채집', '자원 카드 4장 확정 획득')}${btn('draw3', '카드받기', '무작위 카드 3장 획득')}</div>${targetSelect('거래 신청 대상')}`;
+    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><p class="action-description">거래·채집·카드받기 중 하나를 선택하세요. 행동은 다른 사람에게 공개되지 않습니다.</p><div class="action-choices">${btn('trade', '비밀 거래', '상대 응답 후 서로 비공개로 교환', 'data-target="true"')}${btn('gather', '채집', '자원 카드 6장 확정 획득')}${btn('draw3', '카드받기', '무작위 카드 4장 획득')}</div>${targetSelect('거래 신청 대상')}`;
     if (g.round === 2) {
       if (p?.kind === 'craft') return `<h2>필요한 만큼 제작하세요.</h2><p class="action-description">같은 차례에 반복·연속 제작할 수 있습니다. 영구 칼은 일반 칼 재료로 사용할 수 없습니다.</p><div class="recipes">${rules.recipes.map((r, i) => {
         const available = recipeAvailable(r, me.hand);
@@ -301,7 +314,10 @@ app.addEventListener('click', async event => {
   if (!button || button.disabled || busy) return;
   const ui = button.dataset.ui;
   if (ui) {
-    if (ui === 'copyCode' || ui === 'copyLink') {
+    if (ui === 'returnRoom') {
+      const session = savedSession(RETURN_STORAGE);
+      if (session) await command({ type: 'resume', ...session });
+    } else if (ui === 'copyCode' || ui === 'copyLink') {
       const text = ui === 'copyCode' ? state.code : `${location.origin}/?room=${state.code}`;
       try { await navigator.clipboard.writeText(text); toast(ui === 'copyCode' ? '방 코드를 복사했습니다.' : '초대 링크를 복사했습니다.'); }
       catch { toast(`복사할 내용: ${text}`); }
@@ -342,9 +358,10 @@ function renderRules() {
   $('#rules-content').innerHTML = `
     <div class="guide-banner">왕은 공개, 나머지 진영과 손패는 비밀. 반란군끼리는 서로를 압니다.</div>
     <h3>승리와 하루의 흐름</h3><p>3인은 7일, 4인은 6일, 5인 이상은 5일. 반란이 누적 3일 성공하면 즉시 반란군 승리. 마지막 저녁까지 2일 이하이면 왕·시민 승리. 마지막 날에는 밤이 없습니다. 중립은 현재 별도 승리 조건이 없습니다.</p>
-    <div class="guide-phases"><div><b>☀ 아침</b><p>반란력 공개 → 왕의 중재 / 공개처형(4인 이상) / 원정 → 비공개 재분배. 첫날과 반란력 0인 날은 중재 불가.</p></div><div><b>◉ 낮</b><p>왕부터 고정 순서로 3바퀴. ① 거래 / 채집 / 3장 받기 ② 제작 / 사냥 ③ 전체 교체 / 2장 받기 / 손패 수 / 카드 1장 확인. 패스 버튼은 없습니다.</p></div><div><b>◒ 저녁</b><p>왕이 세금(각자 2장 납부) / 지명수배(반란·선동 발견 시 전부 버림) / 지원(왕 제외 전원 3장)을 선택.</p></div><div><b>☾ 밤</b><p>반란군이 반란·선동·병기를 비공개 제출. 다음 아침에 총 반란력만 공개. 0장 제출도 가능.</p></div></div>
+    <div class="guide-phases"><div><b>☀ 아침</b><p>반란력 공개 → 왕의 중재 / 공개처형(4인 이상) / 원정 → 비공개 재분배. 첫날과 반란력 0인 날은 중재 불가.</p></div><div><b>◉ 낮</b><p>왕부터 고정 순서로 3바퀴. ① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥 ③ 전체 교체 / 2장 받기 / 손패 수 / 카드 1장 확인. 패스 버튼은 없습니다.</p></div><div><b>◒ 저녁</b><p>왕이 세금(각자 2장 납부) / 지명수배(반란·선동 발견 시 전부 버림) / 지원(왕 제외 전원 3장)을 선택.</p></div><div><b>☾ 밤</b><p>반란군이 반란·선동·병기를 비공개 제출. 다음 아침에 총 반란력만 공개. 0장 제출도 가능.</p></div></div>
     <h3>중재 · 사냥 · 원정</h3><p>중재는 선포 → 다른 플레이어들의 지원 → 왕의 제출 → 판정. 중재력이 반란력 이상이면 성공. 중재하지 않거나 실패하면 반란 성공 1일. 판정 후 반란력은 초기화됩니다. 선포와 제출은 취소 불가.</p><p>사냥은 공격력 10점 이상이면 본인에게 7장. 원정은 25점 초과(26점 이상)이면 전원 15장, 50점 초과(51점 이상)이면 전원 30장. 원정에만 보병 1점·장교 3점 사용 가능. 원정 왕 필참, 보상은 불참자도 지급.</p>
-    <h3>손패 · 비밀 거래</h3><p>시작 카드 12장. 매일 아침 시작 시 손패 6장 이하는 카드 5장 추가 지급(왕 포함, 하루 한 번). 아침 재분배는 기존 손패 전부 버리고 12장 받기 또는 거절. 낮의 전체 교체는 기존 장수만큼 새로 받기. 23장을 초과한 손패는 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 23장은 유지되고, 이번 아침 원정 보상은 즉시 줄어들지 않습니다.</p><p>거래를 상대가 거절하면 차례 종료. 수락하면 양쪽이 줄 카드만 비공개로 선택하고 동시에 교환. 0장도 가능하며 교환 전에는 상대 카드 종류·장수가 보이지 않습니다. 낮 행동·평소 타인 손패 장수는 비공개입니다.</p>
+    <h3>손패 · 비밀 거래</h3><p>시작 카드 12장. 매일 아침 시작 시 손패 6장 이하는 카드 5장 추가 지급(왕 포함, 하루 한 번). 아침 재분배는 기존 손패 전부 버리고 12장 받기 또는 거절. 거절 시 기존 손패를 유지하고, 8장 미만이면 부족한 만큼 무작위 카드를 받아 8장으로 채웁니다. 낮의 전체 교체는 기존 장수만큼 새로 받기. 23장을 초과한 손패는 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 23장은 유지되고, 이번 아침 원정 보상은 즉시 줄어들지 않습니다.</p><p>거래를 상대가 거절하면 차례 종료. 수락하면 양쪽이 줄 카드만 비공개로 선택하고 동시에 교환. 0장도 가능하며 교환 전에는 상대 카드 종류·장수가 보이지 않습니다. 낮 행동·평소 타인 손패 장수는 비공개입니다.</p>
+    <h3>방 나가기</h3><p>게임 상단의 방 나가기로 홈으로 이동할 수 있습니다. 진행 중인 게임에서는 직업·손패·자리를 유지하고 연결만 해제합니다. 본인 차례에는 복귀를 기다리며, 홈의 원래 방으로 돌아가기로 재입장할 수 있습니다. 대기실에서는 참가자 명단에서 나가고 방장 권한을 넘깁니다.</p>
     <h3>카드 도감</h3><div class="guide-card-list">${Object.values(rules.cards).map(c => `<div><span>${c.icon}</span><b>${c.name}</b><small>${c.chance}%</small><p>${cardStats(c).join(' · ') || '제작 재료'}</p></div>`).join('')}</div>
     <h3>제작법</h3><div class="guide-recipes">${rules.recipes.map(r => `<p>${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} 1장</p>`).join('')}</div><p>반복·연속 제작 가능. 일반 카드는 모두 일회용. 영구 칼·영구 마법은 사냥·원정 한 번에 각각 한 번 사용하고 손패에 남습니다. 영구 칼은 일반 칼 제작 재료로 취급하지 않습니다. 영구 카드도 재분배·몰수·제작 재료 사용 시에는 사라집니다.</p><p class="small muted">철혈의 검은 영구 칼 10장 + 영구 마법 5장 + 자원 20장을 모두 소모해 제작합니다. 제작 즉시 해당 진영이 승리하며, 왕 또는 시민이 제작하면 왕·시민이 함께 승리합니다. 랜덤으로는 나오지 않습니다. 중립 직업 능력은 추후 추가 예정입니다. 행동 시간 제한은 없습니다.</p>`;
 }

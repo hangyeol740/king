@@ -229,7 +229,7 @@ test('공개처형은 카드 버림만, 대상은 계속 참여', () => {
   act(r, k.id, { type: 'execute', target: c.id });
   assert.equal(c.hand.length, 0); assert.equal(k.hand.length, old); assert.ok(r.game.order.includes(c.id));
 });
-test('아침 보급: 0장→5장, 6장→11장, 7장 유지, 왕 포함·재접속/재분배로 중복 지급 안 됨', () => {
+test('아침 보급 후 재분배 거절: 5장→8장, 11장 유지, 7장→8장, 보급 중복 지급 없음', () => {
   const r = setup(), k = king(r), c = citizen(r), b = rebel(r);
   hand(k); hand(c, ...Array(6).fill('resource')); hand(b, ...Array(7).fill('resource'));
   r.game.phase = 'night'; r.game.pending = { done: [] };
@@ -243,7 +243,39 @@ test('아침 보급: 0장→5장, 6장→11장, 7장 유지, 왕 포함·재접�
   for (const p of [c, b]) act(r, p.id, { type: 'joinExpedition', join: false });
   act(r, k.id, { type: 'contribute', cards: [] });
   redistribute(r, false);
-  assert.equal(k.hand.length, 5); assert.equal(c.hand.length, 11); assert.equal(b.hand.length, 7);
+  assert.equal(k.hand.length, 8); assert.equal(c.hand.length, 11); assert.equal(b.hand.length, 8);
+});
+test('재분배 거절은 기존 손패를 유지하면서 8장까지 보충, 8장 이상은 유지·중복 요청 차단', () => {
+  for (const size of [0, 1, 6, 7, 8, 12, 23]) {
+    const r = setup(), p = king(r), other = citizen(r);
+    r.game.phase = 'redistribute'; r.game.pending = { done: [] };
+    const old = hand(p, ...Array(size).fill('eternalSword'));
+    act(r, p.id, { type: 'redistribute', accept: false });
+    assert.equal(p.hand.length, Math.max(size, 8));
+    assert.ok(old.every(id => p.hand.some(c => c.id === id)));
+    if (size < 8) {
+      assert.match(p.notes.at(-1).text, /재분배 거절 보충/);
+      assert.ok(!JSON.stringify(view(r, other.id)).includes(p.notes.at(-1).id));
+    }
+    const before = structuredClone(p.hand);
+    assert.throws(() => act(r, p.id, { type: 'redistribute', accept: false }), RuleError);
+    assert.deepEqual(p.hand, before);
+  }
+});
+test('낮 첫 바퀴: 채집 자원 6장, 무작위 카드 4장 지급, 각 차례 한 번', () => {
+  const r = setup(); r.game.phase = 'day'; r.game.round = 1;
+  const a = current(r); const old = hand(a, 'eternalMagic');
+  act(r, a.id, { type: 'gather' });
+  assert.equal(a.hand.length, 7);
+  assert.equal(a.hand.filter(c => c.type === 'resource').length, 6);
+  assert.ok(a.hand.some(c => c.id === old[0]));
+  assert.throws(() => act(r, a.id, { type: 'gather' }), RuleError);
+  const b = current(r); hand(b);
+  act(r, b.id, { type: 'draw3' });
+  assert.equal(b.hand.length, 4);
+  assert.ok(b.hand.every(c => CARDS[c.type].chance > 0));
+  assert.match(b.notes.at(-1).text, /\+4장/);
+  assert.ok(!JSON.stringify(view(r, a.id)).includes(b.notes.at(-1).id));
 });
 test('시민지원은 왕 제외 모든 진영에 정확히 3장 지급하고 기존 카드 유지·개인 수령 기록 제공', () => {
   for (const lastDay of [false, true]) {
