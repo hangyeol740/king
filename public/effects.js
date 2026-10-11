@@ -16,6 +16,7 @@
     royal: ['♛', '왕의 명령', [262, 392, 523]],
     dawn: ['☀', '왕국의 새로운 아침', [392, 494, 587]],
     loss: ['†', '왕국의 처분', [196, 147]],
+    stolen: ['⚑', '카드를 빼앗겼습니다!', [196, 147, 110]],
     victory: ['♛', '승패가 결정되었습니다', [262, 330, 392, 523, 659]],
     submit: ['✓', '제출 완료', [440, 554]],
     turn: ['◉', '당신의 차례입니다', [523, 698]],
@@ -49,7 +50,7 @@
     frequencies.forEach((frequency, index) => {
       const oscillator = audio.createOscillator(), gain = audio.createGain();
       const start = audio.currentTime + index * .065;
-      oscillator.type = ['breached', 'failure', 'loss'].includes(kind) ? 'triangle' : 'sine';
+      oscillator.type = ['breached', 'failure', 'loss', 'stolen'].includes(kind) ? 'triangle' : 'sine';
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0, start);
       gain.gain.linearRampToValueAtTime(.065, start + .015);
@@ -65,9 +66,9 @@
     updateToggle(); unlock(); if (enabled) sound('submit');
   });
   function show(events) {
-    clearTimeout(timer);
     if (!events.length) return;
-    const priorities = { victory: 100, breached: 90, blocked: 90, success: 70, failure: 70, dawn: 60, royal: 50, loss: 45, craft: 40, trade: 40, gain: 40, notice: 30, turn: 20, submit: 10 };
+    clearTimeout(timer);
+    const priorities = { victory: 100, breached: 90, blocked: 90, stolen: 80, success: 70, failure: 70, dawn: 60, royal: 50, loss: 45, craft: 40, trade: 40, gain: 40, notice: 30, turn: 20, submit: 10 };
     const event = [...events].sort((a, b) => (priorities[b.effect] || 0) - (priorities[a.effect] || 0))[0];
     const kind = Object.hasOwn(themes, event.effect) ? event.effect : 'notice';
     const [icon, title] = themes[kind];
@@ -79,7 +80,7 @@
     panel.querySelector('button').onclick = () => { clearTimeout(timer); panel.hidden = true; };
     panel.getAnimations().forEach(animation => animation.cancel());
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) panel.animate([{ opacity: .5, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 160 });
-    const important = ['blocked', 'breached', 'victory'].includes(kind);
+    const important = ['blocked', 'breached', 'victory', 'stolen'].includes(kind);
     sound(kind, important);
     timer = setTimeout(() => { panel.hidden = true; }, important ? 3600 : 1600);
   }

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createPolicy, validatePolicy, seededRandom } from '../lib/ai-policy.js';
 import { rollout, evaluate } from './environment.js';
 import { PPO } from './ppo.js';
+import { transferPolicy } from './transfer.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -15,7 +16,9 @@ const output = path.resolve(root, arg('output', 'models/policy.json'));
 if (!Number.isInteger(episodes) || episodes < 1 || !Number.isInteger(batchGames) || batchGames < 1 || !Number.isInteger(evalGames) || evalGames < 1 || counts.some(n => !Number.isInteger(n) || n < 3 || n > 8)) throw new Error('episodes/batch/eval-games는 양의 정수, players는 3~8이어야 합니다.');
 await mkdir(path.dirname(output), { recursive: true });
 const random = seededRandom(seed), resume = arg('resume', null);
-let policy = resume ? validatePolicy(JSON.parse(await readFile(path.resolve(root, resume), 'utf8'))) : createPolicy(seed);
+const transfer = arg('transfer',null);
+if(resume&&transfer)throw new Error('--resume과 --transfer는 동시에 사용할 수 없습니다.');
+let policy = transfer ? transferPolicy(JSON.parse(await readFile(path.resolve(root,transfer),'utf8')),seed) : resume ? validatePolicy(JSON.parse(await readFile(path.resolve(root, resume), 'utf8'))) : createPolicy(seed);
 const trainer = new PPO(policy);
 if (resume) {
   try { trainer.restore(JSON.parse(await readFile(`${path.resolve(root, resume)}.checkpoint.json`, 'utf8')).optimizer); }

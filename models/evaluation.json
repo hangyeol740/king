@@ -1,31 +1,31 @@
 {
   "model": "models/policy.json",
-  "ruleset": "v2-goals123-vote10-20-30-50-sabotage-bomb-refresh5-tax3-aid6-role17craft",
-  "trainingEpisodes": 1600,
-  "trainingDecisions": 248208,
-  "evaluatedAt": "2026-10-11T04:55:44.375Z",
-  "games": 150,
+  "ruleset": "v3-secret-conscription-no-rebel-mediation-eternal-artifacts-role20craft",
+  "trainingEpisodes": 800,
+  "trainingDecisions": 151583,
+  "evaluatedAt": "2026-10-11T05:37:42.633Z",
+  "games": 120,
   "opponent": "baseline",
-  "wins": 78,
+  "wins": 68,
   "byRole": {
     "citizen": {
-      "games": 47,
-      "wins": 22
+      "games": 42,
+      "wins": 19
     },
     "rebel": {
-      "games": 38,
-      "wins": 31
-    },
-    "king": {
-      "games": 44,
+      "games": 33,
       "wins": 25
     },
+    "king": {
+      "games": 29,
+      "wins": 24
+    },
     "neutral": {
-      "games": 21,
+      "games": 16,
       "wins": 0
     }
   },
-  "averageDecisions": 194.02666666666667,
-  "winRate": 0.52,
+  "averageDecisions": 218.05833333333334,
+  "winRate": 0.5666666666666667,
   "note": "실제 별도 평가 표본이며 사람 상대 실력을 의미하지 않습니다."
 }

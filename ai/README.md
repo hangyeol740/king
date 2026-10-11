@@ -25,9 +25,9 @@ AI 정책은 `view(room, playerId)` 개인별 상태만 입력받습니다. 상�
 
 ## 현재 규칙과 모델 평가
 
-현재 정책 버전은 2입니다. 원정 투표·상급 강제 지명·진영별 방해 카드·폭탄·마지막 바퀴 5장 교체·전체 손패 보기·카드 가져오기·17종 진영별 제작을 후보와 관측에 반영했습니다. 판정 전 폭탄과 타인의 비공개 투표는 관측하지 않습니다.
+현재 정책 버전은 3입니다. 비공개 상급 지명, 반란군의 중재 참여 금지, 왕의 추가 제작, 영구 칼·영구 마법을 사용하는 특수 검 재료, 20종 제작을 반영했습니다. AI도 다른 지명자를 알 수 없으며 자기 지명 여부만 입력받습니다. 판정 전 폭탄과 타인의 비공개 투표는 관측하지 않습니다.
 
-인원별 반란 승리 목표가 1/2/3일로 바뀌었으므로 이전 규칙 모델을 사용할 수 없습니다. 현재 모델의 실제 학습 횟수는 `models/policy.json`의 metadata, 별도 평가 결과는 `models/evaluation.json`에서 확인합니다. 모델을 추가 학습하면 평가 기록도 새로 생성하세요.
+현재 모델의 새 규칙 학습 횟수는 metadata.episodes, 이전 모델에서 가져온 지식은 metadata.transferredFrom에서 확인합니다. 별도 평가 결과는 `models/evaluation.json`에 있습니다. 모델을 추가 학습하면 평가 기록도 새로 생성하세요.
 
 ## 학습 명령
 
@@ -42,6 +42,14 @@ npm run ai:train -- --episodes 3000 --players 3,4,5 --eval-games 120 --seed 42
 ```bash
 npm run ai:train -- --resume models/policy.json --episodes 3000 --players 3,4,5 --eval-games 120
 ```
+
+v2의 가중치를 v3로 이전하는 경우에는 아래를 사용합니다(이전 v2 파일이 있어야 합니다). 기존 행동·카드 선호 가중치는 위치를 맞춰 보존하고 추가된 왕 제작 3칸만 새로 초기화합니다. 새 규칙의 학습 횟수는 0부터 별도로 기록합니다.
+
+```bash
+npm run ai:train -- --transfer models/old-v2.json --episodes 800 --output models/next-policy.json
+```
+
+`--transfer`와 `--resume`은 동시에 사용할 수 없습니다. 현재 제공되는 v3 모델을 계속 학습하려면 `--resume`을 사용하세요.
 
 기본 경로를 덮어쓰지 않고 별도 모델에 저장:
 
