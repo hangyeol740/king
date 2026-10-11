@@ -195,7 +195,7 @@ test('카드 id 위조·중복 제출 차단, 손패·차례 변경 없음', () 
   assert.throws(() => act(r, p.id, { type: 'hunt', cards: [ids[0], ids[0]] }), RuleError);
   assert.equal(p.hand.length, 1); assert.equal(r.game.turn, 0);
 });
-test('낮 전체 교체 유지·타인 손패 전체 확인·무작위 3장 가져오기, 제3자 비공개', () => {
+test('낮 전체 교체 유지·타인 손패 전체 확인·무작위 2장 가져오기, 제3자 비공개', () => {
   const r = setup(); r.game.phase = 'day'; r.game.round = 3;
   const p = current(r), old = hand(p, 'resource', 'resource', 'resource');
   act(r, p.id, { type: 'replace' });
@@ -207,8 +207,8 @@ test('낮 전체 교체 유지·타인 손패 전체 확인·무작위 3장 가�
   assert.ok(ids.every(id=>!JSON.stringify(view(r,c.id)).includes(id)));
   const b = current(r), before=b.hand.length;
   act(r, b.id, { type: 'steal', target: p.id });
-  assert.equal(p.hand.length,1);assert.equal(b.hand.length,before+3);
-  assert.equal(ids.filter(id=>b.hand.some(c=>c.id===id)).length,3);
+  assert.equal(p.hand.length,2);assert.equal(b.hand.length,before+2);
+  assert.equal(ids.filter(id=>b.hand.some(c=>c.id===id)).length,2);
   assert.equal(r.game.phase, 'evening');
   assert.ok(!JSON.stringify(view(r,b.id)).includes(c.notes.at(-1).id));
   assert.ok(!JSON.stringify(view(r, p.id).game.logs).includes('손패 전체 확인'));

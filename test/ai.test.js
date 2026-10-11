@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { act, makeRoom, joinRoom, view, card, RuleError } from '../lib/game.js';
-import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, OBS_SIZE, ACTION_SIZE, ACTION_TYPES } from '../lib/ai-policy.js';
+import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, forward, OBS_SIZE, ACTION_SIZE } from '../lib/ai-policy.js';
 import { rollout } from '../ai/environment.js';
 import { PPO } from '../ai/ppo.js';
 import { createBotRunner } from '../lib/ai-runner.js';
@@ -80,15 +80,22 @@ test('봇 스케줄러는 사람이 없을 때 정지하고 사람이 복귀하�
     assert.ifError(failure); assert.ok(changes>0);
   } finally {runner.close();}
 });
-test('v2→v3 가중치 이전은 기존 행동·카드 선호 출력 위치를 보존하고 추가 제작 3칸만 새로 생성',()=>{
-  const next=createPolicy(17,16),legacy=structuredClone(next),insertion=ACTION_TYPES.length+17;
-  legacy.version=2;legacy.ruleset='v2';legacy.actionSize-=3;legacy.actor.output-=3;legacy.metadata.episodes=1600;
-  const w2=[],b2=[];
-  for(let old=0;old<legacy.actor.output;old++){const index=old<insertion?old:old+3;b2.push(next.actor.b2[index]);for(let h=0;h<16;h++)w2.push(next.actor.w2[index*16+h]);}
-  legacy.actor.w2=w2;legacy.actor.b2=b2;
-  const transferred=transferPolicy(legacy);
-  assert.deepEqual(transferred.actor.w1,legacy.actor.w1);assert.deepEqual(transferred.critic,legacy.critic);
-  for(let old=0;old<legacy.actor.output;old++){const index=old<insertion?old:old+3;assert.deepEqual(transferred.actor.w2.slice(index*16,(index+1)*16),legacy.actor.w2.slice(old*16,(old+1)*16));}
-  assert.equal(transferred.metadata.transferredFrom.episodes,1600);assert.equal(transferred.metadata.episodes,0);
-  assert.throws(()=>transferPolicy({...legacy,version:1}));
+test('v2/v3→주교 규칙 가중치 이전은 기존 관측·행동의 예측을 보존',()=>{
+  for (const version of [2,3]) {
+    const legacy = { version, ruleset: `v${version}`, observationSize: 51, actionSize: version === 2 ? 76 : 79, metadata: { episodes: 1600 } };
+    const net = output => ({ input: 51, hidden: 16, output, w1: Array.from({length:51*16},(_,i)=>Math.sin(i)*.02), b1: Array(16).fill(.1), w2: Array.from({length:16*output},(_,i)=>Math.cos(i)*.03), b2: Array(output).fill(.2) });
+    legacy.actor = net(legacy.actionSize); legacy.critic = net(1);
+    const transferred = transferPolicy(legacy);
+    const oldObs = Array.from({length:51},(_,i)=>i/51);
+    const newObs = [...oldObs.slice(0,16),0,...oldObs.slice(16,32),0,0,...oldObs.slice(32),...Array(6).fill(0)];
+    assert.deepEqual(forward(transferred.critic,newObs).output,forward(legacy.critic,oldObs).output);
+    const before = forward(legacy.actor,oldObs).output, after = forward(transferred.actor,newObs).output;
+    for(let i=0;i<before.length;i++) {
+      const recipeEnd = 26 + (version === 2 ? 17 : 20);
+      const mapped = i < 26 ? i : i < recipeEnd ? i+4 : i < recipeEnd+16 ? i+4+(24-(version === 2 ? 17 : 20)) : i+4+(24-(version === 2 ? 17 : 20))+2;
+      assert.equal(after[mapped],before[i]);
+    }
+    assert.equal(transferred.metadata.transferredFrom.episodes,1600); assert.equal(transferred.metadata.episodes,0);
+    assert.throws(()=>transferPolicy({...legacy,version:1}));
+  }
 });

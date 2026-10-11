@@ -203,3 +203,47 @@ test('AI 다음에 입장한 사람에게 방장 권한 위임, 사람이 모두
   await send(b, { type: 'leave' });
   assert.equal((await send(a, { type: 'resume', ...created.session })).ok, false);
 });
+
+test('WebSocket 중립 직업 설정·주교 배정·밤 순서·재접속과 저장 복구', async () => {
+  const group = [await connect(), await connect(), await connect(), await connect()];
+  const created = await send(group[0], { type: 'create', name: '주교방장' });
+  const sessions = [created.session];
+  for (let i = 1; i < group.length; i++) sessions.push((await send(group[i], { type: 'join', code: created.session.code, name: `주교테스트${i}` })).session);
+  assert.equal((await send(group[1], { type: 'neutralJobs', jobs: ['bishop'] })).ok, false);
+  assert.ok((await send(group[0], { type: 'neutralJobs', jobs: ['bishop'] })).ok);
+  assert.ok((await send(group[0], { type: 'start' })).ok); await sleep(30);
+  const k = group.find(s => s.state.me.role === 'king'), b = group.find(s => s.state.me.job === 'bishop'), rebel = group.find(s => s.state.me.role === 'rebel');
+  assert.ok(b); assert.equal(b.state.me.churchInfluence, 0);
+  assert.equal(b.state.me.recipes.filter(r => r.job === 'bishop').length, 4);
+  for (const client of group.filter(s => s !== b)) {
+    assert.equal(client.state.me.churchInfluence, undefined);
+    assert.equal(client.state.players.find(p => p.id === b.state.me.id).job, null);
+  }
+  await send(k, { type: 'expedition' });
+  for (const p of group) await send(p, { type: 'voteExpedition', difficulty: 'low' });
+  for (const p of group.filter(p => p !== k)) await send(p, { type: 'joinExpedition', join: false });
+  await send(k, { type: 'contribute', cards: [] });
+  for (const p of group) await send(p, { type: 'redistribute', accept: false });
+  const actor = async () => {
+    for (let i = 0; i < 100; i++) {
+      const g = k.state.game;
+      if (group.every(s => s.state.game.phase === g.phase && s.state.game.round === g.round && s.state.game.current === g.current)) return group.find(s => s.state.me.id === g.current);
+      await sleep(10);
+    }
+    throw new Error('주교 테스트 상태 동기화 실패');
+  };
+  for (let i = 0; i < 4; i++) await send(await actor(), { type: 'draw3' });
+  for (let i = 0; i < 4; i++) { const p = await actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' }); }
+  for (let i = 0; i < 4; i++) await send(await actor(), { type: 'refresh', cards: [] });
+  await sleep(30); await send(k, { type: 'aid' }); await sleep(30);
+  assert.equal((await send(b, { type: 'bishopDone' })).ok, false);
+  assert.ok((await send(rebel, { type: 'revolt', cards: [] })).ok); await sleep(30);
+  assert.equal(b.state.game.phase, 'bishopNight');
+  assert.equal((await send(k, { type: 'bishopDone' })).ok, false);
+  const before = structuredClone(b.state.me), session = sessions[group.indexOf(b)];
+  clients.forEach(c => c.disconnect()); await stop(); await start();
+  const restored = await connect(); assert.ok((await send(restored, { type: 'resume', ...session })).ok);
+  assert.deepEqual(restored.state.me, before); assert.equal(restored.state.game.phase, 'bishopNight');
+  assert.ok((await send(restored, { type: 'bishopDone' })).ok);
+  assert.equal(restored.state.game.phase, 'morning'); assert.equal(restored.state.game.day, 2);
+});

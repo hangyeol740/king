@@ -36,7 +36,7 @@ test('반란군은 지원/0장 제출/선포 모두 금지, 시민·중립만 �
   assert.equal(r.game.lastRevolt.helperCount,1);assert.equal(r.game.lastRevolt.blocked,true);
 });
 test('공개 제작은 공통 9종, 본인 진영별 왕13/시민12/반란군13/중립9종만 제공',()=>{
-  const r=setup(4);assert.equal(RECIPES.length,20);assert.equal(visibleRecipes(null).length,9);
+  const r=setup(4);assert.equal(RECIPES.length,24);assert.equal(visibleRecipes(null).length,9);
   for(const [name,count] of [['king',13],['citizen',12],['rebel',13],['neutral',9]]){
     const p=role(r,name),recipes=view(r,p.id).me.recipes;assert.equal(recipes.length,count);
     assert.ok(recipes.every(recipe=>!recipe.role||recipe.role===name));
@@ -63,6 +63,6 @@ test('두 특수 검은 영구 재료만 인정하고 부족/일반 재료는 �
 test('카드 도난은 피해자 개인 알림·개수 제공, 제3자/가져온 사람에게 피해 알림 유출 없음',()=>{
   const r=setup(4),k=role(r,'king'),victim=role(r,'citizen'),other=role(r,'neutral');r.game.phase='day';r.game.round=3;
   hand(victim,'warWeapon','magic','resource','infantry');act(r,k.id,{type:'steal',target:victim.id});
-  const notification=victim.notes.at(-1);assert.equal(notification.effect,'stolen');assert.equal(notification.details.count,3);assert.match(notification.text,/빼앗겼습니다/);
+  const notification=victim.notes.at(-1);assert.equal(notification.effect,'stolen');assert.equal(notification.details.count,2);assert.match(notification.text,/빼앗겼습니다/);
   assert.ok(!JSON.stringify(view(r,other.id)).includes(notification.id));assert.ok(!JSON.stringify(view(r,k.id)).includes(notification.id));
 });
