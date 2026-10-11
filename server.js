@@ -6,6 +6,8 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, RECIPES, ROLES, RuleError } from './lib/game.js';
+import { validatePolicy } from './lib/ai-policy.js';
+import { createBotRunner } from './lib/ai-runner.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,11 +17,16 @@ const rooms = new Map();
 const sessions = new Map();
 const dataDir = process.env.DATA_DIR || path.join(root, '.data');
 const savePath = path.join(dataDir, 'rooms.json');
+let policy = null;
+try {
+  policy = validatePolicy(JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/policy.json'), 'utf8')));
+  console.log(`강화학습 모델 로드: ${policy.metadata.episodes}판 · ${policy.metadata.algorithm}`);
+} catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
 await mkdir(dataDir, { recursive: true });
 try {
   const saved = JSON.parse(await readFile(savePath, 'utf8'));
   for (const room of saved) {
-    room.players.forEach(p => { p.online = false; });
+    room.players.forEach(p => { p.online = !!p.bot; });
     rooms.set(room.code, room);
   }
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
@@ -35,13 +42,16 @@ function persist() {
 app.disable('x-powered-by');
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: RECIPES, roles: ROLES }));
+app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
+const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 function broadcast(room) {
   for (const p of room.players) {
     const socketId = sessions.get(p.token);
     if (socketId) io.to(socketId).emit('state', view(room, p.id));
   }
+  bots.schedule(room);
 }
 function nickname(value) {
   const name = typeof value === 'string' ? value.trim() : '';
@@ -99,14 +109,16 @@ io.on('connection', socket => {
           }
           room.players = room.players.filter(v => v.id !== p.id);
           sessions.delete(p.token); socket.data = {};
-          if (room.players.length === 0) rooms.delete(room.code);
+          if (!room.players.some(p => !p.bot)) rooms.delete(room.code);
           else {
-            if (room.host === p.id) room.host = room.players[0].id;
+            if (room.host === p.id) room.host = room.players.find(p => !p.bot).id;
             if (room.status === 'finished') { room.status = 'lobby'; room.game = null; room.players.forEach(p => { p.hand = []; p.role = null; p.notes = []; }); }
             room.config = defaultRoles(room.players.length);
           }
           broadcast(room); await persist(); reply({ ok: true, left: true }); return;
         }
+        if (input.type === 'addBot' && !policy) throw new RuleError('학습된 AI 모델이 없습니다. 서버에 models/policy.json을 포함하고 다시 배포하세요.');
+        if (input.type === 'start' && !policy && room.players.some(p => p.bot)) throw new RuleError('AI 참가자를 사용하려면 학습된 모델을 서버에 포함하거나 AI를 제거하세요.');
         act(room, p.id, input);
       }
       broadcast(room);
@@ -128,5 +140,5 @@ io.on('connection', socket => {
 const port = Number(process.env.PORT) || 3000;
 http.listen(port, '0.0.0.0', () => console.log(`왕국과 반란 서버: http://localhost:${port}`));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, async () => {
-  await persist(); io.close(); http.close(() => process.exit(0));
+  bots.close(); await persist(); io.close(); http.close(() => process.exit(0));
 });

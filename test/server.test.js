@@ -8,13 +8,15 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { io } from 'socket.io-client';
+import { candidates } from '../lib/ai-policy.js';
+import { baseline } from '../ai/environment.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const clients = [];
 let server, dataDir, url, port;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function start() {
-  server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: String(port), DATA_DIR: dataDir }, stdio: ['ignore', 'pipe', 'pipe'] });
+  server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: String(port), DATA_DIR: dataDir, AI_DELAY_MS: '50' }, stdio: ['ignore', 'pipe', 'pipe'] });
   let errors = '';
   server.stderr.on('data', data => { errors += data; });
   for (let i = 0; i < 100; i++) {
@@ -83,7 +85,7 @@ test('로컬 서버 재시작 후 저장된 방과 비공개 복귀 토큰으로
   assert.deepEqual(restored.state.me.hand, previous.hand); assert.equal(restored.state.me.role, previous.role);
   assert.equal(restored.state.me.id, previous.id); assert.equal(restored.state.game.phase, 'morning');
 });
-test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 지급 없음, 제작법 8종 API', async () => {
+test('WebSocket 시민지원 6장·재접속 중복 지급 없음·진영별 제작 17종 API', async () => {
   const a = await connect(), b = await connect(), c = await connect();
   const created = await send(a, { type: 'create', name: '지원확인' });
   const br = await send(b, { type: 'join', code: created.session.code, name: '둘' });
@@ -92,6 +94,7 @@ test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 
   await send(a, { type: 'start' });
   const k = group.find(s => s.state.me.role === 'king');
   await send(k, { type: 'expedition' });
+  for(const p of group)await send(p,{type:'voteExpedition',difficulty:'low'});
   for (const p of group.filter(p => p !== k)) await send(p, { type: 'joinExpedition', join: false });
   await send(k, { type: 'contribute', cards: [] });
   for (const p of group) await send(p, { type: 'redistribute', accept: false });
@@ -109,13 +112,13 @@ test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 
   for (let i = 0; i < 3; i++) {
     const p = await actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' });
   }
-  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'draw2' });
+  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'refresh', cards: [] });
   for (let i = 0; i < 100 && group.some(s => s.state.game.phase !== 'evening'); i++) await sleep(10);
   const counts = new Map(group.map(s => [s.state.me.id, s.state.me.hand.length]));
   assert.ok((await send(k, { type: 'aid' })).ok); await sleep(30);
   for (const p of group) {
-    assert.equal(p.state.me.hand.length, counts.get(p.state.me.id) + (p === k ? 0 : 3));
-    if (p !== k) assert.match(p.state.me.notes.at(-1).text, /시민지원: 카드 \+3장/);
+    assert.equal(p.state.me.hand.length, counts.get(p.state.me.id) + (p === k ? 0 : 6));
+    if (p !== k) assert.match(p.state.me.notes.at(-1).text, /시민지원: 카드 \+6장/);
   }
   const recipient = group.find(p => p !== k), previous = structuredClone(recipient.state.me);
   const session = sessions[group.indexOf(recipient)].session;
@@ -123,11 +126,11 @@ test('WebSocket 시민지원 수령 상태·기록 전달, 재접속 후 중복 
   assert.ok((await send(restored, { type: 'resume', ...session })).ok);
   assert.deepEqual(restored.state.me.hand, previous.hand);
   const rules = await (await fetch(`${url}/api/rules`)).json();
-  assert.equal(rules.recipes.length, 8);
+  assert.equal(rules.recipes.length, 17);
   assert.ok(rules.recipes.some(r => r.input === 'infantry' && r.output === 'rebellion'));
   assert.ok(rules.recipes.some(r => r.input === 'eternalSword' && r.output === 'eternalMagic'));
   assert.deepEqual(rules.recipes.find(r => r.output === 'ironSword').ingredients, [
-    { input: 'eternalSword', count: 10 }, { input: 'eternalMagic', count: 5 }, { input: 'resource', count: 20 }
+    { input: 'flameSword', count: 1 }, { input: 'northSword', count: 1 }
   ]);
 });
 test('게임 중 방 나가기로 연결 해제, 다른 사람에게 오프라인 표시·재입장으로 원래 손패·차례 복구', async () => {
@@ -161,6 +164,40 @@ test('대기실 방 나가기 시 참가자 제거·방장 위임·마지막 참
   const result = await send(a, { type: 'leave' });
   assert.ok(result.ok); assert.equal(result.resumeSession, undefined); await sleep(20);
   assert.equal(b.state.players.length, 1); assert.equal(b.state.host, b.state.me.id);
+  await send(b, { type: 'leave' });
+  assert.equal((await send(a, { type: 'resume', ...created.session })).ok, false);
+});
+test('학습 모델 로드·AI 추가 제거·사람 1명 + AI 2명 실시간 게임 끝까지 완료', { timeout: 45000 }, async () => {
+  const info = await (await fetch(`${url}/api/ai`)).json();
+  assert.equal(info.available, true); assert.equal(info.algorithm, 'PPO-self-play'); assert.ok(info.episodes > 0);
+  const human = await connect(); await send(human, { type: 'create', name: '혼자플레이' });
+  assert.ok((await send(human, { type: 'addBot' })).ok);
+  const first = human.state.players.find(p => p.bot);
+  assert.ok((await send(human, { type: 'removeBot', target: first.id })).ok);
+  assert.equal(human.state.players.length, 1);
+  await send(human, { type: 'addBot' }); await send(human, { type: 'addBot' });
+  assert.equal(human.state.players.filter(p => p.bot && p.online).length, 2);
+  assert.ok((await send(human, { type: 'start' })).ok);
+  const started = Date.now();
+  let humanActions = 0;
+  while (human.state.status === 'playing' && Date.now() - started < 40000) {
+    const actions = candidates(human.state);
+    if (actions.length) {
+      const result = await send(human, baseline(human.state, actions));
+      assert.ok(result.ok, result.error); humanActions++;
+      // 실제 서버 요청 제한을 유지하면서 사람의 선택 속도를 모사합니다.
+      await sleep(160);
+    } else await sleep(10);
+  }
+  assert.equal(human.state.status, 'finished', JSON.stringify(human.state.game));
+  assert.ok(humanActions > 0); assert.ok(human.state.game.winner);
+});
+test('AI 다음에 입장한 사람에게 방장 권한 위임, 사람이 모두 떠나면 AI만 있는 대기실 삭제', async () => {
+  const a = await connect(), b = await connect();
+  const created = await send(a, { type: 'create', name: '원방장' });
+  await send(a, { type: 'addBot' }); await send(b, { type: 'join', code: created.session.code, name: '새방장' });
+  await send(a, { type: 'leave' }); await sleep(30);
+  assert.equal(b.state.host, b.state.me.id); assert.equal(b.state.players.length, 2);
   await send(b, { type: 'leave' });
   assert.equal((await send(a, { type: 'resume', ...created.session })).ok, false);
 });

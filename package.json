@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "ai:train": "node ai/train.js",
+    "ai:evaluate": "node ai/evaluate.js"
   },
   "engines": { "node": ">=20" },
   "dependencies": {

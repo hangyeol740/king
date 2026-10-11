@@ -1,0 +1,31 @@
+{
+  "model": "models/policy.json",
+  "ruleset": "v2-goals123-vote10-20-30-50-sabotage-bomb-refresh5-tax3-aid6-role17craft",
+  "trainingEpisodes": 1600,
+  "trainingDecisions": 248208,
+  "evaluatedAt": "2026-10-11T04:55:44.375Z",
+  "games": 150,
+  "opponent": "baseline",
+  "wins": 78,
+  "byRole": {
+    "citizen": {
+      "games": 47,
+      "wins": 22
+    },
+    "rebel": {
+      "games": 38,
+      "wins": 31
+    },
+    "king": {
+      "games": 44,
+      "wins": 25
+    },
+    "neutral": {
+      "games": 21,
+      "wins": 0
+    }
+  },
+  "averageDecisions": 194.02666666666667,
+  "winRate": 0.52,
+  "note": "실제 별도 평가 표본이며 사람 상대 실력을 의미하지 않습니다."
+}

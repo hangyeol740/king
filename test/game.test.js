@@ -17,6 +17,7 @@ function expedition(r, scoreCards = []) {
   const k = king(r);
   act(r, k.id, { type: 'expedition' });
   if (r.status === 'finished') return;
+  r.players.forEach(p=>act(r,p.id,{type:'voteExpedition',difficulty:'low'}));
   r.players.filter(p => p !== k).forEach(p => act(r, p.id, { type: 'joinExpedition', join: false }));
   const ids = hand(k, ...scoreCards);
   act(r, k.id, { type: 'contribute', cards: ids });
@@ -27,7 +28,7 @@ function fullDay(r) {
   for (let i = 0; i < r.players.length; i++) {
     const p = current(r); act(r, p.id, { type: 'beginCraft' }); act(r, p.id, { type: 'craftDone' });
   }
-  for (let i = 0; i < r.players.length; i++) act(r, current(r).id, { type: 'draw2' });
+  for (let i = 0; i < r.players.length; i++) act(r, current(r).id, { type: 'refresh', cards: [] });
 }
 
 test('인원에 따른 기간, 왕 1명, 시작 손패 12장, 왕부터 고정 순서', () => {
@@ -81,7 +82,7 @@ test('동점 중재 성공, 플레이어 지원 후 왕 제출, 카드는 바로
   act(r, k.id, { type: 'contribute', cards: ki });
   assert.equal(r.game.successes, 0); assert.equal(r.game.revolt, 0); assert.equal(k.hand.length, 0);
   assert.equal(r.game.phase, 'redistribute');
-  assert.deepEqual(view(r, c.id).game.lastRevolt, { day: 2, blocked: true, strength: 9, revolt: 9 });
+  assert.deepEqual(view(r, c.id).game.lastRevolt, { day: 2, blocked: true, strength: 9, revolt: 9, bombs: 0 });
   assert.ok(view(r, c.id).game.logs.some(e => e.effect === 'blocked'));
 });
 test('중재 실패 시 카드 소모, 성공 횟수 증가, 점수 초기화, 제출 번복 불가', () => {
@@ -99,19 +100,19 @@ test('중재 실패 시 카드 소모, 성공 횟수 증가, 점수 초기화, �
   assert.ok(view(r, c.id).game.logs.some(e => e.effect === 'breached'));
 });
 test('중재하지 않으면 반란 성공·초기화, 세 번째 성공에 즉시 종료', () => {
-  const r = setup(); r.game.revolt = 15; r.game.successes = 2;
+  const r = setup(5); r.game.revolt = 15; r.game.successes = 2;
   act(r, king(r).id, { type: 'expedition' });
   assert.equal(r.game.successes, 3); assert.equal(r.game.revolt, 0); assert.equal(r.status, 'finished');
   assert.equal(r.game.winner.side, 'rebel'); assert.equal(r.game.phase, 'finished');
   assert.equal(view(r, king(r).id).game.lastRevolt.strength, null);
   assert.ok(r.game.logs.some(e => e.effect === 'breached'));
 });
-test('원정 25점 실패·26점 성공·50점 성공·51점 대성공, 전원 보상 즉시 보존', () => {
+test('하급 원정 9점 실패·10점 성공·19점 성공·20점 대성공, 불참자도 4/9장 보상', () => {
   for (const [types, reward] of [
-    [[...Array(3).fill('weapon'), 'sword'], 0],
-    [[...Array(3).fill('weapon'), 'eternalSword'], 15],
-    [[...Array(6).fill('weapon'), 'eternalSword'], 15],
-    [[...Array(6).fill('weapon'), 'officer'], 30]
+    [['magic','magic','sword'], 0],
+    [['weapon'], 4],
+    [['weapon','magic','magic','sword'], 4],
+    [['highMagic'], 9]
   ]) {
     const r = setup(), c = citizen(r), before = c.hand.length;
     expedition(r, types);
@@ -145,10 +146,10 @@ test('제작 반복·연속 제작과 영구 카드의 별도 재료 처리', ()
   act(r, p.id, { type: 'craft', recipe: 1, count: 1 });
   assert.deepEqual(p.hand.map(c => c.type), ['magic']);
   hand(p, ...Array(6).fill('sword'));
-  act(r, p.id, { type: 'craft', recipe: 5, count: 3 });
+  act(r, p.id, { type: 'craft', recipe: RECIPES.findIndex(r=>r.output==='eternalSword'), count: 3 });
   assert.equal(p.hand.length, 3);
   assert.throws(() => act(r, p.id, { type: 'craft', recipe: 1, count: 1 }), RuleError);
-  act(r, p.id, { type: 'craft', recipe: 6, count: 1 });
+  act(r, p.id, { type: 'craft', recipe: RECIPES.findIndex(r=>r.output==='eternalMagic'), count: 1 });
   assert.deepEqual(p.hand.map(c => c.type), ['eternalMagic']);
   act(r, p.id, { type: 'craftDone' }); assert.equal(r.game.turn, 1);
 });
@@ -194,18 +195,23 @@ test('카드 id 위조·중복 제출 차단, 손패·차례 변경 없음', () 
   assert.throws(() => act(r, p.id, { type: 'hunt', cards: [ids[0], ids[0]] }), RuleError);
   assert.equal(p.hand.length, 1); assert.equal(r.game.turn, 0);
 });
-test('낮 전체 교체 장수 유지, 손패 수와 카드 검사 결과 본인에게만 공개', () => {
+test('낮 전체 교체 유지·타인 손패 전체 확인·무작위 3장 가져오기, 제3자 비공개', () => {
   const r = setup(); r.game.phase = 'day'; r.game.round = 3;
   const p = current(r), old = hand(p, 'resource', 'resource', 'resource');
   act(r, p.id, { type: 'replace' });
   assert.equal(p.hand.length, 3); assert.ok(p.hand.every(c => !old.includes(c.id)));
-  const c = current(r); act(r, c.id, { type: 'counts' });
-  assert.match(c.notes.at(-1).text, /손패 수 확인/);
-  const b = current(r); hand(p, 'agitation');
-  act(r, b.id, { type: 'inspect', target: p.id });
-  assert.match(b.notes.at(-1).text, /선동/);
+  const c = current(r); hand(p,'agitation','bomb','eternalSword','resource');
+  const ids=p.hand.map(c=>c.id);
+  act(r, c.id, { type: 'revealHand', target: p.id });
+  assert.deepEqual(c.notes.at(-1).details.cardTypes,['agitation','bomb','eternalSword','resource']);
+  assert.ok(ids.every(id=>!JSON.stringify(view(r,c.id)).includes(id)));
+  const b = current(r), before=b.hand.length;
+  act(r, b.id, { type: 'steal', target: p.id });
+  assert.equal(p.hand.length,1);assert.equal(b.hand.length,before+3);
+  assert.equal(ids.filter(id=>b.hand.some(c=>c.id===id)).length,3);
   assert.equal(r.game.phase, 'evening');
-  assert.ok(!JSON.stringify(view(r, p.id).game.logs).includes('손패 수 확인'));
+  assert.ok(!JSON.stringify(view(r,b.id)).includes(c.notes.at(-1).id));
+  assert.ok(!JSON.stringify(view(r, p.id).game.logs).includes('손패 전체 확인'));
 });
 test('세금은 자신이 고른 카드, 부족하면 전부, 왕에게 이동', () => {
   const r = setup(); r.game.phase = 'evening';
@@ -217,8 +223,8 @@ test('세금은 자신이 고른 카드, 부족하면 전부, 왕에게 이동',
   act(r, b.id, { type: 'payTax', cards: [] });
   assert.equal(k.hand[0].id, ids[0]); assert.equal(c.hand.length, 0); assert.equal(r.game.phase, 'night');
 });
-test('지명수배는 반란 또는 선동 발견 시 전부 버림, 병기만 있으면 유지', () => {
-  for (const [types, remain] of [[['rebellion', 'resource'], 0], [['agitation', 'resource'], 0], [['weapon'], 1]]) {
+test('지명수배는 반란이 있을 때만 반란·선동·병기·폭탄 버림, 나머지 카드 유지', () => {
+  for (const [types, remain] of [[['rebellion', 'resource'], 1], [['agitation', 'resource'], 2], [['weapon','bomb'], 2], [['rebellion','agitation','weapon','bomb','warWeapon','flameSword','northSword','resource'],4]]) {
     const r = setup(); r.game.phase = 'evening'; const c = citizen(r); hand(c, ...types);
     act(r, king(r).id, { type: 'wanted', target: c.id });
     assert.equal(c.hand.length, remain);
@@ -240,6 +246,7 @@ test('아침 보급 후 재분배 거절: 5장→8장, 11장 유지, 7장→8장
   assert.match(c.notes.at(-1).text, /아침 보급/);
   assert.ok(!JSON.stringify(view(r, b.id)).includes('아침 보급'));
   act(r, k.id, { type: 'expedition' });
+  r.players.forEach(p=>act(r,p.id,{type:'voteExpedition',difficulty:'low'}));
   for (const p of [c, b]) act(r, p.id, { type: 'joinExpedition', join: false });
   act(r, k.id, { type: 'contribute', cards: [] });
   redistribute(r, false);
@@ -277,7 +284,7 @@ test('낮 첫 바퀴: 채집 자원 6장, 무작위 카드 4장 지급, 각 차�
   assert.match(b.notes.at(-1).text, /\+4장/);
   assert.ok(!JSON.stringify(view(r, a.id)).includes(b.notes.at(-1).id));
 });
-test('시민지원은 왕 제외 모든 진영에 정확히 3장 지급하고 기존 카드 유지·개인 수령 기록 제공', () => {
+test('시민지원은 왕 제외 모든 진영에 정확히 6장 지급하고 기존 카드 유지·개인 수령 기록 제공', () => {
   for (const lastDay of [false, true]) {
     const r = setup(4), k = king(r);
     r.game.phase = 'evening'; if (lastDay) r.game.day = r.game.maxDays;
@@ -285,11 +292,11 @@ test('시민지원은 왕 제외 모든 진영에 정확히 3장 지급하고 �
     const before = new Map(r.players.map(p => [p.id, p.hand.map(c => c.id)]));
     act(r, k.id, { type: 'aid' });
     for (const p of r.players) {
-      assert.equal(p.hand.length, p === k ? 24 : 27);
+      assert.equal(p.hand.length, p === k ? 24 : 30);
       assert.ok(before.get(p.id).every(id => p.hand.some(c => c.id === id)));
       if (p !== k) {
         const v = view(r, p.id);
-        assert.match(v.me.notes.at(-1).text, /시민지원: 카드 \+3장 지급 완료/);
+        assert.match(v.me.notes.at(-1).text, /시민지원: 카드 \+6장 지급 완료/);
         assert.equal(v.me.notes.at(-1).effect, 'gain');
         assert.ok(!JSON.stringify(view(r, k.id)).includes(v.me.notes.at(-1).id));
       }
@@ -316,7 +323,7 @@ test('밤의 점수와 제출자 숨김, 다음 아침 합계 공개, 마지막 
   act(r, b.id, { type: 'revolt', cards: ids });
   assert.equal(r.game.day, 2); assert.equal(r.game.revolt, 31);
   assert.equal(view(r, citizen(r).id).game.revolt, 31);
-  r.game.day = 7; r.game.phase = 'evening'; r.game.successes = 2;
+  r.game.day = 7; r.game.phase = 'evening'; r.game.successes = 0;
   act(r, king(r).id, { type: 'aid' });
   assert.equal(r.status, 'finished'); assert.equal(r.game.winner.side, 'royal');
   assert.deepEqual(new Set(r.game.winner.players), new Set([king(r).id, citizen(r).id]));
@@ -347,10 +354,10 @@ test('철혈의 검: 복합 재료 정확히 소모, 왕·시민·반란군·중
   for (const role of ['king', 'citizen', 'rebel', 'neutral']) {
     const r = setup(4), p = r.players.find(p => p.role === role);
     r.game.phase = 'day'; r.game.round = 2; r.game.turn = r.game.order.indexOf(p.id);
-    hand(p, ...Array(11).fill('eternalSword'), ...Array(6).fill('eternalMagic'), ...Array(21).fill('resource'), 'officer');
+    hand(p, 'flameSword','flameSword','northSword','northSword','resource','officer');
     act(r, p.id, { type: 'beginCraft' });
     act(r, p.id, { type: 'craft', recipe, count: 1 });
-    assert.deepEqual(p.hand.map(c => c.type).sort(), ['eternalSword', 'eternalMagic', 'resource', 'officer', 'ironSword'].sort());
+    assert.deepEqual(p.hand.map(c => c.type).sort(), ['flameSword', 'northSword', 'resource', 'officer', 'ironSword'].sort());
     assert.equal(r.status, 'finished');
     const side = ['king', 'citizen'].includes(role) ? 'royal' : role;
     assert.equal(r.game.winner.side, side);
@@ -363,10 +370,10 @@ test('철혈의 검: 복합 재료 정확히 소모, 왕·시민·반란군·중
 });
 test('철혈의 검: 재료 각 종류가 1장 부족하거나 요청 수량이 과하면 아무 카드도 소모하지 않음', () => {
   const recipe = RECIPES.findIndex(r => r.output === 'ironSword');
-  for (const [swords, magic, resources, count] of [[9, 5, 20, 1], [10, 4, 20, 1], [10, 5, 19, 1], [10, 5, 20, 2]]) {
+  for (const [flame, north, count] of [[0, 1, 1], [1, 0, 1], [1, 1, 2]]) {
     const r = setup(); r.game.phase = 'day'; r.game.round = 2;
     const p = current(r);
-    hand(p, ...Array(swords).fill('eternalSword'), ...Array(magic).fill('eternalMagic'), ...Array(resources).fill('resource'));
+    hand(p, ...Array(flame).fill('flameSword'), ...Array(north).fill('northSword'));
     act(r, p.id, { type: 'beginCraft' });
     const before = structuredClone(p.hand);
     assert.throws(() => act(r, p.id, { type: 'craft', recipe, count }), RuleError);

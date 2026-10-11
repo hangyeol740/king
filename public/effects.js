@@ -3,7 +3,7 @@
   const panel = document.querySelector('#action-effect');
   const toggle = document.querySelector('#sound-toggle');
   let enabled = localStorage.getItem('kingdom.sound') !== 'off';
-  let audio, timer, queue = [], playing = false;
+  let audio, timer, lastSoundAt = -Infinity;
   const voices = new Set();
   const themes = {
     blocked: ['♜', '반란 방어 성공', [262, 330, 392, 523]],
@@ -36,60 +36,67 @@
   }
   document.addEventListener('pointerdown', unlock, { passive: true });
   document.addEventListener('keydown', unlock);
-  function sound(kind) {
+  function stopSound() {
+    for (const oscillator of voices) { try { oscillator.stop(); } catch {} }
+  }
+  function sound(kind, important = false) {
     if (!enabled || !audio || audio.state !== 'running' || document.hidden) return;
+    const now = performance.now();
+    if (!important && now - lastSoundAt < 70) return;
+    lastSoundAt = now;
+    stopSound(); // 이전 예약 음을 중단하고 최신 행동을 즉시 재생합니다.
     const frequencies = (themes[kind] || themes.notice)[2];
     frequencies.forEach((frequency, index) => {
       const oscillator = audio.createOscillator(), gain = audio.createGain();
-      const start = audio.currentTime + index * .105;
+      const start = audio.currentTime + index * .065;
       oscillator.type = ['breached', 'failure', 'loss'].includes(kind) ? 'triangle' : 'sine';
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0, start);
       gain.gain.linearRampToValueAtTime(.065, start + .015);
-      gain.gain.exponentialRampToValueAtTime(.001, start + .24);
+      gain.gain.exponentialRampToValueAtTime(.001, start + .14);
       oscillator.connect(gain); gain.connect(audio.destination); voices.add(oscillator);
       oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
-      oscillator.start(start); oscillator.stop(start + .26);
+      oscillator.start(start); oscillator.stop(start + .16);
     });
   }
   toggle.addEventListener('click', () => {
     enabled = !enabled; localStorage.setItem('kingdom.sound', enabled ? 'on' : 'off');
-    if (!enabled) for (const oscillator of voices) { try { oscillator.stop(); } catch {} }
+    if (!enabled) stopSound();
     updateToggle(); unlock(); if (enabled) sound('submit');
   });
-  function nextEffect() {
+  function show(events) {
     clearTimeout(timer);
-    const event = queue.shift();
-    if (!event) { playing = false; panel.hidden = true; return; }
-    playing = true;
+    if (!events.length) return;
+    const priorities = { victory: 100, breached: 90, blocked: 90, success: 70, failure: 70, dawn: 60, royal: 50, loss: 45, craft: 40, trade: 40, gain: 40, notice: 30, turn: 20, submit: 10 };
+    const event = [...events].sort((a, b) => (priorities[b.effect] || 0) - (priorities[a.effect] || 0))[0];
     const kind = Object.hasOwn(themes, event.effect) ? event.effect : 'notice';
     const [icon, title] = themes[kind];
+    const message = e => e.details?.kind === 'hand' ? `${e.details.name}님의 손패 ${e.details.cardTypes.length}장을 확인했습니다. 비밀 기록에서 확인하세요.` : e.text;
+    const texts = [...new Set([message(event), ...events.filter(e => e !== event).slice(-2).map(message)])];
     panel.className = `action-effect effect-${kind}`;
-    panel.innerHTML = `<div class="effect-seal">${icon}</div><div><span class="eyebrow">${event.private ? 'PRIVATE · 나에게만 표시' : 'KINGDOM EVENT'}</span><h2>${title}</h2><p>${escape(event.text)}</p></div><button type="button" class="icon-button" aria-label="효과 알림 닫기">✕</button>`;
+    panel.innerHTML = `<div class="effect-seal">${icon}</div><div><span class="eyebrow">${events.some(e => e.private) ? 'PRIVATE · 나에게만 표시' : 'KINGDOM EVENT'}</span><h2>${title}</h2><p>${texts.map(t => escape(t.length > 260 ? `${t.slice(0, 260)}…` : t)).join('<br>')}</p></div><button type="button" class="icon-button" aria-label="효과 알림 닫기">✕</button>`;
     panel.hidden = false;
-    panel.querySelector('button').onclick = nextEffect;
-    sound(kind);
-    timer = setTimeout(nextEffect, ['blocked', 'breached', 'victory'].includes(kind) ? 4800 : 2700);
+    panel.querySelector('button').onclick = () => { clearTimeout(timer); panel.hidden = true; };
+    panel.getAnimations().forEach(animation => animation.cancel());
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) panel.animate([{ opacity: .5, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 160 });
+    const important = ['blocked', 'breached', 'victory'].includes(kind);
+    sound(kind, important);
+    timer = setTimeout(() => { panel.hidden = true; }, important ? 3600 : 1600);
   }
   window.kingdomEffects = {
     handle(previous, current) {
       if (!previous || previous.code !== current.code || current.status === 'lobby') {
-        queue = []; clearTimeout(timer); playing = false; panel.hidden = true; return;
+        clearTimeout(timer); stopSound(); panel.hidden = true; return;
       }
       const known = new Set([...(previous.game?.logs || []), ...previous.me.notes].map(e => e.id));
       const publicEvents = (current.game?.logs || []).filter(e => e.effect && !known.has(e.id));
       const privateEvents = current.me.notes.filter(e => !known.has(e.id)).map(e => ({ ...e, private: true }));
-      if (publicEvents.some(e => ['blocked', 'breached', 'victory', 'dawn'].includes(e.effect))) {
-        // 반란 결과와 아침 공개는 이전 행동 알림보다 먼저 보여줍니다.
-        queue = []; clearTimeout(timer); playing = false;
-      }
-      // 같은 업데이트의 공개 결과와 개인 수령을 순서대로 표시합니다.
-      queue.push(...publicEvents, ...privateEvents.slice(-2));
+      const events = [...publicEvents, ...privateEvents];
       if (current.game?.current === current.me.id && previous.game?.current !== current.me.id) {
-        queue.push({ effect: 'turn', text: `낮 ${current.game.round}번째 바퀴의 행동을 선택하세요.`, private: true });
+        events.push({ effect: 'turn', text: `낮 ${current.game.round}번째 바퀴의 행동을 선택하세요.`, private: true });
       }
-      if (queue.length > 8) queue = queue.slice(-8);
-      if (!playing) nextEffect();
+      // 큐 없이 최신 상태의 결과를 표시합니다. 빠른 연속 행동에도 밀리지 않습니다.
+      show(events);
     }
   };
   updateToggle();
