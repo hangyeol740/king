@@ -32,7 +32,7 @@ function fullDay(r) {
 }
 
 test('인원에 따른 기간, 왕 1명, 시작 손패 12장, 왕부터 고정 순서', () => {
-  for (const [count, days] of [[3, 7], [4, 6], [5, 5], [8, 5]]) {
+  for (const [count, days] of [[3, 10], [4, 9], [5, 7], [6, 6], [8, 6]]) {
     const r = setup(count);
     assert.equal(r.game.maxDays, days);
     assert.equal(r.players.filter(p => p.role === 'king').length, 1);
@@ -62,11 +62,12 @@ test('추가 인원 진영을 방장이 설정하고 반란군은 서로를 앎'
   const v = view(r, rebels[0].id);
   assert.equal(v.players.find(p => p.id === rebels[1].id).role, 'rebel');
 });
-test('첫날 중재 불가, 3인 공개처형 불가, 왕 이외 아침 행동 불가', () => {
+test('첫날 중재 불가, 왕 이외 아침 행동 불가, 3인 사형 투표 가능', () => {
   const r = setup();
   assert.throws(() => act(r, king(r).id, { type: 'mediate' }), RuleError);
-  assert.throws(() => act(r, king(r).id, { type: 'execute', target: citizen(r).id }), RuleError);
   assert.throws(() => act(r, citizen(r).id, { type: 'expedition' }), RuleError);
+  act(r, king(r).id, { type: 'execute' });
+  assert.equal(r.game.phase, 'executionVote');
 });
 test('동점 중재 성공, 플레이어 지원 후 왕 제출, 카드는 바로 소모', () => {
   const r = setup(), k = king(r), c = citizen(r), b = rebel(r);
@@ -233,6 +234,7 @@ test('지명수배는 반란이 있을 때만 반란·선동·병기·폭탄 버
 test('공개처형은 카드 버림만, 대상은 계속 참여', () => {
   const r = setup(4), c = citizen(r), k = king(r), old = k.hand.length;
   act(r, k.id, { type: 'execute', target: c.id });
+  r.players.forEach(p => act(r, p.id, { type: 'voteExecution', target: c.id }));
   assert.equal(c.hand.length, 0); assert.equal(k.hand.length, old); assert.ok(r.game.order.includes(c.id));
 });
 test('아침 보급 후 재분배 거절: 5장→8장, 11장 유지, 7장→8장, 보급 중복 지급 없음', () => {
@@ -323,19 +325,19 @@ test('밤의 점수와 제출자 숨김, 다음 아침 합계 공개, 마지막 
   act(r, b.id, { type: 'revolt', cards: ids });
   assert.equal(r.game.day, 2); assert.equal(r.game.revolt, 31);
   assert.equal(view(r, citizen(r).id).game.revolt, 31);
-  r.game.day = 7; r.game.phase = 'evening'; r.game.successes = 0;
+  r.game.day = r.game.maxDays; r.game.phase = 'evening'; r.game.successes = 0;
   act(r, king(r).id, { type: 'aid' });
   assert.equal(r.status, 'finished'); assert.equal(r.game.winner.side, 'royal');
   assert.deepEqual(new Set(r.game.winner.players), new Set([king(r).id, citizen(r).id]));
 });
-test('완전한 7일 게임: 아침·낮 세 바퀴·저녁·밤, 마지막 밤 생략', () => {
+test('완전한 10일 게임: 아침·낮 세 바퀴·저녁·밤, 마지막 밤 생략', () => {
   const r = setup(), order = [...r.game.order];
-  for (let day = 1; day <= 7; day++) {
+  for (let day = 1; day <= 10; day++) {
     assert.equal(r.game.day, day); assert.equal(r.game.phase, 'morning');
     expedition(r); redistribute(r, true); fullDay(r);
     assert.equal(r.game.phase, 'evening');
     act(r, king(r).id, { type: 'aid' });
-    if (day < 7) { assert.equal(r.game.phase, 'night'); act(r, rebel(r).id, { type: 'revolt', cards: [] }); }
+    if (day < 10) { assert.equal(r.game.phase, 'night'); act(r, rebel(r).id, { type: 'revolt', cards: [] }); }
     assert.deepEqual(r.game.order, order);
   }
   assert.equal(r.status, 'finished'); assert.equal(r.game.winner.side, 'royal');

@@ -5,7 +5,7 @@ import { randomInt } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, RuleError } from './lib/game.js';
+import { act, makeRoom, joinRoom, view, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, RuleError } from './lib/game.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
 
@@ -28,6 +28,11 @@ try {
   const saved = JSON.parse(await readFile(savePath, 'utf8'));
   for (const room of saved) {
     room.players.forEach(p => { p.online = !!p.bot; });
+    if (room.status === 'playing' && (room.game.rulesVersion || 0) < 5) {
+      room.game.maxDays = gameDays(room.players.length);
+      room.game.religiousGoal = religiousGoal(room.players.length);
+      room.game.rulesVersion = 5;
+    }
     rooms.set(room.code, room);
   }
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
@@ -42,7 +47,7 @@ function persist() {
 }
 app.disable('x-powered-by');
 app.get('/health', (_req, res) => res.json({ ok: true }));
-app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS }));
+app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS }));
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 

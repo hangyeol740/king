@@ -109,8 +109,8 @@ test('랜덤 2장 뺏기 전도 전파·부족분 지급, 주교가 뺏으면 �
   assert.deepEqual(types(b), ['resource', 'evangelism', 'evangelism']);
 });
 
-test('교단·전도는 교체·재분배·처형·폭탄·상급 원정 실패에 보호, 주교 자신의 카드는 버림', () => {
-  for (const action of ['replace', 'redistribute', 'execute', 'bomb', 'expedition']) {
+test('교단·전도는 교체·재분배·폭탄·상급 원정 실패에 보호, 주교 자신의 카드는 버림', () => {
+  for (const action of ['replace', 'redistribute', 'bomb', 'expedition']) {
     const r = setup(), c = role(r, 'citizen'), b = bishop(r), k = king(r);
     const original = hand(c, 'church', 'evangelism', 'resource'); hand(b, 'church', 'evangelism', 'resource');
     if (action === 'replace') {
@@ -120,10 +120,6 @@ test('교단·전도는 교체·재분배·처형·폭탄·상급 원정 실패�
       r.game.phase = 'redistribute'; r.game.pending = { done: [] };
       act(r, c.id, { type: 'redistribute', accept: true }); assert.equal(c.hand.length, 14);
       act(r, b.id, { type: 'redistribute', accept: true }); assert.equal(b.hand.length, 12);
-    } else if (action === 'execute') {
-      act(r, k.id, { type: 'execute', target: c.id }); assert.equal(c.hand.length, 2);
-      r.game.phase = 'morning'; r.game.pending = null;
-      act(r, k.id, { type: 'execute', target: b.id }); assert.equal(b.hand.length, 0);
     } else if (action === 'bomb') {
       r.game.revolt = 5; r.game.bombs = 1;
       act(r, k.id, { type: 'expedition' }); assert.equal(c.hand.length, 2);
@@ -204,7 +200,7 @@ test('종교개혁은 전도5 소모·타인의 모든 종교카드 정리·교�
 });
 
 test('종교반란은 밤마다 한번, 다음 밤 재선언·3일 성공 시 주교 단독 승리', () => {
-  const r = setup(5), b = bishop(r);
+  const r = setup(6), b = bishop(r);
   for (let i = 0; i < 3; i++) {
     hand(b, ...Array(24).fill('church'));
     night(r); b.churchInfluence = 20;
@@ -240,7 +236,7 @@ test('종교중재에는 반란군 참여, 교단·전도 금지, 동점 방어�
 
 test('두 반란 동시 판정은 중재하지 않은 쪽 자동 성공·동시 목표 달성 시 그쪽 우선 승리', () => {
   for (const chosen of ['rebel', 'religion']) {
-    const r = setup(5), b = bishop(r), k = king(r);
+    const r = setup(6), b = bishop(r), k = king(r);
     r.game.revolt = 10; r.game.religiousActive = true; r.game.religiousRevolt = 10;
     r.game.successes = 2; r.game.religiousSuccesses = 2; b.churchInfluence = 10;
     assert.throws(() => act(r, k.id, { type: 'mediate' }), RuleError);
@@ -274,7 +270,7 @@ test('주교의 철혈의 검 승리는 다른 중립을 포함하지 않음', (
 
 test('두 쪽 모두 중재 시도가 없고 동시에 목표에 도달하면 두 쪽 모두 승리', () => {
   for (const action of ['expedition', 'execute']) {
-    const r = setup(5), b = bishop(r), rebel = role(r, 'rebel');
+    const r = setup(6), b = bishop(r), rebel = role(r, 'rebel');
     r.game.revolt = 10; r.game.religiousActive = true; r.game.religiousRevolt = 20;
     r.game.successes = 2; r.game.religiousSuccesses = 2; b.churchInfluence = 20;
     act(r, king(r).id, { type: action, target: role(r, 'citizen').id });

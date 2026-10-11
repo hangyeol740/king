@@ -17,7 +17,7 @@ test('AI 생성·제거는 방장 대기실만, AI 토큰 비공개·인원별 �
   act(r, r.host, { type: 'removeBot', target: r.players[1].id }); assert.equal(r.players.length, 2);
   act(r, r.host, { type: 'addBot' }); act(r, r.host, { type: 'start' });
   assert.throws(() => act(r, r.host, { type: 'addBot' }), RuleError);
-  assert.equal(r.game.maxDays, 7);
+  assert.equal(r.game.maxDays, 10);
 });
 test('관측과 후보는 타인의 숨겨진 손패·진영 및 밤 미공개 점수 변경에 영향을 받지 않음', () => {
   const r = makeRoom('AI1234', '하나'); joinRoom(r, '둘'); joinRoom(r, '셋'); joinRoom(r, '넷');
@@ -87,15 +87,26 @@ test('v2/v3→주교 규칙 가중치 이전은 기존 관측·행동의 예측�
     legacy.actor = net(legacy.actionSize); legacy.critic = net(1);
     const transferred = transferPolicy(legacy);
     const oldObs = Array.from({length:51},(_,i)=>i/51);
-    const newObs = [...oldObs.slice(0,16),0,...oldObs.slice(16,32),0,0,...oldObs.slice(32),...Array(6).fill(0)];
+    const newObs = [...oldObs.slice(0,16),0,0,...oldObs.slice(16,32),0,0,...oldObs.slice(32),...Array(7).fill(0)];
     assert.deepEqual(forward(transferred.critic,newObs).output,forward(legacy.critic,oldObs).output);
     const before = forward(legacy.actor,oldObs).output, after = forward(transferred.actor,newObs).output;
     for(let i=0;i<before.length;i++) {
       const recipeEnd = 26 + (version === 2 ? 17 : 20);
-      const mapped = i < 26 ? i : i < recipeEnd ? i+4 : i < recipeEnd+16 ? i+4+(24-(version === 2 ? 17 : 20)) : i+4+(24-(version === 2 ? 17 : 20))+2;
+      const mapped = i < 26 ? i : i < recipeEnd ? i+6 : i < recipeEnd+16 ? i+6+(24-(version === 2 ? 17 : 20)) : i+6+(24-(version === 2 ? 17 : 20))+2;
       assert.equal(after[mapped],before[i]);
     }
     assert.equal(transferred.metadata.transferredFrom.episodes,1600); assert.equal(transferred.metadata.episodes,0);
     assert.throws(()=>transferPolicy({...legacy,version:1}));
   }
+});
+
+test('v4→사형 투표 규칙 가중치 이전은 기존 주교 관측·행동을 보존', () => {
+  const net = output => ({ input: 60, hidden: 16, output, w1: Array.from({ length: 60 * 16 }, (_, i) => Math.sin(i) * .02), b1: Array(16).fill(.1), w2: Array.from({ length: 16 * output }, (_, i) => Math.cos(i) * .03), b2: Array(output).fill(.2) });
+  const old = { version: 4, ruleset: 'v4-bishop-religious-rebellion-steal2', observationSize: 60, actionSize: 90, actor: net(90), critic: net(1), metadata: { episodes: 800 } };
+  const next = transferPolicy(old), oldObs = Array.from({ length: 60 }, (_, i) => i / 60);
+  const newObs = [...oldObs.slice(0,17), 0, ...oldObs.slice(17), 0];
+  assert.deepEqual(forward(old.critic,oldObs).output, forward(next.critic,newObs).output);
+  const before = forward(old.actor,oldObs).output, after = forward(next.actor,newObs).output;
+  for (let i = 0; i < before.length; i++) assert.equal(before[i], after[i < 30 ? i : i + 2]);
+  assert.equal(next.metadata.transferredFrom.version, 4);
 });

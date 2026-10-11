@@ -247,3 +247,28 @@ test('WebSocket 중립 직업 설정·주교 배정·밤 순서·재접속과 �
   assert.ok((await send(restored, { type: 'bishopDone' })).ok);
   assert.equal(restored.state.game.phase, 'morning'); assert.equal(restored.state.game.day, 2);
 });
+
+test('WebSocket 3인 첫날 왕 사형 선택·투표 비공개·서버 재시작 복구·전원 완료 후 몰수', async () => {
+  const group = [await connect(), await connect(), await connect()], sessions = [];
+  const created = await send(group[0], { type: 'create', name: '사형방장' }); sessions.push(created.session);
+  for (let i = 1; i < group.length; i++) sessions.push((await send(group[i], { type: 'join', code: created.session.code, name: `사형참가${i}` })).session);
+  await send(group[0], { type: 'start' }); await sleep(20);
+  const k = group.find(p => p.state.me.role === 'king'), target = group.find(p => p !== k), targetId = target.state.me.id;
+  assert.equal(k.state.game.maxDays, 10);
+  assert.ok((await send(k, { type: 'execute' })).ok); await sleep(20);
+  assert.equal(target.state.game.phase, 'executionVote'); assert.equal(target.state.me.hand.length, 12);
+  assert.equal((await send(target, { type: 'voteExecution', target: k.state.me.id })).ok, false);
+  assert.ok((await send(k, { type: 'voteExecution', target: targetId })).ok); await sleep(20);
+  assert.equal(target.state.game.pending.myVote, null); assert.equal(target.state.game.pending.voteCount, 1);
+  assert.equal(target.state.game.pending.votes, undefined);
+  const kingIndex = group.indexOf(k);
+  clients.forEach(c => c.disconnect()); await stop(); await start();
+  const restored = [];
+  for (const session of sessions) { const c = await connect(); assert.ok((await send(c, { type: 'resume', ...session })).ok); restored.push(c); }
+  assert.equal(restored[kingIndex].state.game.pending.myVote, targetId);
+  for (const p of restored.filter((_, i) => i !== kingIndex)) assert.ok((await send(p, { type: 'voteExecution', target: targetId })).ok);
+  await sleep(20);
+  assert.equal(restored[0].state.game.phase, 'redistribute');
+  assert.equal(restored.find(p => p.state.me.id === targetId).state.me.hand.length, 0);
+  assert.equal(restored[0].state.game.lastExecution.target, targetId);
+});
