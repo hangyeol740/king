@@ -77,12 +77,12 @@ test('동점 중재 성공, 플레이어 지원 후 왕 제출, 카드는 바로
   act(r, c.id, { type: 'contribute', cards: ci });
   assert.equal(c.hand.length, 0); assert.equal(k.hand.length, 1);
   assert.equal(view(r, k.id).game.pending.total, undefined);
-  act(r, b.id, { type: 'contribute', cards: [] });
+  assert.throws(()=>act(r,b.id,{type:'contribute',cards:[]}),RuleError);
   assert.equal(r.game.phase, 'mediationKing');
   act(r, k.id, { type: 'contribute', cards: ki });
   assert.equal(r.game.successes, 0); assert.equal(r.game.revolt, 0); assert.equal(k.hand.length, 0);
   assert.equal(r.game.phase, 'redistribute');
-  assert.deepEqual(view(r, c.id).game.lastRevolt, { day: 2, blocked: true, strength: 9, revolt: 9, bombs: 0 });
+  assert.deepEqual(view(r, c.id).game.lastRevolt, { day: 2, blocked: true, strength: 9, revolt: 9, bombs: 0, helperCount: 1 });
   assert.ok(view(r, c.id).game.logs.some(e => e.effect === 'blocked'));
 });
 test('중재 실패 시 카드 소모, 성공 횟수 증가, 점수 초기화, 제출 번복 불가', () => {
@@ -93,7 +93,7 @@ test('중재 실패 시 카드 소모, 성공 횟수 증가, 점수 초기화, �
   act(r, c.id, { type: 'contribute', cards: ids });
   assert.throws(() => act(r, c.id, { type: 'contribute', cards: [] }), RuleError);
   assert.throws(() => act(r, k.id, { type: 'expedition' }), RuleError);
-  act(r, b.id, { type: 'contribute', cards: [] });
+  assert.throws(()=>act(r,b.id,{type:'contribute',cards:[]}),RuleError);
   act(r, k.id, { type: 'contribute', cards: [] });
   assert.equal(r.game.successes, 1); assert.equal(r.game.revolt, 0); assert.equal(c.hand.length, 0);
   assert.equal(view(r, c.id).game.lastRevolt.blocked, false);

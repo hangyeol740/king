@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { act, makeRoom, joinRoom, view, card, RuleError } from '../lib/game.js';
-import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, OBS_SIZE, ACTION_SIZE } from '../lib/ai-policy.js';
+import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, OBS_SIZE, ACTION_SIZE, ACTION_TYPES } from '../lib/ai-policy.js';
 import { rollout } from '../ai/environment.js';
 import { PPO } from '../ai/ppo.js';
 import { createBotRunner } from '../lib/ai-runner.js';
+import { transferPolicy } from '../ai/transfer.js';
 
 test('AI 생성·제거는 방장 대기실만, AI 토큰 비공개·인원별 진영 적용', () => {
   const r = makeRoom('AI1234', '사람');
@@ -78,4 +79,16 @@ test('봇 스케줄러는 사람이 없을 때 정지하고 사람이 복귀하�
     for(let i=0;i<100&&!changes&&!failure;i++)await new Promise(resolve=>setTimeout(resolve,5));
     assert.ifError(failure); assert.ok(changes>0);
   } finally {runner.close();}
+});
+test('v2→v3 가중치 이전은 기존 행동·카드 선호 출력 위치를 보존하고 추가 제작 3칸만 새로 생성',()=>{
+  const next=createPolicy(17,16),legacy=structuredClone(next),insertion=ACTION_TYPES.length+17;
+  legacy.version=2;legacy.ruleset='v2';legacy.actionSize-=3;legacy.actor.output-=3;legacy.metadata.episodes=1600;
+  const w2=[],b2=[];
+  for(let old=0;old<legacy.actor.output;old++){const index=old<insertion?old:old+3;b2.push(next.actor.b2[index]);for(let h=0;h<16;h++)w2.push(next.actor.w2[index*16+h]);}
+  legacy.actor.w2=w2;legacy.actor.b2=b2;
+  const transferred=transferPolicy(legacy);
+  assert.deepEqual(transferred.actor.w1,legacy.actor.w1);assert.deepEqual(transferred.critic,legacy.critic);
+  for(let old=0;old<legacy.actor.output;old++){const index=old<insertion?old:old+3;assert.deepEqual(transferred.actor.w2.slice(index*16,(index+1)*16),legacy.actor.w2.slice(old*16,(old+1)*16));}
+  assert.equal(transferred.metadata.transferredFrom.episodes,1600);assert.equal(transferred.metadata.episodes,0);
+  assert.throws(()=>transferPolicy({...legacy,version:1}));
 });

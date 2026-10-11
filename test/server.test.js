@@ -71,9 +71,9 @@ test('일시 끊김과 새 연결에 복귀하면 같은 자리·직업·손패 
   assert.ok((await send(restored, { type: 'resume', ...created.session })).ok);
   assert.equal(restored.state.me.id, before.id); assert.equal(restored.state.me.role, before.role);
   assert.deepEqual(restored.state.me.hand, before.hand);
-  const newer = await connect(), replaced = once(restored, 'replaced');
+  const newer = await connect(), replaced = once(restored, 'replaced'), disconnected = once(restored, 'disconnect');
   assert.ok((await send(newer, { type: 'resume', ...created.session })).ok);
-  await replaced; assert.equal(restored.connected, false); assert.equal(newer.state.me.id, before.id);
+  await replaced; await disconnected; assert.equal(restored.connected, false); assert.equal(newer.state.me.id, before.id);
 });
 test('로컬 서버 재시작 후 저장된 방과 비공개 복귀 토큰으로 복구', async () => {
   const a = await connect(); const created = await send(a, { type: 'create', name: '저장테스트' });
@@ -85,7 +85,7 @@ test('로컬 서버 재시작 후 저장된 방과 비공개 복귀 토큰으로
   assert.deepEqual(restored.state.me.hand, previous.hand); assert.equal(restored.state.me.role, previous.role);
   assert.equal(restored.state.me.id, previous.id); assert.equal(restored.state.game.phase, 'morning');
 });
-test('WebSocket 시민지원 6장·재접속 중복 지급 없음·진영별 제작 17종 API', async () => {
+test('WebSocket 시민지원 6장·재접속 중복 없음·공개 API 공통 제작만·개인별 제작 권한', async () => {
   const a = await connect(), b = await connect(), c = await connect();
   const created = await send(a, { type: 'create', name: '지원확인' });
   const br = await send(b, { type: 'join', code: created.session.code, name: '둘' });
@@ -126,8 +126,10 @@ test('WebSocket 시민지원 6장·재접속 중복 지급 없음·진영별 제
   assert.ok((await send(restored, { type: 'resume', ...session })).ok);
   assert.deepEqual(restored.state.me.hand, previous.hand);
   const rules = await (await fetch(`${url}/api/rules`)).json();
-  assert.equal(rules.recipes.length, 17);
-  assert.ok(rules.recipes.some(r => r.input === 'infantry' && r.output === 'rebellion'));
+  assert.equal(rules.recipes.length, 9);
+  assert.ok(rules.recipes.every(r=>!r.role));
+  assert.equal(k.state.me.recipes.filter(r=>r.role==='king').length,4);
+  assert.ok(k.state.me.recipes.every(r=>!r.role||r.role==='king'));
   assert.ok(rules.recipes.some(r => r.input === 'eternalSword' && r.output === 'eternalMagic'));
   assert.deepEqual(rules.recipes.find(r => r.output === 'ironSword').ingredients, [
     { input: 'flameSword', count: 1 }, { input: 'northSword', count: 1 }

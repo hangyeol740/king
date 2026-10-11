@@ -5,7 +5,7 @@ import { randomInt } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, RECIPES, ROLES, RuleError } from './lib/game.js';
+import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, visibleRecipes, ROLES, RuleError } from './lib/game.js';
 import { validatePolicy } from './lib/ai-policy.js';
 import { createBotRunner } from './lib/ai-runner.js';
 
@@ -41,8 +41,8 @@ function persist() {
 }
 app.disable('x-powered-by');
 app.get('/health', (_req, res) => res.json({ ok: true }));
-app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: RECIPES, roles: ROLES }));
-app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
+app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES }));
+app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
 const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });

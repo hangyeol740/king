@@ -101,8 +101,8 @@ test('가져오기: 부족한 손패는 전부, 빈 손패도 처리하고 영�
     act(r,k.id,{type:'steal',target:b.id});assert.equal(b.hand.length,0);assert.deepEqual(k.hand.map(c=>c.id).sort(),ids.sort());
   }
 });
-test('특수 제작 8종 진영 제한·출력 2장 정확히 적용, 잘못된 진영은 재료 무소모',()=>{
-  assert.equal(RECIPES.filter(r=>r.role).length,8);
+test('특수 제작 11종 진영 제한·출력 2장 정확히 적용, 잘못된 진영은 재료 무소모',()=>{
+  assert.equal(RECIPES.filter(r=>r.role).length,11);
   for(const recipe of RECIPES.filter(r=>r.role)){
     const index=RECIPES.indexOf(recipe),r=setup(),p=role(r,recipe.role),other=role(r,recipe.role==='king'?'citizen':'king');
     readyCraft(r,p);hand(p,...Array(recipe.count).fill(recipe.input));act(r,p.id,{type:'craft',recipe:index,count:1});
@@ -127,7 +127,7 @@ test('폭탄 설치는 판정 전 비공개, 실패하면 왕·시민만 손패 
   r.game.phase='night';r.game.pending={done:[]};act(r,b.id,{type:'revolt',cards:hand(b,'bomb','rebellion')});
   assert.equal(r.game.revolt,8);
   const before=JSON.stringify(view(r,c.id));assert.ok(!before.includes('"bombs":'));assert.ok(!before.includes('폭탄'));
-  act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k))act(r,p.id,{type:'contribute',cards:[]});
+  act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});
   act(r,k.id,{type:'contribute',cards:[]});
   assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);assert.equal(n.hand.length,10);assert.equal(b.hand.length,5);
   assert.equal(view(r,c.id).game.lastRevolt.bombs,1);assert.equal(r.game.bombs,0);assert.equal(r.game.revolt,0);
@@ -137,7 +137,7 @@ test('폭탄 반란 방어 성공 시 몰수 없음·전쟁병기 재사용, 중
     const r=setup(),k=role(r,'king'),c=role(r,'citizen'),b=role(r,'rebel');
     hand(c,...Array(10).fill('resource'));const war=hand(k,'warWeapon')[0];
     r.game.phase='night';r.game.pending={done:[]};act(r,b.id,{type:'revolt',cards:hand(b,'bomb')});
-    if(blocked){act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k))act(r,p.id,{type:'contribute',cards:[]});act(r,k.id,{type:'contribute',cards:[war]});assert.ok(k.hand.some(c=>c.id===war));assert.equal(c.hand.length,10);}
+    if(blocked){act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});act(r,k.id,{type:'contribute',cards:[war]});assert.ok(k.hand.some(c=>c.id===war));assert.equal(c.hand.length,10);}
     else {act(r,k.id,{type:'expedition'});assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);}
     assert.equal(r.game.lastRevolt.blocked,blocked);assert.equal(r.game.lastRevolt.bombs,1);
   }
