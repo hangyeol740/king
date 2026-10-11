@@ -8,6 +8,7 @@ export function readyPlayers(room) {
 export function newGame(count = 3) {
   const room = makeRoom('TRAIN', '학습 1');
   for (let i = 1; i < count; i++) joinRoom(room, `학습 ${i + 1}`);
+  if (count >= 4) act(room, room.host, { type: 'neutralJobs', jobs: ['bishop'] });
   act(room, room.host, { type: 'start' });
   return room;
 }
@@ -22,6 +23,7 @@ export function baseline(snapshot, actions, random = Math.random) {
     return royal ? sorted[0] : sorted.at(-1);
   }
   if (g.phase === 'night') return [...actions].sort((a, b) => score(b, 'revolt') - score(a, 'revolt'))[0];
+  if (g.phase === 'bishopNight') return actions.find(a => a.type === 'religiousRevolt' && me.churchInfluence >= 10) || actions.find(a => a.type === 'reform') || actions.find(a => a.type === 'evangelize') || actions[0];
   if (g.phase === 'expeditionVote') return actions[0];
   if (g.phase === 'expeditionSelect') return actions[0];
   if (g.phase === 'expeditionJoin') return actions[0];
@@ -33,7 +35,7 @@ export function baseline(snapshot, actions, random = Math.random) {
   if (g.phase === 'day') {
     if (g.pending?.kind === 'trade') return actions.find(a => a.accept === false || a.cards?.length === 0) || actions[0];
     if (g.pending?.kind === 'craft') {
-      const priorities=['ironSword','warWeapon','flameSword','northSword','highMagic',...(me.role==='rebel'?['bomb','agitation','rebellion','infantry']:['officer','infantry','rebellion']),'eternalMagic','eternalSword','weapon','magic','sword'];
+       const priorities=['ironSword',...(me.job==='bishop'?['evangelism','church']:[]),'warWeapon','flameSword','northSword','highMagic',...(me.role==='rebel'?['bomb','agitation','rebellion','infantry']:['officer','infantry','rebellion']),'eternalMagic','eternalSword','weapon','magic','sword'];
       for(const output of priorities){const choice=actions.find(a=>a.type==='craft'&&RECIPES[a.recipe].output===output);if(choice)return choice;}
       return actions[0];
     }
@@ -87,7 +89,7 @@ export function evaluate(policy, { games = 60, counts = [3, 4, 5], random = Math
     }
     const won = room.game.winner.players.includes(learner.id);
     results.wins += Number(won); results.averageDecisions += steps;
-    const row = results.byRole[learner.role] ||= { games: 0, wins: 0 };
+    const row = results.byRole[learner.job || learner.role] ||= { games: 0, wins: 0 };
     row.games++; row.wins += Number(won);
   }
   results.winRate = results.wins / games; results.averageDecisions /= games;

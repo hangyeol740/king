@@ -5,9 +5,9 @@ import { randomInt } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, visibleRecipes, ROLES, RuleError } from './lib/game.js';
-import { validatePolicy } from './lib/ai-policy.js';
+import { act, makeRoom, joinRoom, view, defaultRoles, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, RuleError } from './lib/game.js';
 import { createBotRunner } from './lib/ai-runner.js';
+import { compatiblePolicy } from './ai/transfer.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -19,7 +19,8 @@ const dataDir = process.env.DATA_DIR || path.join(root, '.data');
 const savePath = path.join(dataDir, 'rooms.json');
 let policy = null;
 try {
-  policy = validatePolicy(JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/policy.json'), 'utf8')));
+  const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/policy.json'), 'utf8'));
+  policy = compatiblePolicy(savedPolicy);
   console.log(`강화학습 모델 로드: ${policy.metadata.episodes}판 · ${policy.metadata.algorithm}`);
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
 await mkdir(dataDir, { recursive: true });
@@ -41,8 +42,8 @@ function persist() {
 }
 app.disable('x-powered-by');
 app.get('/health', (_req, res) => res.json({ ok: true }));
-app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES }));
-app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
+app.get('/api/rules', (_req, res) => res.json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS }));
+app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
 const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
@@ -112,7 +113,7 @@ io.on('connection', socket => {
           if (!room.players.some(p => !p.bot)) rooms.delete(room.code);
           else {
             if (room.host === p.id) room.host = room.players.find(p => !p.bot).id;
-            if (room.status === 'finished') { room.status = 'lobby'; room.game = null; room.players.forEach(p => { p.hand = []; p.role = null; p.notes = []; }); }
+            if (room.status === 'finished') { room.status = 'lobby'; room.game = null; room.players.forEach(p => { p.hand = []; p.role = null; p.job = null; p.churchInfluence = 0; p.notes = []; }); }
             room.config = defaultRoles(room.players.length);
           }
           broadcast(room); await persist(); reply({ ok: true, left: true }); return;
