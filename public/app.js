@@ -14,8 +14,8 @@ try { acknowledgedThefts = new Set(JSON.parse(localStorage.getItem('kingdom.thef
 const labels = { king: '왕', citizen: '시민', rebel: '반란군', neutral: '중립' };
 const religionCard = type => ['church', 'evangelism'].includes(type);
 const protectedCard = type => state.me.job !== 'bishop' && religionCard(type);
-const playerLabel = p => p.job ? `${labels[p.role]} · ${rules.neutralJobs[p.job]}` : labels[p.role];
-const recipeLabel = r => r.job ? rules.neutralJobs[r.job] + ' 전용' : r.role ? labels[r.role] + ' 전용' : '공통';
+const playerLabel = p => p.job ? `${labels[p.role]} · ${rules.neutralJobs?.[p.job] || p.job}` : labels[p.role];
+const recipeLabel = r => r.job ? (rules.neutralJobs?.[r.job] || r.job) + ' 전용' : r.role ? labels[r.role] + ' 전용' : '공통';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nameOf = id => state.players.find(p => p.id === id)?.name || '플레이어';
 function savedSession(key = STORAGE) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
@@ -72,6 +72,7 @@ socket.on('replaced', () => {
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
 });
 socket.on('state', next => {
+  next = { ...next, neutralJobs: next.neutralJobs || [], game: next.game ? { religiousRevolt: null, religiousSuccesses: 0, religiousGoal: next.players.length === 4 ? 1 : next.players.length === 5 ? 2 : 3, ...next.game } : null };
   const previous = state;
   if (previous?.code === next.code) {
     const oldCards = new Set(previous.me.hand.map(c => c.id));
@@ -96,7 +97,7 @@ socket.on('state', next => {
   render();
   window.kingdomEffects.handle(previous, next);
 });
-fetch('/api/rules').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = data; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
+fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = { ...data, neutralJobs: data.neutralJobs || {} }; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
 
 function render() {
@@ -117,7 +118,7 @@ function renderHome() {
         <h1>왕관을 지킬 것인가,<br><em>왕국을 뒤집을 것인가.</em></h1>
         <p class="hero-description">충성은 보이지 않고, 반란은 밤에 시작된다.<br>친구들과 함께하는 비밀 카드 전략 게임.</p>
         <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="art-star s1">✦</span><span class="art-star s2">✧</span><div class="art-crown">♛</div><div class="art-land"></div><span class="art-caption">ONE CROWN. MANY INTENTIONS.</span></div>
-        <div class="home-facts"><span><b>3명 이상</b> 함께 플레이</span><span><b>5–7일</b> 운명의 라운드</span><span><b>4개 진영</b> 하나의 왕국</span></div>
+        <div class="home-facts"><span><b>3명 이상</b> 함께 플레이</span><span><b>6–10일</b> 운명의 라운드</span><span><b>4개 진영</b> 하나의 왕국</span></div>
       </div>
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
@@ -151,7 +152,7 @@ function renderLobby() {
         <div class="role-settings">${Object.entries(labels).map(([role, label]) => `<div class="role-setting"><span class="role-symbol ${role}">${roleIcon(role)}</span><div><b>${label}</b><small>${roleDescription(role)}</small></div><input aria-label="${label} 인원" data-role-count="${role}" type="number" min="${role === 'king' ? 1 : 0}" max="${role === 'king' ? 1 : state.players.length}" value="${state.config[role]}" ${!isHost || role === 'king' || state.players.length <= 4 ? 'disabled' : ''}></div>`).join('')}</div>
         <p class="config-summary ${valid ? '' : 'warn'}">진영 합계 ${total}명 · 참가자 ${state.players.length}명${!valid ? ' — 인원과 필수 진영을 확인하세요.' : ''}</p>
         ${isHost ? `<button class="primary full" data-cmd="start" ${valid ? '' : 'disabled'}>왕국의 첫날 시작하기 <span>→</span></button>` : '<div class="waiting-box">방장이 게임을 시작하면 입장합니다.</div>'}
-        <div class="neutral-job-settings"><h3>중립 직업 선택</h3><p class="small muted">선택한 직업 중 무작위 배정 · 같은 직업은 최대 1명. 선택한 직업보다 중립 인원이 많으면 나머지는 일반 중립입니다.</p>${Object.entries(rules.neutralJobs).map(([job, label]) => `<label><input type="checkbox" data-neutral-job="${job}" ${(state.neutralJobs || []).includes(job) ? 'checked' : ''} ${!isHost || state.players.length < 4 ? 'disabled' : ''}> ${label}</label>`).join('')}</div>
+        <div class="neutral-job-settings"><h3>중립 직업 선택</h3><p class="small muted">선택한 직업 중 무작위 배정 · 같은 직업은 최대 1명. 선택한 직업보다 중립 인원이 많으면 나머지는 일반 중립입니다.</p>${Object.entries(rules.neutralJobs || {}).map(([job, label]) => `<label><input type="checkbox" data-neutral-job="${job}" ${(state.neutralJobs || []).includes(job) ? 'checked' : ''} ${!isHost || state.players.length < 4 ? 'disabled' : ''}> ${label}</label>`).join('')}</div>
         <p class="small muted">${state.players.length >= 5 ? '방장은 5인부터 추가 인원의 진영을 조정할 수 있습니다.' : '3인: 왕·시민·반란군 / 4인: 중립 추가'}<br>3인 게임에는 중립 직업이 없습니다.</p>
       </section>
     </div>
@@ -160,17 +161,17 @@ function renderLobby() {
 function roleIcon(role) { return { king: '♛', citizen: '♟', rebel: '⚑', neutral: '◇' }[role] || '?'; }
 function roleDescription(role) { return { king: '왕국을 다스리는 단 한 사람', citizen: '왕과 함께 왕국을 지킨다', rebel: '인원별 반란 목표를 달성한다', neutral: '어느 편에도 속하지 않는다' }[role]; }
 function phaseLabel(phase) {
-  if (['morning', 'mediationSupport', 'mediationKing', 'expeditionVote', 'expeditionSelect', 'expeditionJoin', 'expeditionCards', 'redistribute'].includes(phase)) return '아침';
+  if (['morning', 'executionVote', 'mediationSupport', 'mediationKing', 'expeditionVote', 'expeditionSelect', 'expeditionJoin', 'expeditionCards', 'redistribute'].includes(phase)) return '아침';
    if (phase === 'day') return '낮'; if (['evening', 'tax'].includes(phase)) return '저녁'; if (['night', 'bishopNight'].includes(phase)) return '밤'; return '종료';
 }
 function renderGame() {
   const g = state.game, me = state.me, phase = phaseLabel(g.phase), ended = state.status === 'finished';
-  const acting = g.current === me.id;
+  const acting = g.current === me.id || (g.phase === 'morning' && g.king === me.id) || (g.phase === 'executionVote' && !g.pending.myDone);
   app.innerHTML = `
     <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions"><button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
     <div class="game-layout">
       <div class="game-main">
-        <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="score-tracks">${state.neutralJobs.includes('bishop') ? `<div class="rebellion-track religion-track"><span>宗 종교반란 성공</span>${[1,2,3].map(n => `<i class="${g.religiousSuccesses >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.religiousSuccesses}/3</b></div>` : ''}<div class="rebellion-track"><span>반란 성공</span>${Array.from({length:g.revoltGoal},(_,i)=>i+1).map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/${g.revoltGoal}</b></div></div></div>
+        <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="score-tracks">${state.neutralJobs.includes('bishop') ? `<div class="rebellion-track religion-track"><span>✝ 종교반란 성공</span>${Array.from({length:g.religiousGoal},(_,i)=>i+1).map(n => `<i class="${g.religiousSuccesses >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.religiousSuccesses}/${g.religiousGoal}</b></div>` : ''}<div class="rebellion-track"><span>반란 성공</span>${Array.from({length:g.revoltGoal},(_,i)=>i+1).map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/${g.revoltGoal}</b></div></div></div>
         ${renderRevoltBanner()}
         ${renderReligiousBanner()}
         ${renderTheftAlert()}
@@ -179,7 +180,7 @@ function renderGame() {
         <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > 23 && !ended ? '<div class="hand-warning">손패가 23장을 초과했습니다. 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 이번 아침에 받은 원정 보상은 즉시 줄어들지 않습니다.</div>' : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
         <section class="recipe-reference"><h2>나의 제작법 <span>${myRecipes().length}종</span></h2><p class="small muted">공통 제작과 본인 진영·직업의 특수 제작만 표시합니다.</p><div class="guide-recipes">${myRecipes().map(r => `<p><b>${recipeLabel(r)}</b> · ${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} ${r.amount || 1}장</p>`).join('')}</div><p class="small muted">화염대검 + 북부의 검 → 철혈의 검 · 두 검의 재료는 영구 칼·영구 마법이며 제작 시 소모됩니다.</p></section>
       </div>
-      <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'bishop' ? '종교반란을 3일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.' : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일,<br>종교반란 3일 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : ''}</section>
+      <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'bishop' ? `종교반란을 ${g.religiousGoal}일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.` : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일${state.neutralJobs.includes('bishop') ? `,<br>종교반란 ${g.religiousGoal}일` : ''} 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : ''}</section>
         <section class="panel journal"><div class="panel-heading"><h2>왕국의 기록</h2><span class="live-label">PUBLIC</span></div><div class="journal-scroll">${[...g.logs].reverse().map(l => `<div class="journal-entry"><span>DAY ${l.day}</span><p>${esc(l.text)}</p></div>`).join('')}</div></section>
         <section class="panel personal-notes"><div class="panel-heading"><h2>나의 비밀 기록</h2><span class="live-label">PRIVATE</span></div><div class="notes-scroll">${[...me.notes].reverse().map(renderNote).join('') || '<p class="muted">아직 기록이 없습니다.</p>'}</div></section>
         <div class="sidebar-foot">방 코드 <button class="quiet" data-ui="copyCode">${state.code} ⧉</button><span>대화는 디스코드에서</span></div>
@@ -204,7 +205,7 @@ function renderReligiousBanner() {
   if (g.religiousRevolt !== null) return `<section class="revolt-banner religion-report"><div class="revolt-emblem">✝</div><div><span class="eyebrow">RELIGIOUS REBELLION</span><h2>종교반란이 일어났습니다</h2><p>동점 이상이면 방어 성공. 교단·전도카드는 사용할 수 없습니다.${g.revolt > 0 ? ' 왕은 두 반란 중 하나만 중재할 수 있습니다.' : ''}</p></div><div class="revolt-number"><strong>${g.religiousRevolt}</strong><span>종교반란력</span></div></section>`;
   const result = g.lastReligiousRevolt;
   if (result?.day !== g.day) return '';
-  return `<section class="revolt-result ${result.blocked ? 'blocked' : 'breached'}"><span>✝</span><div><h2>${result.blocked ? '종교반란을 막았습니다!' : '종교반란 성공!'}</h2><p>종교반란력 ${result.revolt} · ${result.strength === null ? '중재 미선택' : `중재력 ${result.strength}`} · 종교반란 성공 누적 ${g.religiousSuccesses}/3일</p></div></section>`;
+  return `<section class="revolt-result ${result.blocked ? 'blocked' : 'breached'}"><span>✝</span><div><h2>${result.blocked ? '종교반란을 막았습니다!' : '종교반란 성공!'}</h2><p>종교반란력 ${result.revolt} · ${result.strength === null ? '중재 미선택' : `중재력 ${result.strength}`} · 종교반란 성공 누적 ${g.religiousSuccesses}/${g.religiousGoal}일</p></div></section>`;
 }
 function renderAssistance() {
   const g=state.game,p=g.pending;
@@ -234,8 +235,8 @@ function expeditionValue(type) {
   if(d.expedition) return ['king','citizen','neutral'].includes(role) ? d.expedition : null;
   return d.attack || null;
 }
-function targetSelect(label = '대상 선택') {
-  const others=state.players.filter(p=>p.id!==state.me.id),chosen=others.find(p=>p.id===targetPlayer);
+function targetSelect(label = '대상 선택', candidates = null) {
+  const others=candidates || state.players.filter(p=>p.id!==state.me.id),chosen=others.find(p=>p.id===targetPlayer);
   return `<fieldset class="target-picker"><legend>${label}</legend><p>행동할 플레이어를 아래에서 선택하세요.</p><div class="target-grid">${others.map(p=>`<label class="target-option ${p.id===targetPlayer?'chosen':''}"><input type="radio" name="action-target" data-target-player="${p.id}" ${p.id===targetPlayer?'checked':''}><span class="target-avatar">${p.role?roleIcon(p.role):'?'}</span><b>${esc(p.name)}</b><small>${p.role?labels[p.role]:'진영 비공개'}</small></label>`).join('')}</div><div class="target-preview">${chosen?`선택한 플레이어 <strong>${esc(chosen.name)}</strong>`:'아직 대상이 선택되지 않았습니다.'}</div><input type="hidden" id="target" value="${chosen?.id||''}"></fieldset>`;
 }
 function wait(title, description) { return `<h2>${esc(title)}</h2><p class="action-description">${description}</p><div class="wait-indicator"><i></i><i></i><i></i><span>다른 플레이어의 선택을 기다리고 있습니다.</span></div>`; }
@@ -247,7 +248,11 @@ function renderAction() {
   }
   if (g.phase === 'morning') {
     if (!isKing) return wait('왕의 아침 결정을 기다립니다.', `${esc(nameOf(g.king))}님이 왕국의 오늘을 결정합니다.${g.revolt > 0 ? ` 공개된 반란력은 <b>${g.revolt}점</b>입니다.` : ''}`);
-    return `<h2>폐하, 어떤 길을 택하시겠습니까?</h2><p class="action-description">${g.revolt > 0 || g.religiousRevolt !== null ? '중재하지 않은 반란은 자동 성공합니다. 두 반란이 동시에 발생하면 하나만 중재할 수 있습니다.' : '발생한 반란이 없습니다. 원정 또는 공개처형을 선택하세요.'}</p><div class="action-choices">${btn('mediate', '반란 중재', '지원 후 왕이 제출 · 동점도 성공', `data-revolt-type="rebel" ${g.revolt > 0 ? '' : 'disabled'}`)}${g.religiousRevolt !== null ? btn('mediate', '종교반란 중재', '반란군도 지원 가능 · 교단·전도 사용 불가', 'data-revolt-type="religion"') : ''}${btn('expedition', '원정', '전원 투표로 하급·상급 결정')}${btn('execute', '공개처형', '보호 카드 외 지목한 사람의 손패 몰수', state.players.length >= 4 ? 'data-target="true"' : 'disabled')}</div>${state.players.length >= 4 ? targetSelect('공개처형 대상') : ''}<p class="small muted">중재 선포와 확정한 카드 제출은 되돌릴 수 없습니다.</p>`;
+    return `<h2>폐하, 어떤 길을 택하시겠습니까?</h2><p class="action-description">${g.revolt > 0 || g.religiousRevolt !== null ? '중재하지 않은 반란은 자동 성공합니다. 두 반란이 동시에 발생하면 하나만 중재할 수 있습니다.' : '발생한 반란이 없습니다. 원정 또는 사형 투표를 선택하세요.'}</p><div class="action-choices">${btn('mediate', '반란 중재', '지원 후 왕이 제출 · 동점도 성공', `data-revolt-type="rebel" ${g.revolt > 0 ? '' : 'disabled'}`)}${g.religiousRevolt !== null ? btn('mediate', '종교반란 중재', '반란군도 지원 가능 · 교단·전도 사용 불가', 'data-revolt-type="religion"') : ''}${btn('expedition', '원정', '전원 투표로 하급·상급 결정')}${btn('execute', '사형 투표', '3인·첫날에도 가능 · 최다 득표자 모든 카드 몰수')}</div><p class="small muted">중재 선포와 확정한 카드 제출은 되돌릴 수 없습니다.</p>`;
+  }
+  if (g.phase === 'executionVote') {
+    if (p.myDone) return wait('사형 투표를 마쳤습니다.', `당신은 ${esc(nameOf(p.myVote))}님에게 투표했습니다. ${p.voteCount}/${state.players.length}명 투표 완료 · 전원의 투표를 기다립니다.`);
+    return `<h2>사형 대상을 투표하세요.</h2><p class="action-description">왕을 포함한 전원이 한 표씩 투표합니다. 왕은 사형할 수 없습니다. 최다 득표 동률은 무작위로 결정합니다. 사형된 사람의 교단·전도·영구 카드를 포함한 <b>모든 카드를 몰수</b>합니다. 플레이는 계속됩니다.<br>${p.voteCount}/${state.players.length}명 투표 완료</p>${targetSelect('사형 투표 대상', state.players.filter(p => p.id !== g.king))}<div class="action-choices">${btn('voteExecution', '사형 투표 확정', '전원 완료 후 득표 합계와 결과 공개', 'data-target="true"')}</div>`;
   }
   if (g.phase === 'mediationSupport') {
     if(me.role==='rebel' && p.revoltType !== 'religion')return wait('반란군은 일반 반란 중재에 참여할 수 없습니다.', '카드 지원과 0장 제출 모두 불가합니다. 왕과 다른 진영의 중재 결과를 기다립니다.');
@@ -318,7 +323,7 @@ function renderAction() {
     if (me.job !== 'bishop') return wait('왕국이 잠든 밤.', '밤의 행동은 비공개이며 다음 아침에 반란력이 공개됩니다.');
     const churches = me.hand.filter(c => c.type === 'church').length;
     const evangelisms = me.hand.filter(c => c.type === 'evangelism').length;
-    return `<h2>주교의 밤 · 교단의 길을 선택하세요.</h2><p class="action-description">원하는 행동을 여러 번 할 수 있습니다. 종교반란은 한 밤에 한 번만 선언 가능합니다.<br>교단 ${churches}장 · 전도 ${evangelisms}장 · 교단영향력 <b>${me.churchInfluence}점</b>${g.religiousScheduled ? '<br>다음 아침 종교반란이 예약되어 있습니다.' : ''}</p><div class="action-choices">${btn('evangelize', '종교전도', '교단 5장 소모 · 무작위 1장 가져오기 + 전도 1장 전달', `data-target="true" ${churches < 5 ? 'disabled' : ''}`)}${btn('religiousRevolt', '종교반란', '교단 12장 소모 · 다음 아침 종교반란', churches < 12 || g.religiousScheduled ? 'disabled' : '')}${btn('reform', '종교개혁', '전도 5장 소모 · 타인 교단·전도 몰수 · 교단 1장당 영향력 +2', evangelisms < 5 ? 'disabled' : '')}</div>${targetSelect('종교전도 대상')}<button class="primary" data-cmd="bishopDone">밤 행동 완료 · 다음 아침 →</button>`;
+    return `<h2>주교의 밤 · 교단의 길을 선택하세요.</h2><p class="action-description">원하는 행동을 여러 번 할 수 있습니다. 종교반란은 한 밤에 한 번만 선언 가능합니다.<br>교단 ${churches}장 · 전도 ${evangelisms}장 · 교단영향력 <b>${me.churchInfluence}점</b>${g.religiousScheduled ? '<br>다음 아침 종교반란이 예약되어 있습니다.' : ''}</p><div class="action-choices">${btn('evangelize', '종교전도', '교단 5장 소모 · 무작위 1장 가져오기 + 전도 1장 전달', `data-target="true" ${churches < 5 ? 'disabled' : ''}`)}${btn('religiousRevolt', '종교반란', '교단 12장 소모 · 다음 아침 종교반란', churches < 12 || g.religiousScheduled ? 'disabled' : '')}${btn('reform', '종교개혁', '전도 5장 소모 · 타인 교단·전도 몰수 · 교단 1장당 영향력 +2', evangelisms < 5 ? 'disabled' : '')}${btn('reclaimChurch', '교단회수', '전도 2장 소모 · 선택한 사람의 교단카드 전부 가져오기', `data-target="true" ${evangelisms < 2 ? 'disabled' : ''}`)}</div>${targetSelect('종교전도·교단회수 대상')}<button class="primary" data-cmd="bishopDone">밤 행동 완료 · 다음 아침 →</button>`;
   }
   return '';
 }
@@ -446,15 +451,16 @@ $('#rules').addEventListener('click', event => { if (event.target === $('#rules'
 function renderRules() {
   $('#rules-content').innerHTML = `
     <div class="guide-banner">왕은 공개, 나머지 진영과 손패는 비밀. 반란군끼리는 서로를 압니다.</div>
-    <h3>승리와 하루의 흐름</h3><p>3인은 7일 중 반란 1일 성공, 4인은 6일 중 2일 성공, 5인 이상은 5일 중 3일 성공하면 반란군이 즉시 승리합니다. 마지막 저녁까지 이 목표를 막으면 왕·시민 승리. 마지막 날에는 밤이 없습니다. 철혈의 검 획득 시 진영이 즉시 승리합니다.</p>
+    <h3>승리와 하루의 흐름</h3><p>게임 기간: 3인 10일·4인 9일·5인 7일·6인 이상 6일. 일반 반란은 3인 1일·4인 2일·5인 이상 3일 성공하면 반란군이 즉시 승리합니다. 종교반란은 4인 1일·5인 2일·6인 이상 3일 성공하면 주교가 승리합니다. 마지막 저녁까지 두 반란의 승리 목표를 막으면 왕·시민 승리. 마지막 날에는 밤이 없습니다. 철혈의 검 획득 시 즉시 승리합니다.</p>
     <h3>강화학습 AI</h3><p>대기실의 AI 추가로 혼자 또는 친구와 함께 학습된 AI를 상대할 수 있습니다. AI도 무작위 진영 배정과 동일한 규칙을 적용받으며, 자기 손패와 공개 정보만 보고 서버에서 행동합니다. 사람과 AI를 합쳐 3명 이상이면 시작할 수 있습니다. 학습된 초기 모델이라 진영별 실력 차이가 있으며, 디스코드 대화를 듣지는 않습니다.</p>
-    <div class="guide-phases"><div><b>☀ 아침</b><p>반란력 공개 → 왕의 중재 / 공개처형(4인 이상) / 원정 → 비공개 재분배. 발생한 반란이 있어야 중재 가능.</p></div><div><b>◉ 낮</b><p>왕부터 고정 순서로 3바퀴. ① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥 ③ 전체 교체 / 5장 받기·일부 교체 / 타인 손패 전체 보기 / 타인 카드 2장 가져오기.</p></div><div><b>◒ 저녁</b><p>세금징수: 왕 제외 각자 3장 납부(부족하면 전부). 시민지원: 왕 제외 전원 6장. 지명수배: 정확히 반란카드가 있으면 반란·선동·병기·폭탄만 전부 몰수. 선동·폭탄만 있으면 몰수하지 않음.</p></div><div><b>☾ 밤</b><p>반란군이 카드를 비공개 제출한 뒤 주교가 행동합니다. 다음 아침 반란력을 공개합니다. 폭탄은 판정 전 비공개, 일반 반란 성공 시 왕·시민 손패 몰수(보호 카드 유지).</p></div></div>
+    <div class="guide-phases"><div><b>☀ 아침</b><p>반란력 공개 → 왕의 중재 / 사형 투표 / 원정 → 비공개 재분배. 발생한 반란이 있어야 중재 가능. 3인과 첫날에도 사형 투표 가능.</p></div><div><b>◉ 낮</b><p>왕부터 고정 순서로 3바퀴. ① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥 ③ 전체 교체 / 5장 받기·일부 교체 / 타인 손패 전체 보기 / 타인 카드 2장 가져오기.</p></div><div><b>◒ 저녁</b><p>세금징수: 왕 제외 각자 3장 납부(부족하면 전부). 시민지원: 왕 제외 전원 6장. 지명수배: 정확히 반란카드가 있으면 반란·선동·병기·폭탄만 전부 몰수. 선동·폭탄만 있으면 몰수하지 않음.</p></div><div><b>☾ 밤</b><p>반란군이 카드를 비공개 제출한 뒤 주교가 행동합니다. 다음 아침 반란력을 공개합니다. 폭탄은 판정 전 비공개, 일반 반란 성공 시 왕·시민 손패 몰수(보호 카드 유지).</p></div></div>
+    <h3>사형 투표</h3><p>왕이 사형을 선택하면 왕을 포함한 전원이 왕 이외의 사람에게 한 표씩 투표합니다. 최다 득표자를 사형하며 동률이면 최다 득표자 중 무작위 한 명을 고릅니다. 사형된 사람의 교단·전도·영구 카드를 포함한 모든 카드를 몰수합니다. 탈락하지 않고 플레이를 계속합니다. 표는 마감 전 본인의 선택만 보이며 마감 후 득표 합계와 결과를 공개합니다.</p>
     <h3>중재 · 사냥</h3><p>일반 반란 중재에는 반란군이 참여할 수 없습니다. 종교반란 중재에는 반란군도 참여할 수 있지만 교단·전도카드는 사용할 수 없습니다. 왕 선포 → 지원 → 왕 제출 → 판정. 중재력이 반란력 이상이면 성공. 1장 이상 지원한 인원수(왕 제외)를 표시합니다. 중재 실패·미선택 시 해당 반란 성공 1일. 사냥은 공격력 10점 이상이면 본인에게 7장.</p>
-    <h3>중립 직업 · 주교</h3><p>방장이 원하는 중립 직업을 선택하면 선택한 직업 중 무작위 배정합니다. 같은 직업은 중복되지 않으며 주교는 최대 1명입니다. 3인은 중립 직업이 없습니다. 선택한 직업보다 중립 인원이 많으면 남은 자리는 일반 중립입니다. 주교는 종교반란 3일 성공 시 혼자 승리합니다. 종교반란 성공 트랙은 일반 반란 트랙 위에 표시됩니다.</p>
+    <h3>중립 직업 · 주교</h3><p>방장이 원하는 중립 직업을 선택하면 선택한 직업 중 무작위 배정합니다. 같은 직업은 중복되지 않으며 주교는 최대 1명입니다. 3인은 중립 직업이 없습니다. 선택한 직업보다 중립 인원이 많으면 남은 자리는 일반 중립입니다. 주교는 종교반란 4인 1일·5인 2일·6인 이상 3일 성공 시 혼자 승리합니다. 종교반란 성공 트랙은 일반 반란 트랙 위에 표시됩니다.</p>
     <p>교단·전도카드는 랜덤 확률 0%. 교단 중재력 3, 전도 중재력 7. 일반 반란 중재에 사용된 교단·전도카드의 중재력만큼 주교가 비공개 교단영향력을 얻습니다. 주교만 보병 1장 또는 반란 1장 → 교단 1장, 장교 1장 또는 선동 1장 → 전도 1장을 제작할 수 있습니다.</p>
     <p>누구끼리의 거래·카드 뺏기든 전도카드를 받은 사람은 받은 전도카드 수만큼 일반 카드를 무작위 교단카드로 바꿉니다. 바꿀 일반 카드가 부족하면 부족한 수만큼 교단카드를 추가 지급합니다. 주교가 받으면 발동하지 않습니다. 매일 아침 주교 이외의 사람은 가진 전도카드 수만큼 교단카드를 받으며 이후 손패 제한을 적용합니다.</p>
-    <p>주교 이외의 교단·전도카드는 중재 사용·거래·카드 뺏기와 특별한 종교 정리 효과 외에는 버려지지 않습니다. 재분배 수락은 보호 카드를 유지하고 새 12장을 추가하며, 전체 교체는 나머지 카드만 같은 장수로 교체합니다. 손패 제한은 일반 카드를 먼저 버린 뒤 필요한 만큼 보호 카드를 버립니다. 주교 자신의 카드는 보호되지 않습니다.</p>
-    <div class="guide-phases"><div><b>종교전도</b><p>교단 5장 소모. 다른 사람의 카드 1장을 무작위로 가져온 뒤 그 사람에게 전도 1장을 넣습니다. 여러 번 가능.</p></div><div><b>종교반란</b><p>교단 12장 소모. 한 밤에 1번 선언 가능, 다음 밤 다시 가능. 다음 아침 밤 행동 종료 시의 교단영향력으로 반란합니다.</p></div><div><b>종교개혁</b><p>전도 5장 소모. 자신 이외의 모든 교단·전도카드를 버리고, 버린 교단카드 1장당 영향력 +2. 여러 번 가능.</p></div></div>
+    <p>주교 이외의 교단·전도카드는 중재 사용·거래·카드 뺏기와 사형·종교 정리 효과 외에는 버려지지 않습니다. 재분배 수락은 보호 카드를 유지하고 새 12장을 추가하며, 전체 교체는 나머지 카드만 같은 장수로 교체합니다. 손패 제한은 일반 카드를 먼저 버린 뒤 필요한 만큼 보호 카드를 버립니다. 주교 자신의 카드는 보호되지 않습니다.</p>
+    <div class="guide-phases"><div><b>종교전도</b><p>교단 5장 소모. 다른 사람의 카드 1장을 무작위로 가져온 뒤 그 사람에게 전도 1장을 넣습니다. 여러 번 가능.</p></div><div><b>종교반란</b><p>교단 12장 소모. 한 밤에 1번 선언 가능, 다음 밤 다시 가능. 다음 아침 밤 행동 종료 시의 교단영향력으로 반란합니다.</p></div><div><b>종교개혁</b><p>전도 5장 소모. 자신 이외의 모든 교단·전도카드를 버리고, 버린 교단카드 1장당 영향력 +2. 여러 번 가능.</p></div><div><b>교단회수</b><p>전도 2장 소모. 선택한 다른 한 사람의 교단카드를 전부 자신의 손패로 가져옵니다. 전도·일반 카드는 유지되며 여러 번 가능합니다.</p></div></div>
     <p>두 반란이 동시에 발생하면 왕은 하나만 중재하며 나머지는 자동 성공합니다. 둘 다 승리 목표에 도달하면 왕이 중재하지 않은 쪽이 이깁니다. 왕이 두 쪽 모두 중재하지 않았다면 두 쪽이 공동 승리합니다. 종교반란 종료 후 성공·실패와 관계없이 교단영향력은 0. 종교반란을 막으면 주교 이외의 모든 교단·전도카드를 버립니다.</p>
     <h3>원정 투표와 난이도</h3><p>전원 난이도 투표, 동률은 하급. 원정에서 1장 이상 낸 인원수는 왕을 포함해 표시합니다.</p><div class="guide-phases"><div><b>하급 원정</b><p>왕 필참, 나머지 자유 참가. 10점 성공: 전원 4장 / 20점 대성공: 전원 9장. 실패 패널티 없음.</p></div><div><b>상급 원정</b><p>왕이 3인에서는 1명, 4인에서는 2명, 5인 이상에서는 3명 강제 지명. 명단은 왕에게만, 각 당사자는 자기 지명 여부만 확인합니다. 지명자와 왕만 제출. 30점 성공: 반란군 제외 15장 / 50점 대성공: 반란군 제외 25장. 실패: 반란군 제외 손패 몰수.</p></div></div><p>왕·시민은 보병 +1·장교 +3, 반란군은 반란 -2·선동 -6, 중립은 둘 다 가능. 칼·마법·병기·고위 마법·영구 카드·특수 검은 모든 진영이 공격 카드로 사용 가능합니다.</p>
     <h3>손패 · 비밀 거래</h3><p>시작 카드 12장. 매일 아침 시작 시 손패 6장 이하는 카드 5장 추가 지급(왕 포함, 하루 한 번). 아침 재분배는 기존 손패 전부 버리고 12장 받기 또는 거절. 거절 시 기존 손패를 유지하고, 8장 미만이면 부족한 만큼 무작위 카드를 받아 8장으로 채웁니다. 낮의 전체 교체는 기존 장수만큼 새로 받기. 23장을 초과한 손패는 다음 아침 시작에 무작위로 22장까지 줄어듭니다. 23장은 유지되고, 이번 아침 원정 보상은 즉시 줄어들지 않습니다.</p><p>거래를 상대가 거절하면 차례 종료. 수락하면 양쪽이 줄 카드만 비공개로 선택하고 동시에 교환. 0장도 가능하며 교환 전에는 상대 카드 종류·장수가 보이지 않습니다. 낮 행동·평소 타인 손패 장수는 비공개입니다.</p>
