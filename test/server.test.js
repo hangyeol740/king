@@ -325,3 +325,32 @@ test('서버 재시작 뒤 공유 기기 인원·손패를 복구하되 이름 �
   assert.equal(restored.state.me.role,null);assert.equal(restored.state.me.hand.length,0);assert.equal(restored.state.me.notes.length,0);
   await send(restored,{type:'openSeat',player:king.id});assert.deepEqual(restored.state.me.hand,before);
 });
+
+test('실제 익명 상점 동시 구매는 재고를 중복 판매하지 않으며 돈·진열장이 재시작 후 복구', async()=>{
+  const group=[await connect(),await connect(),await connect(),await connect(),await connect()],sessions=[];
+  const created=await send(group[0],{type:'create',name:'상점검증1'});sessions.push(created.session);
+  for(let i=1;i<group.length;i++)sessions.push((await send(group[i],{type:'join',code:created.session.code,name:`상점검증${i+1}`})).session);
+  const command=async(p,a)=>{const result=await send(p,a);assert.ok(result.ok,result.error);await sleep(8);return result;};
+  await command(group[0],{type:'config',roles:{king:1,citizen:1,rebel:1,neutral:2}});await command(group[0],{type:'neutralJobs',jobs:['merchant','bishop']});await command(group[0],{type:'start'});await sleep(20);
+  const k=group.find(p=>p.state.me.role==='king'),m=group.find(p=>p.state.me.job==='merchant'),bishop=group.find(p=>p.state.me.job==='bishop'),reb=group.find(p=>p.state.me.role==='rebel'),cit=group.find(p=>p.state.me.role==='citizen');
+  async function morning(){await command(k,{type:'expedition'});for(const p of group)await command(p,{type:'voteExpedition',difficulty:'low'});for(const p of group.filter(p=>p!==k))await command(p,{type:'joinExpedition',join:p===m});assert.equal(m.state.game.pending.myDone,true);await command(k,{type:'contribute',cards:[]});for(const p of group)await command(p,{type:'redistribute',accept:false});assert.equal(k.state.game.phase,'market');}
+  await morning();for(const p of group.filter(p=>p!==m))await command(p,{type:'marketDone'});
+  const actor=()=>group.find(p=>p.state.me.id===k.state.game.current);
+  for(let i=0;i<5;i++){const p=actor();await command(p,{type:p===m?'gather':'draw3'});}
+  for(let i=0;i<5;i++){const p=actor();await command(p,{type:'beginCraft'});if(p===m)await command(p,{type:'craft',recipe:0,count:1});await command(p,{type:'craftDone'});}
+  for(let i=0;i<5;i++)await command(actor(),{type:'refresh',cards:[]});await command(k,{type:'aid'});assert.equal(k.state.game.phase,'merchantEvening');
+  const goods=[m.state.me.hand.find(c=>c.type==='resource'),m.state.me.hand.find(c=>c.type==='sword')];
+  await command(m,{type:'displayGoods',cards:goods.map(c=>c.id),price:1});const [first,second]=m.state.game.shop;
+  await command(m,{type:'changePrice',stock:second.id,price:3});
+  for(const p of group.filter(p=>p!==m)){assert.equal(p.state.me.money,undefined);assert.equal(p.state.players.find(p=>p.id===m.state.me.id).job,null);assert.equal(p.state.game.pending,null);assert.ok(goods.every(c=>!JSON.stringify(p.state).includes(c.id)));}
+  await command(m,{type:'beginCraft'});await command(m,{type:'craftDone'});assert.equal((await send(m,{type:'beginCraft'})).ok,false);await command(m,{type:'merchantDone'});
+  await command(reb,{type:'revolt',cards:[]});await command(bishop,{type:'bishopDone'});await morning();
+  const before=new Map([k,cit].map(p=>[p.state.me.id,p.state.me.hand.map(c=>c.id)]));
+  const requests=[k,cit].map(p=>send(p,{type:'marketBuy',stock:first.id,quantity:1,cards:[p.state.me.hand[0].id]}));
+  const responses=await Promise.all(requests);await sleep(20);assert.equal(responses.filter(r=>r.ok).length,1);
+  const winner=responses[0].ok?k:cit,loser=responses[0].ok?cit:k;assert.ok(winner.state.me.hand.some(c=>c.id===goods[0].id));assert.deepEqual(loser.state.me.hand.map(c=>c.id),before.get(loser.state.me.id));
+  assert.equal(m.state.me.money,2);assert.equal(k.state.me.money,undefined);assert.equal(m.state.game.shop.length,1);assert.equal(m.state.game.shop[0].price,3);
+  const shop=structuredClone(m.state.game.shop),money=m.state.me.money,session=sessions[group.indexOf(m)];
+  clients.forEach(c=>c.disconnect());await stop();await start();const restored=await connect();assert.ok((await send(restored,{type:'resume',...session})).ok);
+  assert.equal(restored.state.me.money,money);assert.deepEqual(restored.state.game.shop,shop);assert.equal(restored.state.game.phase,'market');
+});

@@ -1,0 +1,21 @@
+.shop-shelf { padding: 20px; margin: 18px 0; border: 1px solid #d1b47a; border-radius: 10px; background: #fffcf3; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin-top: 15px; }
+.shop-item { padding: 16px; border: 2px solid #e2d4b7; border-radius: 8px; display: grid; gap: 6px; text-align: center; }
+.shop-item.chosen { border-color: var(--gold); background: #fff3d4; }
+.shop-icon { font-size: 35px; }
+.shop-item strong { font-size: 13px; }
+.shop-checkout, .merchant-prices, .merchant-buy { padding: 18px 0; }
+.merchant-prices>div, .merchant-buy>div { display: grid; grid-template-columns: minmax(0,1fr) 90px auto; align-items: center; gap: 10px; margin: 10px 0; }
+.merchant-prices label { margin: 0; }
+.money-counter { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: #98712c; }
+.money-counter span { display: block; font-size: 11px; }
+.money-counter strong { font-size: 32px; }
+@media(max-width:800px) {
+  .shop-shelf { padding: 15px; }
+  .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .shop-item { min-width: 0; padding: 12px 8px; }
+  .shop-item h3 { overflow-wrap: anywhere; font-size: 17px; }
+  .shop-item .secondary { padding: 8px; font-size: 12px; }
+  .merchant-prices>div, .merchant-buy>div { grid-template-columns: minmax(0,1fr) 85px; }
+  .merchant-prices button, .merchant-buy button { grid-column: 1/-1; }
+}

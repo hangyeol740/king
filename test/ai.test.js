@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act, makeRoom, joinRoom, view, card, RuleError } from '../lib/game.js';
-import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, forward, OBS_SIZE, ACTION_SIZE } from '../lib/ai-policy.js';
+import { act, makeRoom, joinRoom, view, card, RECIPES, RuleError } from '../lib/game.js';
+import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, forward, OBS_SIZE, ACTION_SIZE, PHASES, CARD_TYPES, ACTION_TYPES } from '../lib/ai-policy.js';
 import { rollout } from '../ai/environment.js';
 import { PPO } from '../ai/ppo.js';
 import { createBotRunner } from '../lib/ai-runner.js';
@@ -80,40 +80,21 @@ test('봇 스케줄러는 사람이 없을 때 정지하고 사람이 복귀하�
     assert.ifError(failure); assert.ok(changes>0);
   } finally {runner.close();}
 });
-test('v2/v3→주교 규칙 가중치 이전은 기존 관측·행동의 예측을 보존',()=>{
-  for (const version of [2,3]) {
-    const legacy = { version, ruleset: `v${version}`, observationSize: 51, actionSize: version === 2 ? 76 : 79, metadata: { episodes: 1600 } };
-    const net = output => ({ input: 51, hidden: 16, output, w1: Array.from({length:51*16},(_,i)=>Math.sin(i)*.02), b1: Array(16).fill(.1), w2: Array.from({length:16*output},(_,i)=>Math.cos(i)*.03), b2: Array(output).fill(.2) });
-    legacy.actor = net(legacy.actionSize); legacy.critic = net(1);
-    const transferred = transferPolicy(legacy);
-    const oldObs = Array.from({length:51},(_,i)=>i/51);
-    const newObs = [...oldObs.slice(0,16),0,0,...oldObs.slice(16,32),0,0,...oldObs.slice(32),...Array(10).fill(0)];
-    assert.deepEqual(forward(transferred.critic,newObs).output,forward(legacy.critic,oldObs).output);
-    const before = forward(legacy.actor,oldObs).output, after = forward(transferred.actor,newObs).output;
-    for(let i=0;i<before.length;i++) {
-      const recipeEnd = 26 + (version === 2 ? 17 : 20);
-      const mapped = i < 26 ? i : i < recipeEnd ? i+9 : i < recipeEnd+16 ? i+9+(24-(version === 2 ? 17 : 20)) : i+9+(24-(version === 2 ? 17 : 20))+2;
-      assert.equal(after[mapped],before[i]);
+test('v2~v6 모델의 관측·행동·제작·카드 선호를 상인 규칙으로 위치를 맞춰 이전',()=>{
+  for(const [version,phases,cards,recipes,actions,stats,outStats] of [[2,12,16,17,26,19,17],[3,12,16,20,26,19,17],[4,13,18,24,30,25,18],[5,14,18,24,32,26,18],[6,14,18,24,35,29,18]]){
+    const input=4+phases+cards+stats,output=actions+recipes+cards+outStats;
+    const net=output=>({input,hidden:16,output,w1:Array.from({length:input*16},(_,i)=>Math.sin(i)*.02),b1:Array(16).fill(.1),w2:Array.from({length:16*output},(_,i)=>Math.cos(i)*.03),b2:Array(output).fill(.2)});
+    const old={version,ruleset:`v${version}`,observationSize:input,actionSize:output,actor:net(output),critic:net(1),metadata:{episodes:800}};
+    const next=transferPolicy(old),obs=Array.from({length:input},(_,i)=>i/input),now=Array(OBS_SIZE).fill(0);
+    for(let i=0;i<4+phases;i++)now[i]=obs[i];
+    for(let i=0;i<cards;i++)now[4+PHASES.length+i]=obs[4+phases+i];
+    for(let i=0;i<stats;i++)now[4+PHASES.length+CARD_TYPES.length+i]=obs[4+phases+cards+i];
+    assert.deepEqual(forward(old.critic,obs).output,forward(next.critic,now).output);
+    const before=forward(old.actor,obs).output,after=forward(next.actor,now).output;
+    for(let i=0;i<output;i++){
+      const index=i<actions?i:i<actions+recipes?ACTION_TYPES.length+i-actions:i<actions+recipes+cards?ACTION_TYPES.length+RECIPES.length+i-actions-recipes:ACTION_TYPES.length+RECIPES.length+CARD_TYPES.length+i-actions-recipes-cards;
+      assert.equal(before[i],after[index]);
     }
-    assert.equal(transferred.metadata.transferredFrom.episodes,1600); assert.equal(transferred.metadata.episodes,0);
-    assert.throws(()=>transferPolicy({...legacy,version:1}));
+    assert.equal(next.metadata.episodes,0);assert.equal(next.metadata.transferredFrom.version,version);assert.throws(()=>transferPolicy({...old,version:1}));
   }
-});
-
-test('v4→사형 투표 규칙 가중치 이전은 기존 주교 관측·행동을 보존', () => {
-  const net = output => ({ input: 60, hidden: 16, output, w1: Array.from({ length: 60 * 16 }, (_, i) => Math.sin(i) * .02), b1: Array(16).fill(.1), w2: Array.from({ length: 16 * output }, (_, i) => Math.cos(i) * .03), b2: Array(output).fill(.2) });
-  const old = { version: 4, ruleset: 'v4-bishop-religious-rebellion-steal2', observationSize: 60, actionSize: 90, actor: net(90), critic: net(1), metadata: { episodes: 800 } };
-  const next = transferPolicy(old), oldObs = Array.from({ length: 60 }, (_, i) => i / 60);
-  const newObs = [...oldObs.slice(0,17), 0, ...oldObs.slice(17), 0,0,0,0];
-  assert.deepEqual(forward(old.critic,oldObs).output, forward(next.critic,newObs).output);
-  const before = forward(old.actor,oldObs).output, after = forward(next.actor,newObs).output;
-  for (let i = 0; i < before.length; i++) assert.equal(before[i], after[i < 30 ? i : i + 5]);
-  assert.equal(next.metadata.transferredFrom.version, 4);
-});
-
-test('v5 모델의 기존 관측·행동 가중치를 왕국지원 규칙으로 이전',()=>{
-  const net=output=>({input:62,hidden:16,output,w1:Array.from({length:62*16},(_,i)=>Math.sin(i)*.02),b1:Array(16).fill(.1),w2:Array.from({length:16*output},(_,i)=>Math.cos(i)*.03),b2:Array(output).fill(.2)});
-  const old={version:5,ruleset:'v5',observationSize:62,actionSize:92,actor:net(92),critic:net(1),metadata:{episodes:800}};
-  const next=transferPolicy(old),obs=Array.from({length:62},(_,i)=>i/62),now=[...obs,0,0,0];assert.deepEqual(forward(old.critic,obs).output,forward(next.critic,now).output);
-  const before=forward(old.actor,obs).output,after=forward(next.actor,now).output;for(let i=0;i<before.length;i++)assert.equal(before[i],after[i<32?i:i+3]);
 });

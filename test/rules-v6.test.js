@@ -86,9 +86,10 @@ test('동률이면 아무도 처형하지 않고 다음날 투표 허용, 6인 �
   const six=setup(6);six.game.lastExecutionDay=1;six.game.day=2;act(six,role(six,'king').id,{type:'execute'});assert.equal(six.game.phase,'executionVote');
 });
 
-test('5인 추가 자리는 시민·반란군 가능, 중립 직업 1종인 현재 중립2명은 불가',()=>{
+test('5인 추가 자리는 시민·반란군·중립 가능, 주교와 상인은 중복 없이 배정',()=>{
   for(const config of [{king:1,citizen:2,rebel:1,neutral:1},{king:1,citizen:1,rebel:2,neutral:1}]){const r=lobby(5);act(r,r.host,{type:'config',roles:config});act(r,r.host,{type:'start'});assert.equal(r.status,'playing');}
-  const r=lobby(5);act(r,r.host,{type:'config',roles:{king:1,citizen:1,rebel:1,neutral:2}});assert.throws(()=>act(r,r.host,{type:'start'}),RuleError);
+  const r=lobby(5);act(r,r.host,{type:'config',roles:{king:1,citizen:1,rebel:1,neutral:2}});act(r,r.host,{type:'neutralJobs',jobs:['bishop','merchant']});act(r,r.host,{type:'start'});
+  assert.equal(r.players.filter(p=>p.job==='merchant').length,1);assert.equal(r.players.filter(p=>p.job==='bishop').length,1);
 });
 
 test('공유 기기 잠금 상태는 모든 손패·직업·개인 기록·비공개 중재/원정 목록을 숨김',()=>{

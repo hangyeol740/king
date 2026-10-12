@@ -8,7 +8,8 @@ export function readyPlayers(room) {
 export function newGame(count = 3) {
   const room = makeRoom('TRAIN', '학습 1');
   for (let i = 1; i < count; i++) joinRoom(room, `학습 ${i + 1}`);
-  if (count >= 4) act(room, room.host, { type: 'neutralJobs', jobs: ['bishop'] });
+  if (count >= 4) act(room, room.host, { type: 'neutralJobs', jobs: ['bishop','merchant'] });
+  if (count === 5) act(room, room.host, {type:'config',roles:{king:1,citizen:1,rebel:1,neutral:2}});
   act(room, room.host, { type: 'start' });
   return room;
 }
@@ -24,6 +25,11 @@ export function baseline(snapshot, actions, random = Math.random) {
   }
   if (g.phase === 'night') return [...actions].sort((a, b) => score(b, 'revolt') - score(a, 'revolt'))[0];
   if (g.phase === 'bishopNight') return actions.find(a => a.type === 'religiousRevolt' && me.churchInfluence >= 10) || actions.find(a => a.type === 'reform') || actions.find(a => a.type === 'evangelize') || actions[0];
+  if(g.phase==='market')return actions.find(a=>a.type==='marketDone');
+  if(g.phase==='merchantEvening'){
+    if(g.pending.kind==='craft')return actions.find(a=>a.type==='craftDone');
+    return actions.find(a=>a.type==='displayGoods'&&a.price===3)||actions.find(a=>a.type==='merchantDone');
+  }
   if (g.phase === 'expeditionVote') return actions[0];
   if (g.phase === 'expeditionSelect') return actions[0];
   if (g.phase === 'expeditionJoin') return actions[0];
@@ -36,6 +42,7 @@ export function baseline(snapshot, actions, random = Math.random) {
     if (g.pending?.kind === 'royalSupport') return actions.find(a => a.type === 'supportAnswer' && !a.accept) || actions[0];
     if (g.pending?.kind === 'trade') return actions.find(a => a.accept === false || a.cards?.length === 0) || actions[0];
     if (g.pending?.kind === 'craft') {
+      if(me.job==='merchant')return actions.find(a=>a.type==='craft'&&RECIPES[a.recipe].output==='shiningSword')||actions.find(a=>a.type==='craft'&&RECIPES[a.recipe].output==='reinforcedSword')||actions.find(a=>a.type==='craftDone');
        const priorities=['ironSword',...(me.job==='bishop'?['evangelism','church']:[]),'warWeapon','flameSword','northSword','highMagic',...(me.role==='rebel'?['bomb','agitation','rebellion','infantry']:['officer','infantry','rebellion']),'eternalMagic','eternalSword','weapon','magic','sword'];
       for(const output of priorities){const choice=actions.find(a=>a.type==='craft'&&RECIPES[a.recipe].output===output);if(choice)return choice;}
       return actions[0];
