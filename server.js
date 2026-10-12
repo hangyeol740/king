@@ -62,7 +62,7 @@ function broadcast(room) {
     if (!socket) continue;
     const device = room.devices?.find(d => d.id === socket.data.device);
     if (device) {
-      if (room.status === 'playing' && !canAct(room, socket.data.player)) socket.data.player = null;
+      if (room.status === 'playing' && !deviceMayOpen(room, socket.data.player)) socket.data.player = null;
       socket.emit('state', deviceView(room, device, socket.data.player));
     } else if (room.players.some(p => p.id === socket.data.player)) socket.emit('state', view(room, socket.data.player));
   }
@@ -100,6 +100,11 @@ function attachDevice(socket, room, device) {
 function ownedPlayers(socket, room) {
   const device = room.devices?.find(d => d.id === socket.data.device);
   return room.players.filter(p => device ? device.players.includes(p.id) : p.id === socket.data.player);
+}
+function deviceMayOpen(room, id) {
+  if (canAct(room, id)) return true;
+  const g = room.game;
+  return room.status === 'playing' && (['night', 'bishopNight', 'mediationSupport', 'expeditionCards', 'market', 'merchantEvening'].includes(g.phase) || g.phase === 'day' && ['trade', 'royalSupport'].includes(g.pending?.kind));
 }
 io.on('connection', socket => {
   let windowStart = Date.now(), requests = 0;
@@ -145,7 +150,7 @@ io.on('connection', socket => {
         } else if (input.type === 'openSeat' || input.type === 'lockSeat') {
           if (!device) throw new RuleError('공유 기기에서만 화면을 전환할 수 있습니다.');
           if (input.type === 'openSeat') {
-            if (!device.players.includes(input.player) || (room.status === 'playing' && !canAct(room, input.player))) throw new RuleError('자신의 행동 차례인 이 기기의 플레이어만 화면을 열 수 있습니다.');
+            if (!device.players.includes(input.player) || !deviceMayOpen(room, input.player)) throw new RuleError('이 기기의 플레이어만 자신의 화면을 열 수 있습니다.');
             socket.data.player = input.player;
           } else socket.data.player = room.status === 'lobby' ? device.players[0] : null;
         } else if (input.type === 'leave') {

@@ -113,3 +113,9 @@ test('공유 기기 대기 명단에서도 밤 직업·비공개 원정 지명·
   r.game.phase='day';r.game.pending={kind:'royalSupport',from:role(r,'king').id,to:role(r,'citizen').id,accepted:false};
   assert.ok(deviceView(r,device,null).device.players.every(p=>p.ready));
 });
+
+test('공유 기기는 비공개 행동 단계에서 자신의 화면을 열어도 다른 기기의 비밀을 받지 않음',()=>{
+  const r=setup(4,true),device=makeDevice(r,r.players[0]);device.players=r.players.map(p=>p.id);const m=r.players.find(p=>p.job==='bishop');
+  r.game.phase='bishopNight';r.game.pending=null;const opened=deviceView(r,device,m.id);
+  assert.equal(opened.device.active,m.id);assert.equal(opened.me.id,m.id);assert.equal(opened.me.job,'bishop');assert.ok(opened.players.filter(p=>p.id!==m.id).every(p=>p.role===null||p.role==='king'));
+});
