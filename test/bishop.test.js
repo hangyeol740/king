@@ -109,7 +109,7 @@ test('랜덤 2장 뺏기 전도 전파·부족분 지급, 주교가 뺏으면 �
   assert.deepEqual(types(b), ['resource', 'evangelism', 'evangelism']);
 });
 
-test('교단·전도는 교체·재분배·폭탄·상급 원정 실패에 보호, 주교 자신의 카드는 버림', () => {
+test('교체·재분배·폭탄은 타인의 종교카드를 보호하고 상급 원정 실패는 주교의 종교카드도 보호', () => {
   for (const action of ['replace', 'redistribute', 'bomb', 'expedition']) {
     const r = setup(), c = role(r, 'citizen'), b = bishop(r), k = king(r);
     const original = hand(c, 'church', 'evangelism', 'resource'); hand(b, 'church', 'evangelism', 'resource');
@@ -128,7 +128,7 @@ test('교단·전도는 교체·재분배·폭탄·상급 원정 실패에 보�
       for (const p of r.players) act(r, p.id, { type: 'voteExpedition', difficulty: 'high' });
       act(r, k.id, { type: 'selectExpedition', targets: [c.id, b.id] });
       for (const p of [k, c, b]) act(r, p.id, { type: 'contribute', cards: [] });
-      assert.equal(c.hand.length, 2); assert.equal(b.hand.length, 0);
+      assert.equal(c.hand.length, 2); assert.equal(b.hand.length, 2);
     }
     assert.ok(original.slice(0, 2).every(id => c.hand.some(card => card.id === id)));
   }
@@ -140,17 +140,17 @@ test('일부 교체는 타인의 종교카드 선택 차단, 거래와 세금 �
   assert.throws(() => act(r, c.id, { type: 'refresh', cards: [ids[0]] }), RuleError);
   assert.ok(candidates(view(r, c.id)).filter(a => a.type === 'refresh').every(a => a.cards.length === 0));
   const own = hand(b, 'church'); day(r, b);
-  act(r, b.id, { type: 'refresh', cards: own }); assert.equal(b.hand.length, 5);
+  assert.throws(() => act(r, b.id, { type: 'refresh', cards: own }), RuleError); assert.equal(b.hand.length, 1);
   r.game.phase = 'evening'; act(r, k.id, { type: 'tax' });
   const before = k.hand.length; act(r, c.id, { type: 'payTax', cards: ids });
-  assert.equal(k.hand.length, before + 2); assert.equal(c.hand.length, 0);
+  assert.equal(k.hand.length, before); assert.equal(c.hand.length, 2);
 });
 
-test('매일 아침 전도 수만큼 교단 지급 후 제한: 일반 먼저 버림, 종교만 남으면 22장까지 버림', () => {
+test('매일 아침 전도 수만큼 교단 지급 후 제한: 일반 먼저 버림, 종교만 남으면 30장까지 버림', () => {
   const r = setup(), c = role(r, 'citizen'), b = bishop(r);
-  hand(c, ...Array(22).fill('church'), 'evangelism', 'resource'); hand(b, 'evangelism');
+  hand(c, ...Array(30).fill('church'), 'evangelism', 'resource'); hand(b, 'evangelism');
   r.game.phase = 'bishopNight'; act(r, b.id, { type: 'bishopDone' });
-  assert.equal(c.hand.length, 22); assert.ok(c.hand.every(c => ['church','evangelism'].includes(c.type)));
+  assert.equal(c.hand.length, 30); assert.ok(c.hand.every(c => ['church','evangelism'].includes(c.type)));
   assert.equal(b.hand.filter(c => c.type === 'church').length, 0);
   hand(c, 'evangelism', 'evangelism', ...Array(6).fill('resource'));
   r.game.phase = 'bishopNight'; act(r, b.id, { type: 'bishopDone' });
@@ -164,11 +164,11 @@ test('일반 중재 교단3·전도7 소모와 주교 비공개 영향력 획득
   r.game.revolt = 13; act(r, king(r).id, { type: 'mediate' });
   assert.throws(() => act(r, rebel.id, { type: 'contribute', cards: [] }), RuleError);
   act(r, c.id, { type: 'contribute', cards }); act(r, b.id, { type: 'contribute', cards: own });
-  assert.equal(b.churchInfluence, 13); assert.equal(c.hand.length, 0);
+  assert.equal(b.churchInfluence, 10); assert.equal(c.hand.length, 0);
   assert.equal(view(r, c.id).me.churchInfluence, undefined);
   assert.ok(!JSON.stringify(view(r, c.id)).includes('교단영향력 +'));
   act(r, king(r).id, { type: 'contribute', cards: [] });
-  assert.equal(r.game.lastRevolt.blocked, true); assert.equal(b.churchInfluence, 13);
+  assert.equal(r.game.lastRevolt.blocked, true); assert.equal(b.churchInfluence, 10);
 });
 
 test('주교는 반란군 행동 이후에만 행동, 종교전도 반복·비용 소모·도난 알림·빈 손패 처리', () => {
@@ -189,12 +189,12 @@ test('주교는 반란군 행동 이후에만 행동, 종교전도 반복·비�
   act(r, b.id, { type: 'bishopDone' }); assert.equal(r.game.day, 2);
 });
 
-test('종교개혁은 전도5 소모·타인의 모든 종교카드 정리·교단만 2배 영향력, 본인 유지', () => {
+test('종교개혁은 전도5 소모·타인의 교단만 정리하고 전도 유지·교단2배 영향력', () => {
   const r = setup(), b = bishop(r), c = role(r, 'citizen'), k = king(r);
   hand(b, ...Array(6).fill('evangelism'), 'church'); hand(c, 'church', 'church', 'evangelism', 'resource'); hand(k, 'church', 'evangelism');
   night(r); b.churchInfluence = 7;
   act(r, b.id, { type: 'reform' });
-  assert.deepEqual(types(b), ['evangelism', 'church']); assert.deepEqual(types(c), ['resource']); assert.equal(k.hand.length, 0);
+  assert.deepEqual(types(b), ['evangelism', 'church']); assert.deepEqual(types(c), ['evangelism', 'resource']); assert.deepEqual(types(k), ['evangelism']);
   assert.equal(b.churchInfluence, 13);
   assert.ok(!JSON.stringify(view(r, c.id)).includes('현재 13점'));
 });
@@ -260,8 +260,8 @@ test('종교반란 0점도 발생·0장 중재로 방어, 일반 반란을 막�
 });
 
 test('주교의 철혈의 검 승리는 다른 중립을 포함하지 않음', () => {
-  const r = lobby(5);
-  act(r, r.host, { type: 'config', roles: { king: 1, citizen: 1, rebel: 1, neutral: 2 } });
+  const r = lobby(6);
+  act(r, r.host, { type: 'config', roles: { king: 1, citizen: 2, rebel: 1, neutral: 2 } });
   act(r, r.host, { type: 'neutralJobs', jobs: ['bishop'] }); act(r, r.host, { type: 'start' });
   const b = bishop(r); day(r, b, 1); hand(b, 'ironSword');
   act(r, b.id, { type: 'gather' });

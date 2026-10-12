@@ -9,9 +9,12 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/effects.css">
   <link rel="stylesheet" href="/bishop.css">
+  <link rel="stylesheet" href="/mobile.css?v=6">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/effects.js" defer></script>
-  <script src="/app.js?v=5" defer></script>
+  <script src="/pass-device.js?v=6" defer></script>
+  <script src="/results.js?v=6" defer></script>
+  <script src="/app.js?v=6" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -22,6 +25,7 @@
   <div id="toast" role="status" aria-live="polite"></div>
   <section id="action-effect" class="action-effect" role="status" aria-live="polite" aria-atomic="true" hidden></section>
   <dialog id="rules"><div class="dialog-head"><div><span class="eyebrow">FIELD GUIDE</span><h2>왕국의 법칙</h2></div><button class="icon-button" id="rules-close" aria-label="가이드 닫기">✕</button></div><div id="rules-content"></div></dialog>
+  <dialog id="result-dialog" class="result-dialog"><div class="dialog-head"><h2 data-result-title></h2><button class="icon-button" data-result-close aria-label="결과 확인 닫기">✕</button></div><div data-result-body></div></dialog>
   <noscript>이 게임은 JavaScript가 활성화된 PC 브라우저에서 실행됩니다.</noscript>
 </body>
 </html>

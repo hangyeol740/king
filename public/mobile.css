@@ -1,0 +1,109 @@
+/* 큰 결과 화면과 공유 기기 화면 */
+.major-result { display: flex; align-items: center; gap: 20px; border: 2px solid var(--gold); border-radius: 10px; padding: 24px; margin: 16px 0; background: var(--paper); }
+.major-result > span { font-size: 46px; }
+.major-result h2 { font-size: 28px; }
+.major-result.failure { border-color: var(--red); background: #faf0ed; }
+.major-result.great { border-color: var(--gold); background: #faf3da; }
+.result-dialog { width: min(880px, 94vw); max-height: 90dvh; border: 0; border-radius: 14px; padding: 28px; overflow: auto; }
+.result-dialog::backdrop { background: #14251de6; }
+.result-dialog h2 { font-size: clamp(24px, 4vw, 40px); }
+[data-result-body] { padding: 25px 0 8px; text-align: center; font-size: 18px; }
+.result-big-icon { font-size: 70px; }
+.result-score { font-size: 64px; font-weight: 900; color: var(--gold); }
+.result-tallies { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 20px; }
+.inspection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-top: 20px; }
+.inspection-card { background: #f4f0e5; padding: 20px 12px; border: 1px solid var(--line); border-radius: 9px; }
+.inspection-card > span { font-size: 42px; }
+.inspection-card strong { font-size: 26px; }
+.result-private { font-size: 15px; color: var(--muted); }
+.device-toolbar { margin: 20px 0; padding: 16px; background: #ece9f5; border-radius: 9px; display: flex; gap: 16px; justify-content: space-between; align-items: center; }
+.device-toolbar small { display: block; }
+.local-player-controls { padding: 18px 0 0; margin-top: 15px; border-top: 1px solid var(--line); }
+.local-player-controls p { color: var(--muted); font-size: 12px; margin: 8px 0 14px; }
+.local-player-controls > div { display: flex; gap: 8px; }
+.local-player-controls input { flex: 1; width: 100%; }
+.handoff-panel { max-width: 820px; margin: 20px auto; padding: 30px; border-radius: 12px; background: var(--paper); text-align: center; }
+.handoff-symbol { font-size: 64px; color: #705391; }
+.handoff-panel h1 { font-size: 30px; }
+.handoff-panel > p { margin: 12px 0; }
+.handoff-phase { font-weight: 700; }
+.seat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; }
+.seat-choice { background: #f4f1fa; border: 2px solid #ded5ed; padding: 20px; border-radius: 8px; }
+.seat-choice strong { display: block; font-size: 22px; }
+.seat-choice span { font-size: 12px; }
+.seat-choice.chosen { border-color: #705391; }
+.seat-confirm { border: 2px solid #705391; padding: 22px; border-radius: 9px; margin: 20px 0; }
+.seat-confirm p { margin: 12px 0; }
+.public-device-journal { margin: 20px auto; max-width: 820px; }
+.public-device-journal p { margin-top: 12px; }
+
+/* 터치·작은 화면에서도 가로 스크롤 없이 플레이 */
+@media (max-width: 800px) {
+  body { min-width: 0; }
+  #app { padding: 0 14px; }
+  .topbar { height: auto; min-height: 78px; padding: 14px; flex-wrap: wrap; gap: 12px; }
+  .brand { font-size: 18px; }
+  .top-actions { gap: 6px; flex-wrap: wrap; }
+  .top-actions .quiet { font-size: 11px; padding: 8px; }
+  .home-layout, .lobby-grid, .game-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .home-layout { padding-top: 28px; }
+  .hero h1 { font-size: 32px; }
+  .hero-art { display: none; }
+  .hero-description { font-size: 14px; }
+  .home-facts span { font-size: 11px; }
+  .home-facts b { font-size: 17px; }
+  .home-footer { flex-wrap: wrap; gap: 12px; padding: 24px 0; }
+  .entry-panel { padding: 24px; }
+  .page-heading, .game-heading { flex-wrap: wrap; gap: 12px; padding-top: 25px; }
+  .page-heading h1, .game-heading h1 { font-size: 25px; }
+  .game-heading-actions { width: 100%; justify-content: space-between; }
+  .game-main, .game-sidebar, .panel { min-width: 0; }
+  .game-sidebar { display: grid; gap: 14px; }
+  .table-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .table-player { min-width: 0; width: auto; }
+  .table-player strong { overflow-wrap: anywhere; }
+  .action-choices, .action-choices.two, .action-choices.four { grid-template-columns: minmax(0, 1fr); }
+  .action-choice { min-height: 82px; padding: 16px; }
+  .action-choice strong { font-size: 17px; }
+  .action-choice small { font-size: 13px; }
+  .action-panel { padding: 20px 15px; }
+  .target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .target-option { min-width: 0; padding: 12px; }
+  .target-option b { overflow-wrap: anywhere; }
+  .hand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .card { min-width: 0; padding: 12px; }
+  .card h3 { font-size: 18px; }
+  .card-stepper button { min-width: 44px; min-height: 44px; font-size: 22px; }
+  .hand-heading { gap: 10px; flex-wrap: wrap; }
+  .hand-tools { align-items: start; flex-direction: row; flex-wrap: wrap; }
+  .hand-tools .quiet { font-size: 12px; min-height: 44px; }
+  .hand-hint, .small, .card-stats, .action-description { overflow-wrap: anywhere; }
+  .recipes { display: grid; gap: 12px; }
+  .recipe { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; }
+  .recipe input { width: 100%; grid-column: 2; }
+  .recipe button { grid-column: 2; min-height: 44px; }
+  .recipe small { font-size: 12px; }
+  .guide-phases, .guide-card-list { grid-template-columns: minmax(0, 1fr); }
+  .guide-recipes p { overflow-wrap: anywhere; }
+  dialog { max-width: 96vw; max-height: 90dvh; padding: 20px; }
+  .dialog-head { align-items: start; gap: 12px; }
+  .dialog-head h2 { font-size: 25px; }
+  .icon-button { min-width: 44px; min-height: 44px; }
+  .major-result { padding: 18px; gap: 12px; }
+  .major-result h2 { font-size: 23px; overflow-wrap: anywhere; }
+  .revolt-banner { flex-wrap: wrap; padding: 18px; gap: 14px; }
+  .revolt-number strong { font-size: 42px; }
+  .result-dialog { padding: 20px; }
+  .inspection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .device-toolbar { align-items: stretch; flex-direction: column; }
+  .local-player-controls > div { flex-direction: column; }
+  .handoff-panel { padding: 24px 16px; }
+  .handoff-panel h1 { font-size: 25px; }
+  .seat-grid { grid-template-columns: minmax(0, 1fr); }
+  .button-row { flex-wrap: wrap; }
+  input, select { font-size: 16px; }
+  .primary, .secondary { min-height: 46px; }
+  .action-effect { width: calc(100vw - 24px); left: 12px; right: 12px; bottom: 12px; transform: none; }
+  .action-effect h2 { font-size: 20px; }
+  .action-effect p { font-size: 13px; }
+}

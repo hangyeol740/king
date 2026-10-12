@@ -108,12 +108,12 @@ test('중재하지 않으면 반란 성공·초기화, 세 번째 성공에 즉�
   assert.equal(view(r, king(r).id).game.lastRevolt.strength, null);
   assert.ok(r.game.logs.some(e => e.effect === 'breached'));
 });
-test('하급 원정 9점 실패·10점 성공·19점 성공·20점 대성공, 불참자도 4/9장 보상', () => {
+test('하급 원정 14점 실패·15점 성공·24점 성공·25점 대성공, 불참자도 4/9장 보상', () => {
   for (const [types, reward] of [
-    [['magic','magic','sword'], 0],
-    [['weapon'], 4],
-    [['weapon','magic','magic','sword'], 4],
-    [['highMagic'], 9]
+    [['weapon','magic'], 0],
+    [['weapon','magic','sword'], 4],
+    [['highMagic','magic'], 4],
+    [['highMagic','magic','sword'], 9]
   ]) {
     const r = setup(), c = citizen(r), before = c.hand.length;
     expedition(r, types);
@@ -124,13 +124,13 @@ test('하급 원정 9점 실패·10점 성공·19점 성공·20점 대성공, �
     if (types.includes('eternalSword')) assert.ok(k.hand.some(c => c.type === 'eternalSword'));
   }
 });
-test('23장은 유지, 24장 이상이면 아침에 랜덤 22장으로 축소', () => {
+test('30장은 유지, 31장 이상이면 아침에 30장으로 축소', () => {
   const r = setup(), c = citizen(r), b = rebel(r);
-  hand(c, ...Array(24).fill('resource')); hand(b, ...Array(23).fill('resource'));
+  hand(c, ...Array(31).fill('resource')); hand(b, ...Array(30).fill('resource'));
   const old = new Set(c.hand.map(c => c.id));
   r.game.phase = 'night'; r.game.pending = { done: [] };
   act(r, b.id, { type: 'revolt', cards: [] });
-  assert.equal(c.hand.length, 22); assert.ok(c.hand.every(c => old.has(c.id))); assert.equal(b.hand.length, 23);
+  assert.equal(c.hand.length, 30); assert.ok(c.hand.every(c => old.has(c.id))); assert.equal(b.hand.length, 30);
   expedition(r);
   const keep = b.hand.map(c => c.id);
   act(r, c.id, { type: 'redistribute', accept: true });
@@ -231,11 +231,11 @@ test('지명수배는 반란이 있을 때만 반란·선동·병기·폭탄 버
     assert.equal(c.hand.length, remain);
   }
 });
-test('공개처형은 카드 버림만, 대상은 계속 참여', () => {
+test('공개처형은 카드 몰수 후 재분배 자동 수락, 대상은 탈락하지 않음', () => {
   const r = setup(4), c = citizen(r), k = king(r), old = k.hand.length;
   act(r, k.id, { type: 'execute', target: c.id });
   r.players.forEach(p => act(r, p.id, { type: 'voteExecution', target: c.id }));
-  assert.equal(c.hand.length, 0); assert.equal(k.hand.length, old); assert.ok(r.game.order.includes(c.id));
+  assert.equal(c.hand.length, 12); assert.equal(c.executedDay, 1); assert.equal(k.hand.length, old); assert.ok(r.game.order.includes(c.id));
 });
 test('아침 보급 후 재분배 거절: 5장→8장, 11장 유지, 7장→8장, 보급 중복 지급 없음', () => {
   const r = setup(), k = king(r), c = citizen(r), b = rebel(r);

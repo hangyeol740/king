@@ -47,7 +47,7 @@ test('3인 첫날 왕 사형 선언 → 전원 투표 → 최다 득표자 전�
     assert.equal(options.length, 2); assert.ok(options.every(a => a.target !== k.id));
     act(r, p.id, { type: 'voteExecution', target: target.id });
   }
-  assert.equal(r.game.phase, 'redistribute'); assert.equal(target.hand.length, 0);
+  assert.equal(r.game.phase, 'redistribute'); assert.equal(target.hand.length, 12); assert.equal(target.executedDay, 1);
   assert.deepEqual(k.hand, oldKing); assert.ok(r.game.order.includes(target.id));
   assert.equal(r.game.lastExecution.target, target.id);
   assert.equal(r.game.lastExecution.tallies.find(t => t.id === target.id).count, 3);
@@ -68,15 +68,15 @@ test('사형 투표는 왕/위조 대상/중복 차단·전원 완료 전 투표
   assert.equal(r.game.lastExecution.target, b.id);
 });
 
-test('사형 동률은 최다 득표자 중 무작위 한 명만 몰수, 왕·0표 후보는 제외', () => {
+test('사형 동률은 아무도 처형하지 않고 손패를 유지', () => {
   for (let i = 0; i < 8; i++) {
     const r = setup(4), k = king(r), [a, b, c] = r.players.filter(p => p !== k);
     for (const p of r.players) hand(p, 'resource', 'evangelism');
     act(r, k.id, { type: 'execute' });
     for (const [p, target] of [[k,a], [a,b], [b,a], [c,b]]) act(r, p.id, { type: 'voteExecution', target: target.id });
-    assert.ok([a.id,b.id].includes(r.game.lastExecution.target));
+    assert.equal(r.game.lastExecution.target, null);
     assert.deepEqual(new Set(r.game.lastExecution.tied), new Set([a.id,b.id]));
-    assert.equal(r.players.filter(p => !p.hand.length).length, 1);
+    assert.equal(r.players.filter(p => !p.hand.length).length, 0);
     assert.equal(c.hand.length, 2); assert.equal(k.hand.length, 2);
   }
 });

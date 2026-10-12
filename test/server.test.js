@@ -269,6 +269,59 @@ test('WebSocket 3인 첫날 왕 사형 선택·투표 비공개·서버 재시�
   for (const p of restored.filter((_, i) => i !== kingIndex)) assert.ok((await send(p, { type: 'voteExecution', target: targetId })).ok);
   await sleep(20);
   assert.equal(restored[0].state.game.phase, 'redistribute');
-  assert.equal(restored.find(p => p.state.me.id === targetId).state.me.hand.length, 0);
+  assert.equal(restored.find(p => p.state.me.id === targetId).state.me.hand.length, 12);
+  assert.equal(restored.find(p => p.state.me.id === targetId).state.me.executed, true);
   assert.equal(restored[0].state.game.lastExecution.target, targetId);
+});
+
+test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례만 열고 전원 투표·재분배 진행', async()=>{
+  const shared=await connect();await send(shared,{type:'create',name:'공유하나'});
+  const added=await send(shared,{type:'addLocalPlayer',name:'공유둘'});assert.ok(added.ok);assert.equal(added.session.device,true);
+  const last=await send(shared,{type:'addLocalPlayer',name:'공유셋'});assert.ok(last.ok);const session=last.session;
+  assert.equal(shared.state.device.players.length,3);assert.equal(shared.state.players.filter(p=>p.online).length,3);
+  assert.equal((await send(shared,{type:'addLocalPlayer',name:'공유둘'})).ok,false);
+  await send(shared,{type:'start'});assert.equal(shared.state.device.active,null);assert.equal(shared.state.me.hand.length,0);assert.equal(shared.state.me.role,null);
+  const k=shared.state.players.find(p=>p.role==='king'),nonKing=shared.state.players.find(p=>p.id!==k.id);
+  assert.equal((await send(shared,{type:'openSeat',player:nonKing.id})).ok,false);
+  assert.equal((await send(shared,{type:'expedition'})).ok,false);
+  assert.ok((await send(shared,{type:'openSeat',player:k.id})).ok);assert.equal(shared.state.me.id,k.id);assert.equal(shared.state.me.hand.length,12);
+  assert.ok((await send(shared,{type:'lockSeat'})).ok);assert.equal(shared.state.me.hand.length,0);
+  assert.ok((await send(shared,{type:'openSeat',player:k.id})).ok);assert.ok((await send(shared,{type:'expedition'})).ok);assert.equal(shared.state.device.active,null);
+  shared.disconnect();const restored=await connect();assert.ok((await send(restored,{type:'resumeDevice',...session})).ok);assert.equal(restored.state.device.active,null);
+  const ids=restored.state.device.players.map(p=>p.id);
+  for(const id of ids){assert.ok((await send(restored,{type:'openSeat',player:id})).ok);assert.ok((await send(restored,{type:'voteExpedition',difficulty:'low'})).ok);assert.equal(restored.state.device.active,null);}
+  for(const id of ids.filter(id=>id!==k.id)){await send(restored,{type:'openSeat',player:id});assert.ok((await send(restored,{type:'joinExpedition',join:false})).ok);}
+  await send(restored,{type:'openSeat',player:k.id});await send(restored,{type:'contribute',cards:[]});
+  for(const id of ids){await send(restored,{type:'openSeat',player:id});assert.ok((await send(restored,{type:'redistribute',accept:false})).ok);}
+  assert.equal(restored.state.game.phase,'day');assert.equal(restored.state.device.active,null);
+  const current=restored.state.game.current;await send(restored,{type:'openSeat',player:current});assert.ok((await send(restored,{type:'gather'})).ok);assert.equal(restored.state.device.active,null);
+});
+
+test('한 기기2명 + 다른 기기1명 혼합 접속, 다른 기기 자리 열기 금지·복귀·전원 오프라인', async()=>{
+  const shared=await connect(),remote=await connect();const created=await send(shared,{type:'create',name:'혼합공유1'});
+  const group=await send(shared,{type:'addLocalPlayer',name:'혼합공유2'});const joined=await send(remote,{type:'join',code:created.session.code,name:'혼합외부'});
+  await send(shared,{type:'start'});await sleep(20);assert.equal(shared.state.players.length,3);assert.equal(remote.state.device,undefined);
+  assert.equal((await send(shared,{type:'openSeat',player:remote.state.me.id})).ok,false);
+  assert.ok(!JSON.stringify(remote.state).includes(group.session.token));assert.ok(!JSON.stringify(shared.state).includes(joined.session.token));
+  const result=await send(shared,{type:'leave'});assert.ok(result.left);assert.equal(result.resumeSession.device,true);await sleep(20);
+  assert.equal(remote.state.players.filter(p=>p.id!==remote.state.me.id&&p.online).length,0);
+  assert.ok((await send(shared,{type:'resumeDevice',...result.resumeSession})).ok);assert.equal(shared.state.device.active,null);await sleep(20);
+  assert.equal(remote.state.players.filter(p=>p.online).length,3);
+  const intruder=await connect();assert.equal((await send(intruder,{type:'resumeDevice',code:created.session.code,token:'fake'})).ok,false);
+});
+
+test('대기실 공유 기기 퇴장 시 그 기기 참가자만 제거하고 다른 기기에 방장 위임', async()=>{
+  const shared=await connect(),remote=await connect();const created=await send(shared,{type:'create',name:'퇴장공유1'});
+  await send(shared,{type:'addLocalPlayer',name:'퇴장공유2'});await send(remote,{type:'join',code:created.session.code,name:'남은참가'});
+  await send(shared,{type:'leave'});await sleep(20);assert.equal(remote.state.players.length,1);assert.equal(remote.state.host,remote.state.me.id);await send(remote,{type:'leave'});
+});
+
+test('서버 재시작 뒤 공유 기기 인원·손패를 복구하되 이름 확인 전에는 비공개 상태를 보내지 않음', async()=>{
+  const shared=await connect();await send(shared,{type:'create',name:'저장공유1'});await send(shared,{type:'addLocalPlayer',name:'저장공유2'});
+  const added=await send(shared,{type:'addLocalPlayer',name:'저장공유3'});await send(shared,{type:'start'});
+  const king=shared.state.players.find(p=>p.role==='king');await send(shared,{type:'openSeat',player:king.id});const before=structuredClone(shared.state.me.hand);
+  clients.forEach(c=>c.disconnect());await stop();await start();const restored=await connect();
+  assert.ok((await send(restored,{type:'resumeDevice',...added.session})).ok);assert.equal(restored.state.device.players.length,3);assert.equal(restored.state.device.active,null);
+  assert.equal(restored.state.me.role,null);assert.equal(restored.state.me.hand.length,0);assert.equal(restored.state.me.notes.length,0);
+  await send(restored,{type:'openSeat',player:king.id});assert.deepEqual(restored.state.me.hand,before);
 });

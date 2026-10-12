@@ -46,8 +46,8 @@ test('상급 원정 왕이 3/4/5인에서 1/2/3명 강제 지명·거절 불가�
     assert.throws(()=>act(r,outsider.id,{type:'contribute',cards:[]}),RuleError);
   }
 });
-test('상급 29점 실패·30점 성공·49점 성공·50점 대성공, 반란군 제외 전원 보상/몰수',()=>{
-  for(const [score,reward] of [[29,0],[30,15],[49,15],[50,25]]){
+test('상급 19점 실패·20점 성공·39점 성공·40점 대성공, 반란군 제외 전원 보상/몰수',()=>{
+  for(const [score,reward] of [[19,0],[20,15],[39,15],[40,25]]){
     const r=setup(4),k=role(r,'king'),b=role(r,'rebel'),c=role(r,'citizen'),n=role(r,'neutral');
     for(const p of [b,c,n])hand(p,'resource','resource');
     vote(r);act(r,k.id,{type:'selectExpedition',targets:[b.id,n.id]});
@@ -78,10 +78,10 @@ test('원정 진영별 카드 사용과 방해 점수 -2/-6 적용, 영구 전�
 test('반란군 방해 때문에 성공 원정이 실패하면 상급 몰수 적용',()=>{
   const r=setup(),k=role(r,'king'),b=role(r,'rebel'),c=role(r,'citizen'),n=role(r,'neutral');
   hand(c,'resource');hand(n,'resource');vote(r);act(r,k.id,{type:'selectExpedition',targets:[b.id,n.id]});
-  act(r,k.id,{type:'contribute',cards:hand(k,'flameSword')});
+  act(r,k.id,{type:'contribute',cards:hand(k,'northSword')});
   act(r,b.id,{type:'contribute',cards:hand(b,'agitation')});
   act(r,n.id,{type:'contribute',cards:[]});
-  assert.ok(r.game.logs.some(e=>e.text.includes('총 공격력 24점')));assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);assert.equal(n.hand.length,0);
+  assert.ok(r.game.logs.some(e=>e.text.includes('총 공격력 14점')));assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);assert.equal(n.hand.length,0);
 });
 test('5장 받기: 교체 0/3/5장 선택, 기존 선택 카드만 버림, 6장·중복·위조 거절',()=>{
   for(const replaced of [0,3,5]){
@@ -96,7 +96,7 @@ test('5장 받기: 교체 0/3/5장 선택, 기존 선택 카드만 버림, 6장�
 });
 test('가져오기: 부족한 손패는 전부, 빈 손패도 처리하고 영구 카드도 이전',()=>{
   for(const count of [0,1,2]){
-    const r=setup(),k=role(r,'king'),b=role(r,'rebel');r.game.phase='day';r.game.round=3;
+    const r=setup(),k=role(r,'citizen'),b=role(r,'rebel');r.game.phase='day';r.game.round=3;r.game.turn=r.game.order.indexOf(k.id);
     hand(k);const ids=hand(b,...Array(count).fill('warWeapon'));
     act(r,k.id,{type:'steal',target:b.id});assert.equal(b.hand.length,0);assert.deepEqual(k.hand.map(c=>c.id).sort(),ids.sort());
   }

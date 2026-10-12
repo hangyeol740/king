@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { act, makeRoom, joinRoom, view, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS } from '../lib/game.js';
+import { makeDevice, deviceView } from '../lib/device.js';
 
 async function browser() {
   const elements = new Map(), handlers = {};
@@ -17,6 +18,7 @@ async function browser() {
     fetch: () => new Promise(() => {}), setTimeout: () => 1, clearTimeout() {},
     window: { kingdomEffects: { handle() {} } }
   });
+  vm.runInContext(await readFile(new URL('../public/pass-device.js', import.meta.url), 'utf8'), context);
   vm.runInContext(await readFile(new URL('../public/app.js', import.meta.url), 'utf8'), context);
   return { context, elements, handlers };
 }
@@ -60,4 +62,13 @@ test('사형 화면의 후보는 왕 제외·자신 포함이며 1표 확정 후
   act(r, voter.id, { type: 'voteExecution', target: voter.id }); b.handlers.state(view(r, voter.id));
   html = b.elements.get('#app').innerHTML;
   assert.match(html, /사형 투표를 마쳤습니다/); assert.doesNotMatch(html, /data-cmd="voteExecution"/);
+});
+
+test('공유 기기 이름 확인 전에는 직업·손패 화면이 없고 차례인 사람만 화면을 열 수 있음',async()=>{
+  const b=await browser(),r=setup(3),k=r.players.find(p=>p.role==='king'),device=makeDevice(r,r.players[0]);device.players=r.players.map(p=>p.id);
+  vm.runInContext(`rules = ${JSON.stringify({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS })}`, b.context);
+  b.handlers.state(deviceView(r,device,null));let html=b.elements.get('#app').innerHTML;assert.match(html,/다음 사람에게 기기를 넘겨주세요/);assert.doesNotMatch(html,/class="hand-grid"|class="panel identity-panel/);
+  vm.runInContext(`deviceSeatChoice=${JSON.stringify(k.id)};render()`,b.context);html=b.elements.get('#app').innerHTML;assert.match(html,/님이 맞나요/);assert.doesNotMatch(html,/class="hand-grid"/);
+  b.handlers.state(deviceView(r,device,k.id));html=b.elements.get('#app').innerHTML;assert.match(html,/class="hand-grid"/);assert.match(html,/화면 가리고 다음 사람에게 넘기기/);
+  b.handlers.state(deviceView(r,device,null));assert.doesNotMatch(b.elements.get('#app').innerHTML,/class="hand-grid"/);
 });

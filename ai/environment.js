@@ -33,6 +33,7 @@ export function baseline(snapshot, actions, random = Math.random) {
   }
   if (g.phase === 'redistribute') return actions.find(a => a.accept === (me.hand.length < 12));
   if (g.phase === 'day') {
+    if (g.pending?.kind === 'royalSupport') return actions.find(a => a.type === 'supportAnswer' && !a.accept) || actions[0];
     if (g.pending?.kind === 'trade') return actions.find(a => a.accept === false || a.cards?.length === 0) || actions[0];
     if (g.pending?.kind === 'craft') {
        const priorities=['ironSword',...(me.job==='bishop'?['evangelism','church']:[]),'warWeapon','flameSword','northSword','highMagic',...(me.role==='rebel'?['bomb','agitation','rebellion','infantry']:['officer','infantry','rebellion']),'eternalMagic','eternalSword','weapon','magic','sword'];
