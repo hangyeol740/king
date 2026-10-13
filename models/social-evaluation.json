@@ -1,0 +1,111 @@
+{
+  "seed": 109301,
+  "trained": {
+    "games": 480,
+    "wins": 183,
+    "byOpponent": {
+      "baseline": {
+        "games": 120,
+        "wins": 53
+      },
+      "random": {
+        "games": 120,
+        "wins": 50
+      },
+      "policy": {
+        "games": 120,
+        "wins": 32
+      },
+      "skeptic": {
+        "games": 120,
+        "wins": 48
+      }
+    },
+    "byRole": {
+      "citizen": {
+        "games": 138,
+        "wins": 44
+      },
+      "king": {
+        "games": 135,
+        "wins": 44
+      },
+      "bishop": {
+        "games": 49,
+        "wins": 7
+      },
+      "rebel": {
+        "games": 120,
+        "wins": 62
+      },
+      "merchant": {
+        "games": 38,
+        "wins": 26
+      }
+    },
+    "counts": {
+      "honest": 9598,
+      "conceal": 9553,
+      "bluff": 9120,
+      "reserve": 10200,
+      "refuseExpedition": 59,
+      "zeroSupport": 261
+    },
+    "winRate": 0.38125
+  },
+  "untrained": {
+    "games": 480,
+    "wins": 193,
+    "byOpponent": {
+      "baseline": {
+        "games": 120,
+        "wins": 53
+      },
+      "random": {
+        "games": 120,
+        "wins": 54
+      },
+      "policy": {
+        "games": 120,
+        "wins": 45
+      },
+      "skeptic": {
+        "games": 120,
+        "wins": 41
+      }
+    },
+    "byRole": {
+      "king": {
+        "games": 113,
+        "wins": 45
+      },
+      "rebel": {
+        "games": 137,
+        "wins": 78
+      },
+      "merchant": {
+        "games": 54,
+        "wins": 36
+      },
+      "citizen": {
+        "games": 130,
+        "wins": 34
+      },
+      "bishop": {
+        "games": 46,
+        "wins": 0
+      }
+    },
+    "counts": {
+      "honest": 10238,
+      "conceal": 10012,
+      "bluff": 10168,
+      "reserve": 10138,
+      "refuseExpedition": 62,
+      "zeroSupport": 311
+    },
+    "winRate": 0.40208333333333335
+  },
+  "limitations": "Real game terminal rewards; simulated discrete help signals. No LLM calls or human persuasion evaluation. Game deck/roles use server crypto randomness, so seeds do not guarantee paired games.",
+  "promoted": false
+}

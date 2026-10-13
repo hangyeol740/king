@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "algorithm": "episodic-policy-gradient-social-options",
+  "values": {
+    "citizen/expedition": [
+      -0.24040943105121987,
+      -0.03785059627320879,
+      -0.3067466362632463,
+      0.5850066635876754
+    ],
+    "citizen/other": [
+      0.041184242303334756,
+      -0.04598346758057429,
+      0.03865219203386757,
+      -0.03385296675663518
+    ],
+    "citizen/crisis": [
+      0.26347307378489004,
+      -0.11284709415950754,
+      -0.3185904763613289,
+      0.1679644967359447
+    ],
+    "bishop/expedition": [
+      -0.005480068461527685,
+      0.17041852882947447,
+      0.030500672828110108,
+      -0.1954391331960576
+    ],
+    "bishop/other": [
+      0.001994162573994481,
+      -0.06642593698109468,
+      0.009961264582424195,
+      0.054470509824675356
+    ],
+    "king/crisis": [
+      0.1481540781476501,
+      -0.006704402030573483,
+      -0.07534276390641523,
+      -0.06610691221066202
+    ],
+    "king/other": [
+      -0.07865071981064717,
+      0.08257717567824184,
+      -0.03146957471425768,
+      0.027543118846658405
+    ],
+    "rebel/other": [
+      0.08128237400037172,
+      -0.04894424085353207,
+      -0.1013780758132572,
+      0.06903994266641768
+    ],
+    "merchant/other": [
+      -0.011324249596103066,
+      0.014657538146879097,
+      -0.010467319673453039,
+      0.0071340311226813094
+    ],
+    "merchant/crisis": [
+      -0.15992300942671953,
+      0.3299253019274501,
+      -0.19646211847722905,
+      0.026459825976498937
+    ],
+    "king/expedition": [
+      0.43286736419314786,
+      -0.34165412528050765,
+      0.27629461907176484,
+      -0.3675078579844043
+    ],
+    "bishop/crisis": [
+      -0.30467676184948034,
+      -0.1044869695203154,
+      0.2108759740069903,
+      0.19828775736280604
+    ],
+    "merchant/expedition": [
+      -0.08729351027083385,
+      -0.12928207191405403,
+      0.12958901102222542,
+      0.08698657116266253
+    ],
+    "rebel/expedition": [
+      -0.10022689532663277,
+      -0.20102923671768724,
+      0.008336298444271566,
+      0.29291983360004786
+    ],
+    "rebel/crisis": [
+      -0.06760005771211205,
+      0.10955124537663073,
+      0.03234095178326331,
+      -0.07429213944778197
+    ]
+  },
+  "metadata": {
+    "episodes": 1600,
+    "externalApi": false,
+    "trainedAt": "2026-10-13T18:09:40.031Z",
+    "seed": 9301,
+    "opponents": [
+      "baseline",
+      "random",
+      "policy",
+      "skeptic"
+    ],
+    "evaluation": {
+      "seed": 109301,
+      "trained": {
+        "games": 480,
+        "wins": 183,
+        "byOpponent": {
+          "baseline": {
+            "games": 120,
+            "wins": 53
+          },
+          "random": {
+            "games": 120,
+            "wins": 50
+          },
+          "policy": {
+            "games": 120,
+            "wins": 32
+          },
+          "skeptic": {
+            "games": 120,
+            "wins": 48
+          }
+        },
+        "byRole": {
+          "citizen": {
+            "games": 138,
+            "wins": 44
+          },
+          "king": {
+            "games": 135,
+            "wins": 44
+          },
+          "bishop": {
+            "games": 49,
+            "wins": 7
+          },
+          "rebel": {
+            "games": 120,
+            "wins": 62
+          },
+          "merchant": {
+            "games": 38,
+            "wins": 26
+          }
+        },
+        "counts": {
+          "honest": 9598,
+          "conceal": 9553,
+          "bluff": 9120,
+          "reserve": 10200,
+          "refuseExpedition": 59,
+          "zeroSupport": 261
+        },
+        "winRate": 0.38125
+      },
+      "untrained": {
+        "games": 480,
+        "wins": 193,
+        "byOpponent": {
+          "baseline": {
+            "games": 120,
+            "wins": 53
+          },
+          "random": {
+            "games": 120,
+            "wins": 54
+          },
+          "policy": {
+            "games": 120,
+            "wins": 45
+          },
+          "skeptic": {
+            "games": 120,
+            "wins": 41
+          }
+        },
+        "byRole": {
+          "king": {
+            "games": 113,
+            "wins": 45
+          },
+          "rebel": {
+            "games": 137,
+            "wins": 78
+          },
+          "merchant": {
+            "games": 54,
+            "wins": 36
+          },
+          "citizen": {
+            "games": 130,
+            "wins": 34
+          },
+          "bishop": {
+            "games": 46,
+            "wins": 0
+          }
+        },
+        "counts": {
+          "honest": 10238,
+          "conceal": 10012,
+          "bluff": 10168,
+          "reserve": 10138,
+          "refuseExpedition": 62,
+          "zeroSupport": 311
+        },
+        "winRate": 0.40208333333333335
+      },
+      "limitations": "Real game terminal rewards; simulated discrete help signals. No LLM calls or human persuasion evaluation. Game deck/roles use server crypto randomness, so seeds do not guarantee paired games.",
+      "promoted": false
+    },
+    "reward": "terminal team win +1 loss -1; no reward for lie count"
+  }
+}
