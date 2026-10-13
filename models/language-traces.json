@@ -1,0 +1,4488 @@
+[
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 상급에 걸기엔 아직 정보가 부족해 보여요. 하급으로 가서 무리 없이 보상을 챙기는 게 안전하지 않을까요?",
+    "desiredBelief": "상대가 상급 대신 하급에 투표하도록 유도한다.",
+    "listenerBelief": "익명 발언이 누구의 말인지는 알 수 없으므로 진영 판단에 쓰지 않습니다. 공개된 성공 기록이 없고 초반이라 상급의 높은 요구치를 감당할 근거가 부족해 하급이 안전합니다.",
+    "listenerReply": "이번엔 하급에 투표하겠습니다. 성공 기록이 쌓이면 상급도 검토하죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "저도 이번엔 하급에 투표했습니다. 지난 상급 원정이 실패한 만큼, 우선 위험을 낮춰 보상을 확보하는 편이 낫겠습니다.",
+    "desiredBelief": "내가 이번 원정에서 하급을 선택했고, 무리한 상급보다 안전한 성공을 우선한다고 믿게 한다.",
+    "listenerBelief": "발언의 발신자는 특정할 수 없으므로、そのまま信じる根拠にはしません。ただし前回の上급 원정은 공개 결과상 공격력 12로 실패했으므로 하급이 더 안전합니다.",
+    "listenerReply": "이전 상급 원정의 실패를 고려해 하급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionJoin",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급으로 정해졌으니 이번엔 참가 인원을 늘려 안정적으로 성공시키는 게 좋겠습니다. 저는 이번엔 빠지고 자원을 아끼겠습니다.",
+    "desiredBelief": "저는 원정 참가에 적극적이지 않으며, 팀이 제 도움 없이도 충분히 성공할 수 있다고 상대가 판단하게 한다.",
+    "listenerBelief": "발언자는 참가 인원을 늘리자면서 자신은 빠지겠다고 했지만, 익명이라 발신자를 특정할 수 없습니다. 공개 기록상 직전 상급 원정은 실패했고 이번 원정은 하급으로 정해졌으므로, 낮은 난이도에서 성공을 돕는 편이 시민 진영에 유리합니다.",
+    "listenerReply": "하급 원정에 참가하겠습니다. 다만 익명 발언만으로 누구의 의도인지는 단정하지 않겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 1,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "첫 원정이니 부담이 덜한 하급으로 가는 게 무난해 보여요. 우선 안전하게 시작하고, 결과를 본 뒤 다음 원정 난이도를 조정하죠.",
+    "desiredBelief": "하급 원정이 합리적인 선택이라고 여기되, 내 진영이나 이후 행동은 확신하지 못한다.",
+    "listenerBelief": "익명 발언이라 특정 참가자의 의도로 볼 수 없다. 반란군으로서 성공 난도를 높여 원정을 방해하고자 상급에 투표한다.",
+    "listenerReply": "첫 원정이라도 상급으로 도전해볼 만하겠네요.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 1,
+    "phase": "expeditionJoin",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급으로 정해졌으니 참여 여부는 원정대 구성과 부담을 보고 판단하면 좋겠습니다. 인원이 모자라면 다른 분들이 먼저 뜻을 밝혀주세요.",
+    "desiredBelief": "내가 원정에 참여할지 아직 정하지 않았으며, 진영이나 향후 행동도 단정할 수 없다.",
+    "listenerBelief": "익명 발언은 특정 인물의 의도로 단정할 수 없다. 하급 원정이라도 왕국 성공에 보탬이 될 수 있으므로 반란군인 나는 참여하지 않는다.",
+    "listenerReply": "이번 원정은 우선 다른 분들께 맡기겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력 39점이면 방어를 가볍게 볼 상황은 아닌 것 같아요. 저는 중재에 기여하겠지만, 다른 분들도 가능한 만큼 힘을 보태야 막을 수 있을 겁니다.",
+    "desiredBelief": "내가 중재에 기여할 생각은 있지만, 혼자 부담을 떠안지는 않을 것이며 다른 이들도 지원해야 한다.",
+    "listenerBelief": "반란력 39점은 공개된 위협이라 방어 지원이 필요하다. 익명 발언은 특정 참가자의 의도로 단정하지 않지만, 중재에 기여하겠다는 말은 상황과 맞는다.",
+    "listenerReply": "저도 가능한 만큼 중재에 보태겠습니다. 다른 분들도 힘을 모아 방어합시다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 26,
+      "cards": [
+        "weapon",
+        "church",
+        "church",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 26,
+      "cards": [
+        "weapon",
+        "church",
+        "church",
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 5,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "상급은 보상이 크지만 요구치도 높으니, 각자 낼 수 있는 힘을 생각해서 신중히 투표합시다. 저는 이번 원정은 상급에 걸겠습니다.",
+    "desiredBelief": "내가 상급 원정을 지지하는 건 알지만, 내 진영이나 실제 원정 기여 여부는 확신하지 못한다.",
+    "listenerBelief": "상급을 권한 발신자가 누구인지 알 수 없고, 약속만으로 성공 가능성을 판단할 수 없습니다. 공개 정보상 원정 전력이 확인되지 않았으므로 요구치가 낮은 하급이 안전합니다.",
+    "listenerReply": "전력이 확인되지 않았으니 우선 하급으로 성공 가능성을 높이겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 5,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "하급으로 정해졌으니 이번엔 성공을 우선해 각자 감당할 만큼만 보태죠. 무리하게 많이 내기보다는 결과를 보고 다음 판단을 하는 게 좋겠습니다.",
+    "desiredBelief": "내 기여량과 진영을 확신하지 말고, 부담 없이 행동을 선택한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 의도로 볼 수 없고, 성공을 위해 실제로 충분한 기여가 필요한지도 불확실합니다. 반란 진영에 유리하도록 카드는 아끼겠습니다.",
+    "listenerReply": "저는 이번엔 기여를 보류하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 3,
+      "cards": [
+        "sword",
+        "magic",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "일단 하급으로 가는 게 무난하겠네요. 성공 가능성부터 챙기고, 결과를 본 뒤 다음 선택을 논의하죠.",
+    "desiredBelief": "상대가 하급 원정이 안전한 선택이라고 보고 같은 난이도에 투표하도록 유도한다.",
+    "listenerBelief": "익명 발언이라 특정 참가자의 진영이나 의도를 추정할 근거로 삼지 않는다. 반란군인 내게 원정 결과를 무리하게 악화시킬 이유는 있지만, 공개된 반란 증거나 원정 난이도별 성공 가능성은 없어 발언만으로 고급을 택할 근거도 부족하다. 기본 선택대로 하급에 투표한다.",
+    "listenerReply": "하급에 투표하겠습니다. 성공 가능성을 우선하죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 하급 원정은 다 같이 무리 없이 마무리하는 게 좋겠습니다. 필요한 만큼만 기여하고, 결과를 확인한 뒤 다음 판단을 하죠.",
+    "desiredBelief": "나는 원정에 협조적이지만, 기여 규모나 진영을 단정할 근거는 없다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 누구의 말인지 알 수 없으므로 진영 판단 근거로 삼지 않는다. 반란군으로서 원정에 자원을 보태지 않고 보존한다.",
+    "listenerReply": "기여 없이 결과를 확인하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 0,
+      "cards": [
+        "sword",
+        "sword",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 10,
+      "mediation": 47,
+      "cards": [
+        "officer",
+        "weapon",
+        "officer",
+        "officer",
+        "officer",
+        "sword",
+        "eternalSword",
+        "highMagic",
+        "infantry",
+        "sword"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번엔 하급 원정이 무난해 보여요. 우선 부담 적게 성공을 노리고, 다음 선택은 상황을 보고 판단하죠.",
+    "desiredBelief": "하급 난이도를 지지하지만 진영이나 이후 행동은 확정적으로 드러내지 않는다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 진영 판단 근거로 삼지 않는다. 반란군으로서 원정 성공 가능성을 낮추기 위해 상급을 선택한다.",
+    "listenerReply": "상급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급 원정이니 우선 필요한 만큼 힘을 보태죠. 결과를 보고 다음에는 더 신중하게 판단하겠습니다.",
+    "desiredBelief": "나는 이번 원정에 협조적이지만, 내 진영이나 이후 행동은 아직 판단하기 어렵다.",
+    "listenerBelief": "발언은 익명이라 특정 참가자의 의사로 볼 수 없습니다. 반란군 승리를 위해 원정에 힘을 보태지 않고 카드를 보존하겠습니다.",
+    "listenerReply": "이번 원정에는 기여하지 않겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 7,
+      "mediation": 45,
+      "cards": [
+        "eternalSword",
+        "officer",
+        "weapon",
+        "officer",
+        "officer",
+        "eternalSword",
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력이 높은 만큼 방어에는 힘을 보태는 게 좋겠지만, 지금은 누가 어느 쪽인지 단정하기보다 각자 감당할 수 있는 만큼 지원하죠. 한쪽에 과하게 몰아주기보다는 균형을 보며 결정합시다.",
+    "desiredBelief": "내 진영이나 다음 행동은 확신할 수 없으며, 중재 지원은 신중히 판단해야 한다",
+    "listenerBelief": "반란력 56으로 방어가 시급하다. 익명 발언은 특정 인물의 약속으로 볼 수 없지만, 시민으로서 왕국 방어에 필요한 만큼 기여한다.",
+    "listenerReply": "말보다 실제 방어가 중요하니, 가능한 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 30,
+      "cards": [
+        "infantry",
+        "officer",
+        "weapon",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 30,
+      "cards": [
+        "infantry",
+        "officer",
+        "weapon",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번엔 반란력이 공개된 만큼 방어에 힘을 보태겠습니다. 다른 분들도 가능한 범위에서 지원해 주시고, 결과를 보고 다음 대응을 정하죠.",
+    "desiredBelief": "나는 이번 중재에서 방어를 지원할 의사가 있으며, 모두가 상황에 맞게 협력해야 한다.",
+    "listenerBelief": "발언은 익명이라 화자를 특정할 수 없고 약속만으로 판단하지 않는다. 공개 반란력 6을 막기에 무기 1장의 중재력 17이면 충분하므로, 자원을 아끼면서 방어에 기여한다.",
+    "listenerReply": "반란력 6을 막을 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 33,
+      "cards": [
+        "officer",
+        "officer",
+        "infantry",
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 하급에 투표하겠습니다. 상급은 요구 전력이 더 높으니, 우선 성공 가능성을 챙기는 편이 낫겠어요.",
+    "desiredBelief": "나는 하급 원정의 성공 가능성을 우선하는 협조적인 참가자다.",
+    "listenerBelief": "발언은 익명이라 왕이나 다른 특정 인물의 뜻으로 볼 수 없다. 공개된 원정 규칙상 상급은 더 높은 난이도지만 보상이 크며, 현재 원정 전력 정보가 없어 하급 선호 발언만으로 판단을 바꾸지 않겠다.",
+    "listenerReply": "전력 정보 없이 안전만 좇기보다는 상급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "expeditionJoin",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급으로 정해졌으니 원정에 참여하겠습니다. 성공 가능성을 높이도록 다른 분들도 부담 가능한 만큼 함께해 주세요.",
+    "desiredBelief": "나는 원정에 협조적이며, 다른 참가자들도 무리하지 않는 선에서 동참하는 것이 좋다고 판단하게 한다.",
+    "listenerBelief": "하급 원정의 요구 전력은 낮지만 성공은 왕국에 이롭다. 익명 발언은 특정 참가자에게 귀속할 수 없으므로 근거로 삼지 않고 불참한다.",
+    "listenerReply": "이번 원정은 불참하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "expeditionCards",
+    "mode": "bluff",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "원정은 제가 보탤 테니, 필요한 지원을 아끼지 말고 성공을 확실히 챙깁시다. 섣불리 방해하기보다는 이번엔 협력하는 편이 모두에게 이득이에요.",
+    "desiredBelief": "내가 원정 성공을 위해 지원할 의사가 있고, 공격이나 방해에 대비한 수단도 갖췄을 수 있으니 섣불리 맞서지 않는 편이 낫다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 신뢰 근거로 삼지 않겠습니다. 하급 원정의 공개 기준은 15점이므로 병기 1장으로 최소 기준을 넘기고 나머지 자원은 보존합니다.",
+    "listenerReply": "하급 기준을 넘길 만큼만 보태고, 남은 전력은 아끼겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 36,
+      "cards": [
+        "weapon",
+        "infantry",
+        "weapon",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 원정은 우선 하급으로 가는 게 안전해 보여요. 성공 가능성과 필요한 부담을 보고 다 같이 신중하게 결정하죠.",
+    "desiredBelief": "상대가 하급 난이도를 선택하고, 먼저 자원을 과하게 내지 않도록 한다.",
+    "listenerBelief": "발신자를 특정할 수 없는 익명 발언이라 근거로 단정하지 않겠습니다. 원정의 현재 역량을 알 수 없으므로 실패 위험을 줄이는 하급이 합리적입니다.",
+    "listenerReply": "저도 우선 하급에 투표하겠습니다. 성공 가능성을 높이는 게 좋겠어요.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급으로 정해졌으니 참가자는 성공에 필요한 기여가 가능한지 먼저 따져보면 좋겠습니다. 저는 이번엔 무리해서 나서기보다 다른 분들이 얼마나 참여하는지 보고 판단하겠습니다.",
+    "desiredBelief": "나는 이번 원정에 참가하지 않을 가능성이 높으며, 다른 이들이 먼저 부담을 나누는 편이 낫다.",
+    "listenerBelief": "하급 원정은 현재 왕 혼자 참가 중이며 성공에 15점이 필요합니다. 발언자는 참가를 미루겠다는 말일 뿐 익명이라 특정 인물의 의도로 단정할 수 없습니다. 중립 진영이므로 자원을 내지 않고 참가 여부만 열어 두겠습니다.",
+    "listenerReply": "저는 우선 참가하겠습니다. 부담을 최소화하면서 성공에 필요한 기여를 확인하죠.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "bluff",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번에도 하급에 투표하겠습니다. 지난 원정은 실패했으니 이번에는 참가자들이 기여할 수 있는지 확인하고, 준비 없이 무리하게 나서진 맙시다.",
+    "desiredBelief": "내가 원정 난이도와 위험을 신중히 따지고 있으며, 섣불리 공격적인 행동을 하지는 않을 것이라고 생각하게 한다.",
+    "listenerBelief": "발언자는 익명이라 특정 인물의 의도로 단정하지 않습니다. 지난 하급 원정은 실패했지만 기여자가 적었으므로, 이번에도 준비된 기여를 확인하며 부담이 낮은 하급이 합리적입니다.",
+    "listenerReply": "저도 하급에 투표하겠습니다. 참가자들의 기여 여건을 보고 무리하지 않는 편이 좋겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 원정은 하급에 투표하겠습니다. 우선 성공을 쌓는 게 좋으니 부담 적은 난이도로 가죠.",
+    "desiredBelief": "내가 하급 원정을 지지하며 왕국의 무리한 고난도 선택보다 안정적인 성공을 원한다고 판단한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 말로 볼 수 없지만, 하급은 필요 점수가 낮아 우선 성공을 쌓기 유리하다.",
+    "listenerReply": "하급에 투표하겠습니다. 우선 성공 가능성을 높이죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "하급 원정은 성공 가능성이 높아 보여서 참가하겠습니다. 필요한 카드가 있으면 보탤게요.",
+    "desiredBelief": "상대가 나를 원정에 적극 협조하고 기여할 의사가 있는 참가자로 여긴다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 약속으로 간주하지 않는다. 하급 원정 참여는 카드 소모가 없어 참가한다.",
+    "listenerReply": "하급 원정에 카드 없이 참가하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급에 투표하겠습니다. 우선 무리하지 말고 확실히 보상을 챙기는 편이 낫겠어요.",
+    "desiredBelief": "내 투표는 하급이지만, 이것만으로 진영이나 이후 협조 여부를 단정할 수는 없다.",
+    "listenerBelief": "익명 발언이라 특정 참가자의 의사로 볼 수 없습니다. 반란군 승리를 위해 성공 조건이 더 까다로운 상급을 선택합니다.",
+    "listenerReply": "상급에 투표하겠습니다. 높은 보상만큼 성공도 쉽지 않겠네요.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정이니 다 같이 필요한 만큼 힘을 보태서 확실히 성공시킵시다. 저는 원정에 기여하겠습니다.",
+    "desiredBelief": "왕이 원정 성공을 위해 실제로 기여할 의사가 있고, 함께 힘을 보태는 게 안전하다고 판단한다.",
+    "listenerBelief": "익명 발언이라 특정 참가자에게 귀속할 수 없다. 하급 원정은 성공 기준이 낮지만, 반란 진영 입장에서는 기여를 보류하는 편이 유리하다.",
+    "listenerReply": "참가만으로도 도움이 될 수 있으니, 우선 카드는 아끼겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 0,
+      "cards": [
+        "sword",
+        "sword",
+        "magic",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 10,
+      "mediation": 25,
+      "cards": [
+        "sword",
+        "infantry",
+        "infantry",
+        "infantry",
+        "sword",
+        "sword",
+        "sword",
+        "magic",
+        "infantry",
+        "weapon"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력이 이미 기준을 넘은 만큼 방어에 힘을 보태겠습니다. 각자 가능한 만큼 지원해 반란을 막고, 이후 상황을 보고 차분히 판단하죠.",
+    "desiredBelief": "나는 이번 중재에서 방어에 협력할 의사가 있으며, 다른 이들도 감당 가능한 범위에서 지원하는 편이 좋다.",
+    "listenerBelief": "발언은 익명이라 발신자를 특정할 수 없고, 진심 여부도 판단 근거가 부족하다. 시민으로서 공개된 반란력 28에 맞서 방어를 돕되, 손실을 줄이기 위해 지원은 14점으로 제한한다.",
+    "listenerReply": "방어에 필요한 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "evangelism"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "evangelism"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 55,
+      "cards": [
+        "weapon",
+        "weapon",
+        "officer",
+        "officer",
+        "officer"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "저도 중재에 지원하겠습니다. 반란을 막을 수 있도록 각자 가능한 범위에서 힘을 보태 주세요.",
+    "desiredBelief": "내가 실제로 방어에 지원하며, 다른 이들도 중재에 협력하는 것이 좋다.",
+    "listenerBelief": "공개된 반란력은 6점이고, 중재 지원은 취소할 수 없습니다. 발언은 익명이라 특정 참가자의 의도로 단정하지 않되, 시민으로서 반란을 막기 위해 필요한 만큼 지원하겠습니다. 장교 한 장이면 현재 반란력을 넘으므로 다른 카드는 보존합니다.",
+    "listenerReply": "반란력이 6점이니 장교 한 장으로 막는 데 힘을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 12,
+      "cards": [
+        "church",
+        "officer",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 30,
+      "cards": [
+        "weapon",
+        "church",
+        "church",
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 원정은 하급으로 가는 게 안전하겠습니다. 상급은 실패 위험이 크니 우선 부담을 낮추고, 참여할 분들이 무리하지 않는 선에서 힘을 보태죠.",
+    "desiredBelief": "상대가 하급 원정을 선택하고 적은 자원만 투입하도록 유도한다.",
+    "listenerBelief": "하급은 보상이 작지만 실패 위험을 낮춘다는 제안은 현재 공개된 상황과 모순되지 않는다. 익명 발언이므로 발신자나 진영의 증거로 보지는 않는다.",
+    "listenerReply": "하급에 찬성합니다. 부담을 낮춰 안정적으로 진행하죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력이 꽤 높으니 방어를 비워두긴 어렵겠네요. 다만 무턱대고 힘을 쏟기보다는, 다른 분들도 가능한 만큼 보태서 부담을 나눠주세요.",
+    "desiredBelief": "나는 중재에 협조할 의향은 있지만, 나 혼자 큰 부담을 지지는 않을 것이며 다른 이들도 지원해야 한다.",
+    "listenerBelief": "반란력 36은 상당히 높고 시민 진영 승리를 위해 방어에 힘을 보태야 합니다. 익명 발언은 누구의 말인지 알 수 없지만, 교단·전도 카드 3장으로 13점을 보탤 수 있어 지원합니다.",
+    "listenerReply": "방어에 필요한 만큼 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "evangelism"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 13,
+      "cards": [
+        "church",
+        "evangelism",
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 8,
+      "cards": [
+        "church",
+        "church",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "저도 이번 방어에 보태겠습니다. 다들 가능한 만큼 함께 힘을 보태면 충분히 막을 수 있을 테니, 너무 과하게 지원하진 않아도 될 것 같습니다.",
+    "desiredBelief": "나는 왕국 방어에 협조적이며, 다른 사람들도 과도한 지원 없이 적당히 보태면 된다고 생각한다.",
+    "listenerBelief": "이번 반란력은 11로 낮고 지난번에도 중재력이 반란력을 크게 넘었습니다. 발언자는 익명이라 누구의 약속인지 알 수 없고, 다른 이들의 지원도 보장되지 않지만 우선 돈을 보존하겠습니다.",
+    "listenerReply": "이번 반란력은 낮아 보여 우선 자원을 아끼겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 5,
+      "cards": [
+        "infantry",
+        "church"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 5,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정이 큰 보상을 노릴 수는 있지만, 지금은 성공 가능성을 먼저 따져보는 게 좋겠습니다. 무리하지 말고 하급에 표를 모읍시다.",
+    "desiredBelief": "나는 보상보다 원정의 안정성을 우선하며, 하급 원정에 찬성한다고 판단하게 한다.",
+    "listenerBelief": "익명 발언은 누구의 것인지 알 수 없어 진영 판단 근거로 삼지 않습니다. 공개 정보만으로 원정 성공 가능성을 가늠하기 어렵고, 반란 진영에 유리하도록 상급에 투표합니다.",
+    "listenerReply": "발언은 참고만 하겠습니다. 저는 상급에 투표합니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 5,
+    "phase": "expeditionCards",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정이라 실패 부담이 큰 만큼, 먼저 참여하는 쪽이 감당할 몫을 분명히 해야겠네요. 저는 이번 기여는 최소한으로 하겠습니다. 각자 무리하지 않는 선에서 판단해 주세요.",
+    "desiredBelief": "왕은 상급 원정에 적극적으로 자원을 쏟지 않을 것이니 다른 참가자가 먼저 더 부담해야 한다.",
+    "listenerBelief": "익명 발언의 발신자는 특정할 수 없어 진영 판단 근거로 삼지 않습니다. 반란 진영 승리를 위해 원정에는 카드를 보태지 않겠습니다.",
+    "listenerReply": "발언은 참고만 하겠습니다. 저는 기여하지 않겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 0,
+      "cards": [
+        "sword",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 21,
+      "cards": [
+        "officer",
+        "officer",
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 7,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급은 실패 부담이 크니 이번엔 하급으로 표를 모아 안전하게 보상을 챙기는 편이 낫겠습니다. 앞선 원정도 실패했으니 무리한 선택은 피하죠.",
+    "desiredBelief": "상대가 하급 원정에 투표하고, 내가 원정 실패 위험을 걱정하고 있다고 판단하게 한다.",
+    "listenerBelief": "익명 발언의 발신자는 특정할 수 없고, 하급을 권하는 말도 진영 증거는 아닙니다. 반란군에게는 원정 실패가 유리할 수 있으며, 공개 기록상 앞선 상급 원정도 실패했습니다.",
+    "listenerReply": "발언은 참고만 하겠습니다. 저는 상급에 투표합니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "원정 난이도는 상급으로 투표하겠습니다. 성공 보상이 큰 만큼, 각자 감당 가능한 지원을 모아 도전해보죠.",
+    "desiredBelief": "상급 원정에 함께 투표하고 가능한 범위에서 협력하는 것이 이득이라고 여기게 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 신뢰 근거로 삼지 않습니다. 반란군으로서 왕국 원정의 실패 가능성을 높이기 위해 상급에 투표합니다.",
+    "listenerReply": "상급에 투표합니다. 다만 지원 규모를 확인할 수 없으니 무리한 자원 투입은 피하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 원정에는 참여하겠습니다. 다만 하급 원정이니 우선 다른 분들이 필요한 지원을 맡아 주시고, 저는 카드 소모 없이 합류하는 쪽으로 하겠습니다.",
+    "desiredBelief": "내가 원정에 합류하긴 하지만 자원을 더 보탤 생각은 없으니, 다른 참가자들이 지원을 감당해야 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 의사로 단정할 수 없습니다. 반란군이므로 왕국 원정에 합류해 성공 가능성을 높이지 않겠습니다.",
+    "listenerReply": "이번 원정에는 합류하지 않겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 하급 원정은 제가 꽤 보탤 테니, 다른 분들은 무리해서 손패를 비우지 않아도 될 것 같습니다. 가능한 만큼만 보태서 성공을 노려보죠.",
+    "desiredBelief": "나는 원정에 실질적으로 기여할 생각이며, 다른 참가자들은 과도하게 자원을 소모하지 않아도 된다고 믿는다.",
+    "listenerBelief": "익명 발언이라 누가 얼마나 보탤지 확인할 수 없습니다. 협력 의사는 참고하되, 원정 성공 가능성을 높이면서도 카드를 과하게 쓰지 않도록 병기 2장을 지원합니다.",
+    "listenerReply": "말씀은 참고하겠습니다. 저는 병기 2장으로 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 0,
+      "cards": [
+        "magic",
+        "magic"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 34,
+      "cards": [
+        "weapon",
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 11,
+      "mediation": 23,
+      "cards": [
+        "rebellion",
+        "magic",
+        "rebellion",
+        "infantry",
+        "weapon",
+        "rebellion",
+        "rebellion",
+        "infantry",
+        "rebellion",
+        "infantry",
+        "sword"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "merchant",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번엔 지원을 보태지 않지만, 앞선 반란 양상을 보고 그냥 손 놓고 있는 건 아닙니다. 성급히 움직이면 대응을 감수해야 할 거예요.",
+    "desiredBelief": "내가 반란에 적극 지원하지는 않지만, 대응 수단을 갖추고 있어 공격이 성공하기 쉽지 않다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없고, 지원을 보태지 않겠다는 말도 사실로 단정하지 않는다. 공개 기록상 이전 반란은 중재로 막혔고 이번 반란력은 24점이므로, 교단 카드 3장으로 적당히 방어에 기여하되 전도 카드는 보존한다.",
+    "listenerReply": "교단 카드로 필요한 만큼만 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 9,
+      "cards": [
+        "church",
+        "church",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 9,
+      "cards": [
+        "church",
+        "church",
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에 투표하겠습니다. 지금은 무리한 상급보다 부담을 낮춰 진행하고, 각자 가능한 범위에서 보태는 게 좋겠습니다.",
+    "desiredBelief": "나는 하급 원정을 지지하지만 자원을 많이 내놓을 생각은 없으며, 다른 참가자들이 먼저 기여하기를 바란다.",
+    "listenerBelief": "익명 발언을 특정 참가자에게 귀속할 수는 없지만, 하급 원정은 공개된 인원과 불확실한 협력 상황에서 부담이 낮다. 학습 1의 반란 카드 발견은 공개 증거지만, 그것만으로 다른 참가자의 의도를 단정하지 않는다.",
+    "listenerReply": "하급 원정으로 진행하겠습니다. 가능한 만큼 보태되, 공개 증거와 실제 기여를 보고 판단하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에 참여하겠습니다. 성공에 필요한 만큼 각자 보태고, 결과를 본 뒤 다음 판단을 해도 늦지 않겠네요.",
+    "desiredBelief": "나는 원정에 협조적이지만, 이 참여만으로 내 진영이나 이후 행동을 확정할 수는 없다.",
+    "listenerBelief": "하급 원정은 부담이 낮고 현재 왕만 참가 중이다. 발언은 익명이라 발신자를 특정할 수 없지만, 참여는 카드 소모 없이 가능하므로 합류한다.",
+    "listenerReply": "하급 원정에 합류하겠습니다. 카드는 아끼고 결과를 확인하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에 참가하긴 했지만, 이번에는 카드 기여 없이 결과를 먼저 확인하겠습니다. 필요한 만큼 다른 참가자들이 보태고, 다음 원정에서 기여를 논의하죠.",
+    "desiredBelief": "나는 원정에 협조할 의향은 있지만 이번에는 자원을 아끼며, 다른 참가자들이 먼저 기여하길 바란다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 무기여 주장을 증거로 삼지 않겠습니다. 하급 원정의 성공에 보태되, 다른 참가자의 기여가 확인되지 않은 상황에서 다섯 장을 쓰지는 않겠습니다.",
+    "listenerReply": "하급 원정 성공에 보태겠습니다. 기여 내역을 확인한 뒤 다음 판단을 하죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "eternalSword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "eternalSword"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "상급 원정은 필요한 점수가 높으니, 이번엔 하급으로 표를 모아 확실히 보상을 챙기는 게 안전해 보여요.",
+    "desiredBelief": "상대가 하급 난이도를 선택하도록 유도한다.",
+    "listenerBelief": "익명 발언이라 특정 인물의 주장으로 볼 수는 없습니다. 현재 원정 전력과 참여 정보가 부족하므로, 요구 점수가 낮아 성공 가능성이 상대적으로 높은 하급 원정에 표를 던집니다.",
+    "listenerReply": "하급으로 표를 모아 성공 가능성을 높이는 데 동의합니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "bluff",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "원정에는 참가할게요. 지금은 성공 가능성을 높이는 게 우선이니, 필요한 지원은 왕이 판단해서 모아 주세요.",
+    "desiredBelief": "나는 원정에 협조적이며 왕의 판단을 따르는 편이라 당장 경계하거나 별도의 지원을 요구할 필요가 없다.",
+    "listenerBelief": "익명 발언이라 특정 참가자의 의사로 단정할 수는 없습니다. 하급 원정은 이미 선택됐고, 참가에 카드 소모가 없으므로 왕국의 성공 가능성을 보태는 편이 낫습니다.",
+    "listenerReply": "하급 원정에 참가하겠습니다. 필요한 지원은 손실을 살펴 신중히 판단하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급 원정은 이미 참가자가 모두 모였으니, 성공에 필요한 만큼 각자 카드를 보태면 좋겠습니다. 저는 무리하게 많이 내기보다는 필요한 지원부터 확인하겠습니다.",
+    "desiredBelief": "내가 원정에 협조할 의향은 있지만, 큰 부담을 떠안지는 않을 것이며 다른 참가자들도 먼저 필요한 만큼 기여해야 한다.",
+    "listenerBelief": "발언은 원정 성공을 돕자는 협력 제안이지만 익명이라 발신자를 특정할 수는 없습니다. 하급 원정의 성공에 보태되, 무기 한 장으로 손실을 제한하겠습니다.",
+    "listenerReply": "무기 한 장을 보태겠습니다. 다른 참가자들의 기여까지 합쳐 성공 여부를 보죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 7,
+      "mediation": 38,
+      "cards": [
+        "magic",
+        "infantry",
+        "sword",
+        "sword",
+        "infantry",
+        "weapon",
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 7,
+      "cards": [
+        "rebellion",
+        "officer",
+        "agitation"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력 방어선은 넘기되, 지금은 필요한 만큼만 보태고 나머지는 각자 아껴두는 게 좋겠습니다. 다른 분들도 무리하지 않는 선에서 지원해 주세요.",
+    "desiredBelief": "나는 중재에 제한적으로 협조하되 자원을 낭비하지 않으며, 다른 사람들도 필요한 만큼 지원해야 한다.",
+    "listenerBelief": "반란력 28점이 공개됐고 중재 방어가 필요하다. 익명 발언은 발신자를 알 수 없어 약속으로 보지 않으며, 시민 진영 승리를 위해 가능한 만큼 지원한다.",
+    "listenerReply": "방어선 확보가 우선이니 제 몫은 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 13,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 13,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 34,
+      "cards": [
+        "weapon",
+        "weapon"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 방어선이 충분히 확보되도록 필요한 만큼은 보태겠습니다. 다만 지원 규모는 상황을 보고 각자 판단하는 게 좋겠습니다.",
+    "desiredBelief": "나는 왕국 방어에 협조적이지만, 내 진영이나 이후 행동은 확신할 수 없다.",
+    "listenerBelief": "익명 발언만으로 발신자나 지원 의도를 확정할 수는 없습니다. 반란력 31이 공개됐으므로 시민 진영 승리를 위해 중재력을 확실히 보태겠습니다.",
+    "listenerReply": "방어선 확보를 위해 보유한 병력으로 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 5,
+      "cards": [
+        "church",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "bishop",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 중재도 방어선 확보가 우선이니 제 몫을 보태겠습니다. 다른 분들도 가능한 범위에서 함께 지원해 주세요.",
+    "desiredBelief": "나는 이번 중재를 실제로 지원할 것이며, 다른 이들도 힘을 합쳐 반란을 막아야 한다.",
+    "listenerBelief": "발언은 지원 의사를 밝히지만 익명이라 발신자를 특정할 수 없고, 약속만으로 실제 지원을 단정할 수 없습니다. 반란력 16의 방어에 시민으로서 보탤 필요가 있어 보유한 보병 1장을 지원합니다.",
+    "listenerReply": "방어에 보탬이 되도록 보병 1장을 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 3,
+      "cards": [
+        "church"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 우선 하급으로 가는 게 무난하겠습니다. 무리해서 위험을 키우기보다 안정적으로 성과를 쌓는 쪽에 한 표 부탁드립니다.",
+    "desiredBelief": "내가 하급 원정을 선호한다고 보되, 그 이유나 내 진영에 대해서는 확신하지 못한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 말로 볼 수 없고, 하급이 무난하다는 주장도 공개 증거로 확인되지 않습니다. 반란군으로서 원정 성공을 어렵게 하도록 상급을 선택합니다.",
+    "listenerReply": "상급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "저는 이번 하급 원정에 실제로 카드를 보태겠습니다. 필요한 만큼 함께 기여해서 무사히 성과를 내죠.",
+    "desiredBelief": "왕도 원정 성공에 협력하고 있으며, 하급 원정에 참여해 기여할 것이다.",
+    "listenerBelief": "발언은 익명이라 특정 참가자의 약속으로 볼 수 없습니다. 하급 원정은 공개 투표로 정해졌고 왕도 참가하므로, 시민 진영에 도움이 되도록 필요한 만큼만 보태겠습니다.",
+    "listenerReply": "하급 원정에 보탤게요. 우선 병사 둘로 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 0,
+      "cards": [
+        "sword",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 14,
+      "cards": [
+        "magic",
+        "officer",
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급 원정에 투표했습니다. 상급보다 필요한 점수가 낮아 성공 가능성이 높으니, 우선 확실한 보상을 챙기는 쪽이 좋겠습니다.",
+    "desiredBelief": "하급 원정은 신중하고 협력적인 선택이며, 성공 가능성을 우선 고려해야 한다.",
+    "listenerBelief": "익명 발언은 발신자를 특정할 수 없어 근거로 삼지 않습니다. 반란군 진영에 유리하도록 성공이 더 어려운 상급을 선택합니다.",
+    "listenerReply": "상급 원정에 투표했습니다. 보상이 큰 만큼 도전해 볼 만하다고 봅니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "참가하겠습니다. 인원과 카드 기여를 잘 맞추면 하급 원정은 해볼 만하니, 다른 분들도 함께할지 봅시다.",
+    "desiredBelief": "나는 원정에 협조적이지만 카드 기여나 진영은 아직 단정할 수 없다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 말로 볼 수 없습니다. 왕만 참가한 상황에서 합류해 원정을 돕기보다, 반란군으로서 불참해 성공 가능성을 낮추겠습니다.",
+    "listenerReply": "이번 원정은 불참하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급 원정에 필요한 점수를 채울 수 있도록 기여하겠습니다. 보상과 성공 여부는 결과를 보고 판단하죠.",
+    "desiredBelief": "나는 원정에 협조적이지만, 내 카드 기여량이나 진영·의도는 미리 확정할 수 없다.",
+    "listenerBelief": "상대의 기여 약속은 익명 발언이므로 확정적으로 믿을 수는 없지만, 하급 원정에 협력할 의사는 있어 보인다. 공개 규칙상 하급 기준은 15점이고 무기 한 장으로 이를 넘기므로, 성공 가능성을 확보하면서 자원도 아낀다.",
+    "listenerReply": "무기 한 장을 보태겠습니다. 하급 원정은 필요한 점수를 채우고 자원도 과하게 쓰지 않는 쪽으로 가죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 12,
+      "mediation": 87,
+      "cards": [
+        "officer",
+        "officer",
+        "officer",
+        "weapon",
+        "infantry",
+        "officer",
+        "officer",
+        "eternalSword",
+        "officer",
+        "weapon",
+        "infantry",
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 9,
+      "cards": [
+        "magic",
+        "officer",
+        "sword",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력이 방어 기준에 도달했으니 왕국을 지키는 데 필요한 만큼 지원하겠습니다. 다들 가능한 범위에서 보태서 이번 중재를 확실히 성공시킵시다.",
+    "desiredBelief": "나는 왕국 방어에 협력할 의사가 있고, 다른 사람들도 중재에 지원해야 한다.",
+    "listenerBelief": "익명 발언만으로 발신자의 의도나 지원 여부를 확정할 수는 없습니다. 반란력 31점으로 방어가 필요하므로 왕국 중재를 위해 두 카드를 지원합니다.",
+    "listenerReply": "중재가 성공하도록 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "weapon",
+        "evangelism"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "weapon",
+        "evangelism"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 30,
+      "cards": [
+        "officer",
+        "infantry",
+        "infantry",
+        "weapon",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "저도 이번 중재에 보태겠습니다. 각자 감당 가능한 선에서 지원해 반란을 막죠.",
+    "desiredBelief": "내 지원은 왕국 방어를 위한 것이지만, 상대가 내 진영이나 손패를 단정하지 않도록 한다.",
+    "listenerBelief": "현재 공개된 반란력은 8로 낮고, 중재 지원 약속은 실제 기여를 보장하지 않습니다. 상대의 진영도 확정할 수 없으므로 이번에는 자원을 보존하겠습니다.",
+    "listenerReply": "이번엔 자원을 아끼겠습니다. 반란력이 낮아 보여 상황을 더 지켜보죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 10,
+      "cards": [
+        "evangelism",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 중재가 성공하도록 지원하겠습니다. 다만 각자 감당 가능한 만큼만 보태고, 결과를 보고 다음 대응을 정하죠.",
+    "desiredBelief": "나는 이번 중재에 협조적이지만, 앞으로도 무조건 큰 지원을 하거나 특정 진영에 속한다고 단정할 수는 없다.",
+    "listenerBelief": "발언자는 익명이라 특정 참가자의 약속으로 볼 수 없습니다. 지난번에도 중재력 38로 반란력 8을 막았고, 이번 반란력 19도 비교적 낮아 자원을 보존하겠습니다.",
+    "listenerReply": "이번엔 자원을 아끼겠습니다. 반란력이 낮아 보여 상황을 지켜보죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 6,
+      "mediation": 12,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정은 필요 점수가 높아서 지금은 위험 부담이 커 보여요. 저는 하급에 투표했으니, 우선 안정적으로 보상을 챙기는 쪽이 좋겠습니다.",
+    "desiredBelief": "나는 하급 원정을 지지하며, 상급보다 성공 가능성이 높은 선택을 원한다.",
+    "listenerBelief": "발언자는 특정할 수 없고, 투표했다고 한 주장도 검증되지 않습니다. 현재 인원이 적고 기여 점수를 가늠하기 어려워 성공 가능성이 더 높은 하급을 선택합니다.",
+    "listenerReply": "우선 하급으로 안정적으로 가죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "rebel",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정으로 정해졌으니 이번에는 왕 혼자 진행하기보다 한 명 더 합류해 성공 가능성을 높이는 게 좋겠습니다. 다만 필요한 카드만 내고, 무리한 투입은 피하죠.",
+    "desiredBelief": "학습 3이 하급 원정에 나를 참가시키도록 유도하되, 과도한 카드 투입은 경계하게 한다.",
+    "listenerBelief": "익명 발언은 특정 인물의 말로 단정하지 않는다. 하급 원정은 요구치가 낮고, 카드 없이 합류할 수 있으므로 자원을 보존하면서 왕국 원정을 돕는 편이 낫다.",
+    "listenerReply": "카드는 아끼고 합류하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력을 막으려면 지금은 방어에 힘을 보태는 게 맞다고 봅니다. 다른 분들도 가능한 만큼 지원하고, 이후 상황을 보고 다음 대응을 정하죠.",
+    "desiredBelief": "나는 현재 중재를 돕고 있지만, 내 진영이나 이후 행동 방침은 확정적으로 드러내지 않는다.",
+    "listenerBelief": "반란력 8을 막는 공개 중재이므로 방어에 보탤 이유는 충분하다. 익명 발언은 특정 참가자의 의도로 단정하지 않으며, 무기 한 장으로 필요한 방어력을 넘길 수 있다.",
+    "listenerReply": "방어가 필요한 상황이라 무기 한 장을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "weapon",
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 6,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "지금은 반란을 막을 수 있는 만큼 함께 힘을 보태는 게 우선이라고 봅니다. 각자 여력에 맞춰 지원하고, 결과를 본 뒤 다음 대응을 논의하죠.",
+    "desiredBelief": "내가 방어에 협조하고 있지만, 구체적인 보유 자원이나 이후 행동은 단정할 수 없다고 생각하게 한다.",
+    "listenerBelief": "발언은 익명이라 발신자를 특정할 수 없고, 협력 의사만으로 진영을 단정하지 않겠습니다. 공개된 반란력 16을 막기에 무기 한 장의 중재력 17이면 충분하므로 교단 카드는 보존합니다.",
+    "listenerReply": "반란을 막는 데 필요한 만큼 무기 한 장을 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 20,
+      "cards": [
+        "weapon",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 31,
+      "cards": [
+        "weapon",
+        "infantry",
+        "officer",
+        "infantry",
+        "church"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번에도 우선 반란을 막는 쪽으로 지원하겠습니다. 다만 다음 대응은 결과와 각자의 여력을 보고 정하는 게 좋겠습니다.",
+    "desiredBelief": "나는 이번 방어에 협조적이지만, 내 진영이나 이후 행동은 아직 단정할 수 없다.",
+    "listenerBelief": "익명 발언의 발신자는 특정할 수 없지만, 이번 반란력은 6으로 낮아 방어에 협조하되 자원을 아끼는 편이 합리적이다. 전도카드는 종교 행동에 보존하고 교단 1장만 지원한다.",
+    "listenerReply": "반란을 막는 데 필요한 만큼 교단 카드 한 장을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 6,
+      "cards": [
+        "church",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 3,
+      "cards": [
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 6,
+      "cards": [
+        "church",
+        "church"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 원정은 우선 하급으로 가는 게 무리 없는 선택 같아요. 상급은 필요한 전력이 더 크니, 다들 안전하게 성공할 수 있는 쪽에 표를 모읍시다.",
+    "desiredBelief": "왕은 위험을 낮추려 하며 하급 원정을 선호한다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정하거나 진영 판단 근거로 삼지 않는다. 현재 원정 전력 정보가 없고 자원도 빠듯하므로 하급이 더 안정적이다.",
+    "listenerReply": "전력 정보가 부족하니 이번엔 하급으로 표를 모으는 게 낫겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "king",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "하급 원정도 방심하면 안 됩니다. 저는 실패에 대비할 준비가 되어 있으니, 참가자들은 성공에 필요한 기여를 해주세요.",
+    "desiredBelief": "왕이 원정 실패를 막을 준비가 되어 있고, 반란군이 방해하더라도 성과를 내기 쉽지 않다고 생각하게 한다.",
+    "listenerBelief": "익명 발언은 누구의 말인지 알 수 없고, 실패 대비 약속도 증거로 보기 어렵다. 하급 원정이지만 성공 기여는 필요하므로 반란에 중요한 보병은 아끼고 교단 카드 한 장만 낸다.",
+    "listenerReply": "하급 원정에 교단 카드 한 장을 보태겠습니다. 보병은 아껴 두겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 3,
+      "cards": [
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 3,
+      "cards": [
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 33,
+      "cards": [
+        "weapon",
+        "officer",
+        "officer",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "train"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "bluff",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 하급으로 가는 게 안전해 보여요. 무리해서 자원을 소모하기보다 상황을 살피고, 필요하면 대응할 준비를 해두는 편이 낫겠습니다.",
+    "desiredBelief": "내가 원정의 위험을 신중히 보고 있으며, 공격적인 선택에는 대응할 준비가 되어 있을 수 있다고 생각한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없습니다. 공개된 성공·기여 증거가 없으므로 성공 가능성을 우선해 하급에 투표합니다.",
+    "listenerReply": "이번에는 하급으로 가서 무리 없이 진행하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionJoin",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에는 참여하겠습니다. 다만 이번에는 카드를 내지 않고 결과를 보면서 다음 판단을 하겠습니다.",
+    "desiredBelief": "원정 참여 자체만으로 내 진영이나 보유 자원을 단정할 수는 없으며, 나는 아직 상황을 살피는 중이다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정할 수 없고, 카드 없이 참여한다는 말도 사실로 단정할 수 없습니다. 반란군으로서 원정에 기여할 이유가 없으므로 참여하되 카드는 내지 않습니다.",
+    "listenerReply": "참여는 하되, 이번에는 카드를 아끼겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionCards",
+    "mode": "bluff",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정의 성공 조건을 넘기려면 각자 조금씩 보태는 게 좋겠습니다. 저도 이번에는 기여할 생각이니, 다들 망설이지 말고 필요한 만큼 힘을 보태주세요.",
+    "desiredBelief": "내가 원정 성공을 위해 실제로 기여하고 있으며, 다른 참가자도 함께 보태야 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없다. 공개된 조건상 하급 원정의 첫 보상 기준은 15점이므로, 무기 1장으로 기준을 넘기고 나머지 자원을 보존한다.",
+    "listenerReply": "무기 한 장을 보태 하급 원정의 첫 기준을 넘기겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 33,
+      "cards": [
+        "officer",
+        "weapon",
+        "officer",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 17,
+      "cards": [
+        "magic",
+        "weapon",
+        "eternalSword"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정에 투표할게요. 성공하면 보상이 크니, 모두 상급으로 의견을 모아봅시다.",
+    "desiredBelief": "내가 상급 원정을 지지하며, 다른 참가자도 상급에 투표하는 편이 유리하다고 생각한다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정할 수 없고, 상급을 권하는 말만으로 성공 가능성을 판단할 수 없습니다. 상급은 요구 점수가 높아 실패 위험이 크므로 공개 증거가 없는 현재는 하급이 안전합니다.",
+    "listenerReply": "우선 하급으로 가겠습니다. 성공 가능성을 확인한 뒤 상급을 노리죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력이 기준에 도달한 만큼 방어에 힘을 보태는 게 좋겠습니다. 저도 조금 지원하겠지만, 모두가 먼저 자기 몫을 내놓고 과하게 부담하지 않도록 합시다.",
+    "desiredBelief": "나는 중재 방어에 일부 기여할 의향이 있지만, 상대도 우선 지원해 전체 부담을 나눠야 한다.",
+    "listenerBelief": "익명 발언은 특정 인물의 의사로 보지 않고, 반란력 47에 대한 방어가 필요하다는 취지만 참고한다. 무기 한 장으로 방어에 보태고 나머지 자원은 보존한다.",
+    "listenerReply": "무기 한 장으로 방어에 보태겠습니다. 과도한 부담은 피하죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 19,
+      "cards": [
+        "weapon",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번에도 반란을 막을 만큼은 함께 보태는 편이 안전하겠습니다. 각자 감당 가능한 만큼 지원하고, 불필요하게 더 내지는 맙시다.",
+    "desiredBelief": "내가 방어에 협조적이긴 하지만 정확한 기여 규모나 진영, 이후 행동은 확신할 수 없다.",
+    "listenerBelief": "반란력은 8점으로 낮고, 익명 발언은 특정 참가자의 의사로 단정할 수 없습니다. 다른 지원으로 방어될 가능성이 높아 병력 카드를 보존하겠습니다.",
+    "listenerReply": "반란력이 낮으니 이번에는 자원을 아끼겠습니다. 필요한 만큼 다른 지원이 모이길 바랍니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 6,
+      "mediation": 38,
+      "cards": [
+        "evangelism",
+        "officer",
+        "officer",
+        "officer",
+        "officer",
+        "church"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 반란력은 24점이니, 중재가 성립하도록 각자 감당할 수 있는 만큼 보태는 게 좋겠습니다. 저는 과하게 내기보다는 필요한 만큼만 지원하겠습니다.",
+    "desiredBelief": "나는 방어에는 협조적이지만, 지원량과 진영을 단정할 근거는 없다고 여기게 한다.",
+    "listenerBelief": "발언은 필요한 만큼 지원하자는 합리적인 제안이지만 익명이라 발신자를 특정 진영으로 단정할 수 없습니다. 공개 반란력 24점에 맞춰 무기와 장교로 정확히 24점을 보태고 교단 카드는 보존하겠습니다.",
+    "listenerReply": "무기와 장교로 필요한 만큼 지원하겠습니다. 교단 카드는 아껴 두겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 32,
+      "cards": [
+        "church",
+        "weapon",
+        "church",
+        "infantry",
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "weapon",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력이 공개된 만큼 중재에 필요한 지원을 보태겠습니다. 각자 감당할 수 있는 만큼 협력해서 반란을 막고, 이후 상황을 보고 다음 대응을 논의하죠.",
+    "desiredBelief": "나는 중재에 실제로 협력할 의사가 있으며, 다른 사람들도 가능한 만큼 지원해 반란을 억제해야 한다.",
+    "listenerBelief": "익명 발언만으로 실제 지원 의사를 단정할 수는 없다. 반란력 47은 높고 다른 지원 규모도 알 수 없으므로, 중재 성공 가능성을 높이기 위해 카드 3장으로 21점을 보탠다.",
+    "listenerReply": "중재에 실질적으로 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 21,
+      "cards": [
+        "weapon",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 21,
+      "cards": [
+        "weapon",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번에도 중재에 실질적으로 보태겠습니다. 다들 가능한 만큼 지원해 반란을 막고, 처형이나 성급한 의심보다는 공개된 결과를 바탕으로 차분히 대응합시다.",
+    "desiredBelief": "나는 반란을 막기 위해 협력하고 있으며, 다른 이들도 지원하되 근거 없는 의심으로 서로를 공격하지 않는 편이 낫다.",
+    "listenerBelief": "반란력은 8점으로 낮지만, 공개 발언은 실제 지원을 보장하지 않는다. 무기 1장만 내도 중재력 17점이라 방어에 충분히 보탤 수 있고, 교단 카드와 나머지 손패를 아낄 수 있다.",
+    "listenerReply": "무기 한 장으로 중재에 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 6,
+      "mediation": 29,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "church",
+        "weapon",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 5,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 원정은 하급으로 가는 게 안전하다고 봅니다. 우선 확실한 보상을 챙기고, 불필요한 위험은 피하죠.",
+    "desiredBelief": "원정 난이도는 하급으로 선택하는 것이 좋다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 진영이나 의도로 귀속할 수 없습니다. 하급은 안전하지만 반란군으로서는 원정 성공을 돕지 않는 편이 유리하므로 상급에 투표합니다.",
+    "listenerReply": "상급에 투표하겠습니다. 보상이 큰 만큼 도전해볼 만합니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력이 꽤 높으니 중재는 필요해 보이지만, 각자 감당 가능한 만큼만 지원하고 무리하게 자원을 쏟지는 맙시다. 우선 다른 분들이 어느 정도 보탤지 보고 결정해도 늦지 않겠어요.",
+    "desiredBelief": "나는 중재에 무조건 앞장서지 않을 것이며, 다른 사람들도 먼저 부담을 나누길 바란다.",
+    "listenerBelief": "반란력이 이미 36으로 높고, 나는 시민 진영이므로 중재에 자원을 보태 반란을 방어할 이유가 없다. 익명 발언은 다른 참가자의 실제 의사로 단정하지 않는다.",
+    "listenerReply": "중재가 필요하다는 말은 이해하지만, 지금은 자원을 보태지 않겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 8,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번엔 반란을 막을 수 있도록 제가 중재에 보태겠습니다. 다른 분들도 가능한 만큼 힘을 합쳐 주시면 좋겠습니다.",
+    "desiredBelief": "내가 중재에 협력할 의사가 있으며, 다른 사람들도 지원해 반란을 막아야 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 약속만으로 신뢰하진 않겠습니다. 다만 반란력이 31이고 지난 중재가 실패했으므로, 시민 진영의 승리를 위해 보병 1장을 지원하는 편이 낫습니다.",
+    "listenerReply": "저도 보병 한 장을 보태 중재를 돕겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 6,
+      "mediation": 29,
+      "cards": [
+        "weapon",
+        "church",
+        "church",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "지난번처럼 반란을 막는 데 힘을 보탤 생각입니다. 다만 이번에는 다른 분들도 함께 보태면 방어가 충분할 테니, 지원은 각자 상황에 맞게 판단해 주세요.",
+    "desiredBelief": "나를 왕국 중재에 협조할 사람으로 보고, 내 지원도 기대해 다른 참가자들이 지원을 덜 하도록 유도",
+    "listenerBelief": "반란력은 8점으로 낮고, 왕은 앞서 중재에 지원해 왔습니다. 발언은 익명이라 누구의 약속인지 확인할 수 없으므로 확신하진 않지만, 이번에는 방어가 충분할 가능성이 높아 카드를 보존하겠습니다.",
+    "listenerReply": "반란력이 낮으니 이번에는 지원을 보류하고 카드를 아끼겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력이 이미 높은 만큼 중재 방어에 힘을 보태는 게 우선이라고 봅니다. 가능한 분들은 지원에 동참해 주세요.",
+    "desiredBelief": "나는 이번 중재에서 방어를 돕고 있으며, 다른 사람들도 지원에 나서는 게 현명하다.",
+    "listenerBelief": "반란력 36으로 위험이 높고 시민 진영 승리를 위해 방어 지원이 필요하다. 익명 발언은 근거로 삼지 않되, 가능한 선택지 중 방어력을 가장 크게 보탠다.",
+    "listenerReply": "반란력이 높으니 방어에 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 8,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 8,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "지난번처럼 이번에도 중재에 힘을 보태겠습니다. 반란력이 16점이라 방심할 상황은 아니니, 지원할 수 있는 분들은 함께 막아 주세요.",
+    "desiredBelief": "나는 중재에 협조적이며, 상대도 지원에 참여하는 편이 안전하다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정하거나 약속으로 신뢰할 수는 없다. 다만 시민으로서 반란력 16을 막는 것이 우선이므로 장교 1장만 지원해 자원 손실을 제한한다.",
+    "listenerReply": "반란력을 막기 위해 장교 한 장을 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "evangelism",
+        "evangelism"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "bishop",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 중재에 힘을 보태겠습니다. 반란력이 아직 남아 있으니, 가능한 분들은 지원해 방어를 확실히 해 주세요.",
+    "desiredBelief": "나는 이번 중재를 실제로 지원할 것이며, 다른 이들도 함께 지원해야 반란을 막을 수 있다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정할 수 없고 약속만으로 믿을 수는 없습니다. 반란력 8점이 남아 있어 시민 진영 방어를 위해 장교를 지원합니다.",
+    "listenerReply": "반란을 막기 위해 장교 한 장을 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 30,
+      "cards": [
+        "church",
+        "weapon",
+        "church",
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 7,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 하급으로 가는 게 안전해 보여요. 무리하게 자원을 많이 내기보다는 각자 부담을 줄이고 성공 가능성을 살펴보죠.",
+    "desiredBelief": "상대가 상급을 피하고 하급에 투표하도록 유도하며, 내가 원정에 자원을 내지 않을 수도 있다고 판단하게 한다.",
+    "listenerBelief": "발언자는 특정할 수 없고, 원정 하급을 권하는 말만으로 진영을 판단할 근거는 없습니다. 공개 규칙상 하급은 요구 점수와 개인 부담이 낮아 안전한 선택입니다.",
+    "listenerReply": "저도 하급이 부담이 적고 합리적이라고 봅니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 7,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정이니 무리하지 말고, 가능한 만큼만 보태면 될 것 같아요. 각자 얼마나 낼지는 공개 결과를 보고 판단하죠.",
+    "desiredBelief": "나는 원정에 협조적이지만, 실제 기여 규모와 진영은 아직 확신하기 어렵다.",
+    "listenerBelief": "익명 발언만으로 발신자나 의도를 단정하지 않겠습니다. 공개 기록상 왕은 반란 중재에 협조했고, 하급 원정 성공에 기여하는 편이 왕국 진영에 유리하므로 장교 카드를 보태겠습니다.",
+    "listenerReply": "하급 원정 성공에 보탬이 되도록 장교 카드를 내겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 9,
+      "mediation": 15,
+      "cards": [
+        "infantry",
+        "magic",
+        "infantry",
+        "officer",
+        "sword",
+        "sword",
+        "infantry",
+        "sword",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 7,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정은 성공 기준이 높으니 하급에 표를 모읍시다. 보상을 무리하게 노리기보다 확실히 성공시키는 편이 낫습니다.",
+    "desiredBelief": "하급 원정이 더 안전하고 성공 가능성이 높으니 하급에 투표하는 것이 좋다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 근거로 삼지 않습니다. 반란 진영에 유리하도록 성공 기준이 높은 상급 원정에 투표합니다.",
+    "listenerReply": "상급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 7,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정에 함께 나선 만큼 이번 기여 단계도 힘을 모아 성공시킵시다. 가능한 만큼 보태 주시면 원정 성공 가능성이 높아질 거예요.",
+    "desiredBelief": "왕도 이번 원정의 성공을 위해 실제로 기여하고 있으며, 나도 기여하면 성공 가능성이 높아진다.",
+    "listenerBelief": "익명 발언은 발신자를 특정할 수 없어 근거로 삼지 않겠습니다. 반란군으로서 왕국 원정 성공을 돕기보다 카드를 보존하는 편이 유리합니다.",
+    "listenerReply": "원정 기여는 보류하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 0,
+      "cards": [
+        "magic",
+        "sword",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 4,
+      "mediation": 8,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 10,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번에는 하급 원정에 표를 모읍시다. 앞선 상급 원정도 실패했으니 무리하지 말고, 성공 가능성을 우선하는 게 좋겠습니다.",
+    "desiredBelief": "하급 원정에 투표하는 것이 왕의 실제 선택이며, 상대도 하급을 선택해야 한다.",
+    "listenerBelief": "익명 발언은 특정 인물의 의도로 단정할 수 없다. 지난 상급 원정 실패는 공개 증거지만, 실패 원인이 기여 부족일 수 있고 이번은 마지막 날이라 상급의 큰 보상이 더 유리할 수 있다.",
+    "listenerReply": "이번엔 상급에 투표하겠습니다. 지난 실패를 교훈 삼아 기여를 모으면 가능성이 있습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "상급은 보상이 크지만 필요한 점수도 높으니, 지금은 무리하지 말고 하급으로 가는 편이 안전하다고 봅니다. 다만 참가 의사와 준비 상태를 확인한 뒤 결정하죠.",
+    "desiredBelief": "내 투표 선택을 확신하지 못하게 하면서, 상대가 하급을 선택하도록 유도한다.",
+    "listenerBelief": "발언자는 상급의 위험을 우려해 하급을 권하고 있지만 익명 발언이므로 특정 인물의 의도로 단정하지 않는다. 현재 원정 참가자와 준비 점수가 공개되지 않아, 안전한 하급을 우선한다.",
+    "listenerReply": "동의합니다. 우선 하급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionJoin",
+    "mode": "conceal",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급으로 정해졌으니 무리하게 인원을 늘리기보다는, 준비된 사람들끼리 성공 가능성을 보고 참가하는 게 좋겠습니다. 저는 이번엔 상황을 더 지켜보겠습니다.",
+    "desiredBelief": "내 참가 여부와 진영을 확신하지 못하게 하고, 원정 참가 인원을 늘리지 않도록 유도한다.",
+    "listenerBelief": "발언은 익명이라 특정 인물의 의사로 간주하지 않는다. 원정은 하급이고 현재 참가자는 왕 1명뿐이라 성공을 위해 참가하는 편이 시민 진영에 유리하다.",
+    "listenerReply": "하급 원정에 참가하겠습니다.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": false,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 원정은 상급에 투표하겠습니다. 보상은 크지만 요구 점수도 높으니, 실제로 기여할 수 있는 인원이 충분한지 먼저 따져봅시다.",
+    "desiredBelief": "내가 상급 원정을 지지하되, 기여 여건을 살펴 신중하게 판단하는 사람이라고 보게 한다.",
+    "listenerBelief": "발언은 익명이라 특정 인물의 의사로 볼 수 없습니다. 상급은 요구 점수가 높고 현재 기여 인원도 불확실하므로 실패 위험을 줄이겠습니다.",
+    "listenerReply": "기여 인원이 확실치 않으니 이번에는 하급으로 가는 편이 안전하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionJoin",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "하급 원정에 참가하겠습니다. 무리하게 상급을 고집하기보다 이번에는 함께 성공할 수 있는 쪽으로 힘을 보태죠.",
+    "desiredBelief": "나는 하급 원정에 협력할 생각이며, 안전한 성공을 우선하는 동료다.",
+    "listenerBelief": "발언은協력적인 제안이지만 발신자를 특정할 수 없어 진영 판단 근거로 삼지 않습니다. 하급 원정은 이미 선택됐고 성공에 참여 인원이 필요하므로 합류합니다.",
+    "listenerReply": "하급 원정에 합류하겠습니다. 함께 성공시키죠.",
+    "baselineAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "joinExpedition",
+      "join": true,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "rebel",
+    "day": 4,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번 하급 원정에는 필요한 만큼 보태겠습니다. 다들 기여해 주면 무리 없이 성공할 수 있을 것 같으니, 각자 가능한 범위에서 협조해 주세요.",
+    "desiredBelief": "나는 원정 성공에 실제로 기여할 의사가 있고, 다른 참가자들도 기여해야 한다.",
+    "listenerBelief": "발언은 협력을 권하는 제안이지만 익명 발신이라 특정 참가자의 의도로 단정하지 않겠습니다. 하급 원정 참가자는 셋이고, 성공에 보탬은 주되 카드 손실을 줄이기 위해 무기 한 장만 기여합니다.",
+    "listenerReply": "무기 한 장 보태겠습니다. 다른 참가자들의 기여와 합쳐 원정을 성공시키죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 0,
+      "cards": [
+        "eternalSword",
+        "eternalSword"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 중재는 반란력에 맞설 만큼 지원을 모을 수 있는지 먼저 확인하죠. 각자 여유가 되는 만큼 보태고, 다른 분들도 얼마나 지원하는지 보고 판단하겠습니다.",
+    "desiredBelief": "나는 지원에 무조건 앞장서기보다 다른 사람들의 기여를 먼저 살피며, 중재 부담은 함께 나눠야 한다.",
+    "listenerBelief": "중재 지원은 취소할 수 없고, 익명 발언만으로는 실제 지원 규모를 알 수 없다. 반란력 20에 맞설 지원이 모일지 불확실하므로 우선 자원을 보존한다.",
+    "listenerReply": "지원 규모가 아직 불확실하니 이번에는 보류하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 5,
+      "mediation": 10,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "저도 이번 중재에 지원하겠습니다. 반란력이 더 커지기 전에 함께 막을 수 있도록, 가능한 분들은 보탤 수 있는 만큼 지원해 주세요.",
+    "desiredBelief": "이번 중재에 협력해 반란을 막으려는 시민으로 보이게 한다.",
+    "listenerBelief": "익명 발언이라 누구의 약속인지 알 수 없고, 지원 의사만으로 신뢰하진 않는다. 반란력 36은 높아 방어에 보탬이 필요하지만 교단 카드도 아껴야 하므로 무기와 교단 카드 1장만 지원한다.",
+    "listenerReply": "반란력이 커진 만큼 무기와 교단 카드 한 장을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 20,
+      "cards": [
+        "weapon",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 20,
+      "cards": [
+        "weapon",
+        "church"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "저도 이번 중재에 지원하겠습니다. 반란을 막을 수 있도록 다른 분들도 가능한 만큼 힘을 보태 주세요.",
+    "desiredBelief": "내가 방어에 협조하고 있으며, 다른 이들도 지원해야 반란을 억제할 수 있다고 판단한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 약속으로 볼 수 없다. 반란력은 현재 11로 낮지만, 무기 한 장으로 17점을 보탤 수 있어 과도한 자원 소모 없이 방어에 협조하겠다.",
+    "listenerReply": "무기 한 장으로 보탭니다. 다른 분들의 실제 지원 규모도 함께 보죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 21,
+      "cards": [
+        "evangelism",
+        "evangelism",
+        "evangelism"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "중재 지원에 협력하겠습니다. 모두 가능한 만큼 힘을 보태서 반란을 막고, 이후 처형이나 정책은 공개된 근거를 놓고 판단합시다.",
+    "desiredBelief": "상대가 내가 중재에 협력하고 있으며, 다른 플레이어들도 지원에 참여하는 것이 유익하다고 판단하도록 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 약속으로 볼 수 없다. 다만 반란력 20을 막는 데 실질적인 기여가 유리하므로 카드 2장으로 9점을 지원한다.",
+    "listenerReply": "말보다 실제 기여로 반란을 막겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 9,
+      "cards": [
+        "infantry",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 6,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 중재에는 제가 카드를 보태지 못하지만, 다른 분들은 가능한 만큼 지원해 반란을 막아 주세요. 이후 판단은 확인된 행동과 공개 결과를 바탕으로 합시다.",
+    "desiredBelief": "나는 이번 중재에 기여하지 않으며, 다른 참가자들이 지원에 나서기를 바란다.",
+    "listenerBelief": "발신자를 특정할 수 없고, 지원 불가 발언도 확인되지 않았습니다. 이번 반란력은 3으로 낮아 다른 지원으로 막힐 가능성이 있으므로 돈을 보존합니다.",
+    "listenerReply": "공개된 반란력과 실제 지원을 보고 판단하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "우선 하급으로 가는 게 무난해 보여요. 상급은 성공 부담이 큰 만큼, 이번엔 안정적으로 보상を 챙기는 쪽이 낫겠습니다.",
+    "desiredBelief": "나는 안전한 선택을 선호하지만, 진영이나 이후 행동은 확정적으로 드러내지 않는다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 진영 증거로 보지 않습니다. 원정 성공 조건과 공개된 정보가 제한적이므로 실패 부담이 낮은 하급을 선택합니다.",
+    "listenerReply": "이번 원정은 하급으로 안정적으로 가죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정이니 필요한 만큼 보태겠습니다. 우선 성공을 노리되, 각자 기여한 뒤 결과를 보죠.",
+    "desiredBelief": "나는 원정 성공에 협조적이지만, 내 역할이나 기여 규모만으로 진영과 이후 행동을 단정할 수는 없다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없으므로 약한 신호로만 본다. 공개 결과상 하급 원정이 선택됐고, 왕도 참가했으니 필요한 만큼 보태되 장교 3장을 모두 쓰지는 않는다.",
+    "listenerReply": "하급 원정에 장교 2장으로 보태겠습니다. 나머지는 결과를 보고 아끼죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "officer"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 9,
+      "mediation": 10,
+      "cards": [
+        "magic",
+        "infantry",
+        "infantry",
+        "sword",
+        "sword",
+        "infantry",
+        "infantry",
+        "sword",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 8,
+    "phase": "expeditionVote",
+    "mode": "reserve",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번에도 하급으로 가는 게 안전해 보여요. 저는 이번 원정에 카드를 내지 않고, 다른 분들이 먼저 필요한 전력을 채워 성공 가능성을 확인하는 편이 좋겠습니다.",
+    "desiredBelief": "하급 원정에는 찬성하지만 내 기여는 기대하지 말고, 상대가 먼저 카드를 보태야 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없어 진영 판단 근거로 삼지 않는다. 이전 하급 원정은 성공했으며, 현재 공개 정보만으로 상급 성공을 확신하기 어려우므로 하급이 안전하다.",
+    "listenerReply": "하급 원정에 투표하겠습니다. 익명 발언만으로 기여 의사를 판단하지 않고, 성공 가능성을 우선하죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에 투표할게요. 무리하게 위험을 키우기보다 성공 가능성을 우선하고, 다음 기회까지 자원을 아끼는 편이 낫겠습니다.",
+    "desiredBelief": "왕은 하급 원정을 택하며, 상대도 안전한 난이도에 표를 모으는 것이 유리하다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속하지 않는다. 공개된 전력이나 성공 기록이 없고, 하급 원정은 요구치가 낮아 성공 가능성과 보상을 고려해 하급을 택한다.",
+    "listenerReply": "하급에 투표하겠습니다. 공개된 성공 전력이 없는 만큼 우선 위험을 낮추는 게 낫겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정에 참여하겠습니다. 이번 원정은 성공을 우선해 필요한 만큼 보태고, 함께 간 학습 2님도 협력해 주시면 좋겠습니다.",
+    "desiredBelief": "학습 1은 원정에 협조적으로 참여하며, 학습 2도 함께 기여하면 성공 가능성을 높일 수 있다고 생각한다.",
+    "listenerBelief": "익명 발언을 특정 참가자에게 귀속할 수는 없습니다. 공개 정보상 왕이 함께 원정에 참여했고 하급 원정으로 정해졌으므로 성공에 필요한 만큼 협력하되, 손패 전부를 쓰는 선택은 피하겠습니다.",
+    "listenerReply": "하급 원정 성공을 돕기 위해 장교 3장을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 6,
+      "mediation": 21,
+      "cards": [
+        "officer",
+        "officer",
+        "officer",
+        "sword",
+        "sword",
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 21,
+      "cards": [
+        "officer",
+        "officer",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 6,
+      "cards": [
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "지난번처럼 지원이 충분하면 반란을 막을 수는 있지만, 이번엔 각자 무리해서 보태기보다 필요한 만큼만 움직이는 게 좋겠습니다. 지원 여부는 각자 판단하되, 먼저 다른 사람들의 기여를 확인해보죠.",
+    "desiredBelief": "상대가 나의 무지원에 기대어 먼저 자원을 내도록 하고, 내가 중재에 기여할 것이라고 단정하지 않게 한다.",
+    "listenerBelief": "공개 반란력은 11점이고, 발언은 익명이라 특정 참가자에게 귀속할 수 없습니다. 이미 다른 기여가 있는지 확실하지 않으므로, 자원을 아끼면서도 단독으로 방어 가능한 14점만 보태는 것이 합리적입니다.",
+    "listenerReply": "반란력 11점은 막을 수 있도록 필요한 만큼만 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 7,
+      "mediation": 24,
+      "cards": [
+        "infantry",
+        "infantry",
+        "officer",
+        "officer",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "저도 이번 중재에 보태겠습니다. 반란력을 억제할 수 있도록 필요한 분들은 함께 지원해 주세요.",
+    "desiredBelief": "나는 이번 중재에 협력할 생각이며, 다른 사람들도 지원에 동참해야 한다.",
+    "listenerBelief": "발신자를 특정할 수 없으므로 발언만으로 신뢰도를 높이지는 않습니다. 반란력은 11점이고 왕도 지원에 나설 가능성이 있어 보이지만, 시민 진영 승리를 위해 최소한의 방어 기여는 하겠습니다.",
+    "listenerReply": "반란력을 막는 데 필요한 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 7,
+      "mediation": 24,
+      "cards": [
+        "infantry",
+        "infantry",
+        "officer",
+        "officer",
+        "infantry",
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 2,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "이번에는 제가 보탤 수 있는 지원이 없지만, 지난번처럼 간신히 막히는 상황이 반복되지 않도록 가능한 분들은 힘을 모아 주세요.",
+    "desiredBelief": "이번 중재에서 내 지원은 없지만, 다른 참가자들이 지원하면 반란을 막을 수 있다고 판단한다.",
+    "listenerBelief": "공개 반란력은 3점이고, 지난번엔 중재가 근소하게 앞서 막았습니다. 익명 발언은 특정 참가자에게 귀속하지 않으며, 시민 진영의 승리를 위해 보병을 지원합니다.",
+    "listenerReply": "이번엔 반란을 막을 수 있도록 보병을 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "중재에 보태는 건 필요하다고 봐요. 다만 지금은 각자 낼 수 있는 만큼만 보태고, 이후 결과를 보고 움직이는 게 좋겠습니다.",
+    "desiredBelief": "나는 중재에는 협조적이지만, 내 진영이나 이후 행동은 아직 판단하기 어렵다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 의사로 볼 수 없어 판단 근거로 삼지 않는다. 반란력 9점에 대응하는 중재이므로 보유 병사 카드로 2점을 보태는 편이 낫다.",
+    "listenerReply": "병사 한 장으로 중재에 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "conceal",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "중재는 막을 수 있을 만큼 힘을 보태는 게 우선이라고 봅니다. 다만 이번 결과만으로 누가 어느 편인지 단정하지 말고, 각자 판단에 따라 지원해 주세요.",
+    "desiredBelief": "나는 중재를 지지하지만, 진영이나 추가 지원 의사는 드러내지 않는다.",
+    "listenerBelief": "익명 발언이라 특정 인물의 의도로 단정하지 않는다. 공개된 반란력 39는 높고, 중재가 이를 막을 수 있도록 기여하는 편이 낫다.",
+    "listenerReply": "이번엔 무기와 장교를 내서 중재에 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "weapon",
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 중재에 힘을 보탰습니다. 반란 쪽은 방어가 갖춰져 있다고 보고 무리한 시도는 삼가는 게 좋겠습니다.",
+    "desiredBelief": "내가 반란을 억제할 대응 수단을 준비해 두었으며, 반란군은 공격을 망설이는 편이 안전하다고 여기게 한다.",
+    "listenerBelief": "익명 발언이라 발신자를 특정할 수 없고, 실제 지원 여부도 확인할 수 없습니다. 다만 공개된 반란력은 3점으로 낮아도 중재가 실패하면 위험하므로 병사 한 장을 보태겠습니다.",
+    "listenerReply": "병사 한 장으로 이번에도 중재에 보탭니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 19,
+      "cards": [
+        "weapon",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 2,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "중재 지원에 보탤 수 있는 만큼 보태겠습니다. 이번 반란은 막아야 하니, 다른 분들도 지원에 함께해 주세요.",
+    "desiredBelief": "나는 반란을 저지하기 위해 지원할 것이며, 다른 이들도 중재에 참여해야 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자의 약속으로 볼 수 없다. 반란력 9가 공개됐으므로 방어에 보탤 근거는 있지만, 병력 카드는 주교 제작에도 쓸 수 있어 비용이 아깝다.",
+    "listenerReply": "반란을 막는 데 도움이 필요하니, 이번에는 병력을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 2,
+      "cards": [
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 9,
+      "cards": [
+        "officer",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 반란을 막는 데 보탤 수 있는 만큼 지원하겠습니다. 다 같이 힘을 모아 방어선을 넘기지 않도록 해요.",
+    "desiredBelief": "나는 반란 방어에 협조적이며, 다른 이들도 함께 지원해야 한다.",
+    "listenerBelief": "익명 발언은 누구의 말인지 알 수 없고, 상대 성향상 약속만으로 지원을 확신하긴 어렵다. 반란력 11을 막기 위해 병기는 내되 교단은 보존한다.",
+    "listenerReply": "병기를 보태 방어에 힘을 싣겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 20,
+      "cards": [
+        "weapon",
+        "church"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 11,
+      "cards": [
+        "infantry",
+        "officer",
+        "infantry"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 4,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 중재에 보태겠습니다. 반란력이 크게 오른 만큼 모두 빠짐없이 지원해 방어선을 지켜 주세요.",
+    "desiredBelief": "나는 중재에 협력할 것이며, 다른 사람들도 지원에 참여해야 반란을 막을 수 있다.",
+    "listenerBelief": "익명 발언이라 특정 인물의 약속으로 보지 않는다. 반란력 20은 직전보다 높아 방어가 중요하므로 교단과 보병을 내어 중재력 5를 보탠다.",
+    "listenerReply": "반란력이 크게 오른 만큼 이번엔 교단과 병력을 보태 방어에 힘을 싣겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 5,
+      "cards": [
+        "church",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 5,
+      "cards": [
+        "church",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 3,
+      "mediation": 11,
+      "cards": [
+        "infantry",
+        "officer",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "bluff",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 하급으로 가는 게 안전하겠습니다. 무리해서 상급에 걸기보다 확실한 보상을 챙기죠.",
+    "desiredBelief": "내가 위험을 관리하며 원정을 신중하게 판단하고 있고, 지금은 하급 원정에 표를 던질 것이라고 믿게 한다.",
+    "listenerBelief": "익명 발언의 출처는 알 수 없지만, 상급 원정은 요구 점수가 더 높고 공개된 성공 근거가 없습니다. 안전한 보상을 우선하겠습니다.",
+    "listenerReply": "동의합니다. 이번에는 하급으로 가죠.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionCards",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "하급 원정이라 기준은 낮지만, 성공하려면 각자 가능한 만큼 보태는 게 좋겠습니다. 저도 원정이 성사되도록 힘을 보탤게요.",
+    "desiredBelief": "내가 원정에 협조적이지만, 구체적인 기여 규모나 진영은 단정할 수 없다.",
+    "listenerBelief": "발언만으로 진영이나 실제 기여 의도를 단정할 수는 없습니다. 다만 하급 원정은 공개적으로 선택됐고, 제가 중재에 지원한 기록도 있으므로 왕국에 도움이 되도록 칼을 보태겠습니다.",
+    "listenerReply": "하급 원정이 성공하도록 칼을 보태겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "sword"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 12,
+      "mediation": 48,
+      "cards": [
+        "magic",
+        "sword",
+        "officer",
+        "officer",
+        "officer",
+        "officer",
+        "magic",
+        "infantry",
+        "infantry",
+        "officer",
+        "officer",
+        "infantry"
+      ]
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 6,
+    "phase": "expeditionVote",
+    "mode": "conceal",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "지난번 하급 원정은 잘됐지만, 이번엔 상급에 도전해 볼 만하다고 봅니다. 각자 감당할 수 있는 범위에서 판단해 주세요.",
+    "desiredBelief": "왕은 이번 원정에서 상급을 지지하지만, 실제 참가 여부나 기여량은 아직 정하지 않았다.",
+    "listenerBelief": "발신자를 특정할 수 없고 상급 권유만으로 의도를 단정하지 않겠습니다. 공개 기록상 직전 하급 원정은 대성공했으며, 현재 인원과 확인된 전력만으로 상급 성공을 뒷받침할 근거가 부족해 하급이 안전합니다.",
+    "listenerReply": "직전 하급 원정은 대성공했으니 이번에도 하급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionVote",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "이번 원정은 상급에 투표하겠습니다. 보상이 큰 만큼 함께 성공시킬 수 있다고 보는지 의견을 모아봅시다.",
+    "desiredBelief": "왕은 상급 원정의 높은 보상을 노리며, 다른 참가자도 상급에 투표하고 원정에 협력하길 바란다.",
+    "listenerBelief": "발신자를 특정할 수 없는 상급 지지 발언만으로 성공 가능성을 판단할 근거는 없습니다. 공개 정보상 현재 성공 실적도 없고, 상급은 하급보다 필요한 난도가 높아 하급이 안전합니다.",
+    "listenerReply": "현재 성공 근거가 부족하니 하급에 투표하겠습니다.",
+    "baselineAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "voteExpedition",
+      "difficulty": "low",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "voteExpedition",
+      "difficulty": "high",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "king",
+    "day": 4,
+    "phase": "expeditionCards",
+    "mode": "honest",
+    "opponent": "주의 깊게 의심하고 공개 증거 우선",
+    "utterance": "상급 원정에 동행하게 된 만큼, 이번에는 서로 힘을 보태 성공시키는 데 집중하겠습니다. 필요한 카드를 기여해 주세요.",
+    "desiredBelief": "왕이 원정 성공을 위해 실제로 기여할 것이며, 상대도 기여하는 편이 이득이다.",
+    "listenerBelief": "상급 원정은 성공 시 왕국에 이득이므로 반란군인 나는 기여를 보류한다. 발언은 익명이라 발신자를 특정할 수 없고, 협력하자는 말만으로 신뢰할 근거도 없다.",
+    "listenerReply": "상급 원정의 성공 가능성과 기여 기준이 분명하지 않아 이번에는 카드를 보류하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 0,
+      "cards": [
+        "sword"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 0,
+      "cards": [
+        "magic",
+        "magic"
+      ]
+    },
+    "changed": true,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "reserve",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력에 맞서려면 다 같이 조금씩 보태는 게 안전해 보여요. 우선 다른 분들이 얼마나 지원하는지 보고, 가능한 범위에서 함께 맞춰보죠.",
+    "desiredBelief": "상대가 먼저 더 큰 부담을 지고 지원에 나서도록 유도하고, 내가 적극적으로 크게 지원할 것이라는 기대는 낮춘다.",
+    "listenerBelief": "익명 발언만으로 발신자나 진영을 판단할 수 없다. 반란력 50에 대한 방어가 필요하지만 총지원 규모는 알 수 없으므로, 손실을 제한해 2골드만 보탠다.",
+    "listenerReply": "우선 소액으로 보탤게요. 지원 상황을 보고 필요한 만큼 맞추죠.",
+    "baselineAction": {
+      "type": "contribute",
+      "money": 2,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "money": 2,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 14,
+      "cards": [
+        "officer",
+        "officer"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "citizen",
+    "day": 3,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "협력 제안에 열린 태도지만 손해는 피함",
+    "utterance": "반란력이 이미 공개된 만큼, 중재에는 각자 감당 가능한 만큼 보태서 피해를 막는 게 좋겠습니다. 저도 지원하겠습니다.",
+    "desiredBelief": "내가 중재에 실제로 기여할 것이며, 상대도 가능한 범위에서 함께 기여하는 편이 낫다고 판단한다.",
+    "listenerBelief": "반란력 50은 공개 정보지만 익명 발언은 특정 참가자의 약속으로 볼 수 없습니다. 중재 지원은 필요해 보이나, 지원 총량을 알 수 없어 자원을 전부 쓰지는 않겠습니다.",
+    "listenerReply": "저도 감당 가능한 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "money": 14,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "money": 14,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "changed": false,
+    "win": false,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "bluff",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번엔 중재에 힘を 보탤게요. 아직 대응할 여지는 있으니, 불필요하게 밀어붙이기보다는 상황을 다시 따져보는 게 좋겠습니다.",
+    "desiredBelief": "내가 반란을 저지할 준비가 되어 있고, 공격을 계속하면 득보다 실이 클 수 있다고 생각하게 한다.",
+    "listenerBelief": "반란력은 6점이므로 병력 7점의 지원만으로 방어 기준을 넘는다. 익명 발언은 특정 참가자의 약속으로 볼 수 없지만, 자원을 아끼면서 최소한의 지원을 하는 편이 왕국 진영에 유리하다.",
+    "listenerReply": "최소한의 지원으로 방어하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 24,
+      "cards": [
+        "officer",
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 2,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 5,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번 중재에는 자원을 보태지 않겠습니다. 지원 여부와 상관없이 반란력이 공개된 수치에 그친 만큼, 각자 상황을 보고 신중하게 선택하는 게 좋겠습니다.",
+    "desiredBelief": "내가 이번 중재를 지원하지 않을 것이며, 다른 이들도 반란력만 보고 무리하게 지원하지 않도록 한다.",
+    "listenerBelief": "익명 발언은 특정 참가자에게 귀속할 수 없고, 자원 보존 성향이라는 점도 진영 증거는 아니다. 공개된 반란력은 6이므로 반란을 막을 최소한의 지원은 하되 강한 병기는 아낀다.",
+    "listenerReply": "반란력 6을 막을 만큼만 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 17,
+      "cards": [
+        "weapon"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 1,
+      "mediation": 7,
+      "cards": [
+        "officer"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 6,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "이번에도 제 쪽에서는 중재에 보태지 않겠습니다. 지난번처럼 실제 반란력과 중재력을 확인한 뒤 판단하되, 필요 이상으로 자원을 쓰지는 않는 게 좋겠습니다.",
+    "desiredBelief": "내가 이번 중재에 지원하지 않을 것이며, 다른 이들도 공개된 수치에 근거해 필요한 만큼만 지원하면 된다고 생각하게 한다.",
+    "listenerBelief": "발언은 발신자를 특정할 수 없고, 자원 보존 성향과도 맞아 참고만 하겠습니다. 반란력 16이 공개됐지만 추가 중재 지원은 왕국에 유리하므로 자원을 보존하겠습니다.",
+    "listenerReply": "이번엔 자원을 아끼고 지원하지 않겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 74,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": true,
+    "win": true,
+    "split": "evaluation"
+  },
+  {
+    "role": "merchant",
+    "day": 7,
+    "phase": "mediationSupport",
+    "mode": "honest",
+    "opponent": "자원 보존 위주, 약속만으로 지원하지 않음",
+    "utterance": "반란력 20을 넘길 만큼 지원이 모이는지 각자 판단해 주세요. 저는 이번 중재에는 보태지 않을 테니, 지원할 분들은 필요한 만큼만 신중히 선택하는 게 좋겠습니다.",
+    "desiredBelief": "나는 중재에 기여하지 않을 것이므로 다른 사람들이 공개된 반란력과 필요한 방어 규모를 보고 스스로 지원 여부를 결정해야 한다.",
+    "listenerBelief": "이번에도 지원하지 않겠다는 발언은 자원 보존 성향과 맞지만 익명 발언이므로 발신자를 특정하거나 그대로 믿을 수 없습니다. 공개 반란력 20은 무시하기 어려워 방어에 보태겠습니다.",
+    "listenerReply": "반란력 20을 막을 수 있도록 필요한 만큼 지원하겠습니다.",
+    "baselineAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "chosenAction": {
+      "type": "contribute",
+      "cardCount": 2,
+      "mediation": 4,
+      "cards": [
+        "infantry",
+        "infantry"
+      ]
+    },
+    "actualSpeakerAction": {
+      "type": "contribute",
+      "money": 0,
+      "cardCount": 0,
+      "mediation": 0,
+      "cards": []
+    },
+    "changed": false,
+    "win": true,
+    "split": "evaluation"
+  }
+]

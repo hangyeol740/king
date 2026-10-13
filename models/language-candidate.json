@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "algorithm": "REINFORCE-natural-language-social-options",
+  "values": {
+    "rebel/expedition": [
+      -0.2735041538266241,
+      0.17271891978226,
+      -0.00007253927826411655,
+      0.10085777332262817
+    ],
+    "citizen/expedition": [
+      0.009301166408905959,
+      0.28567935386810783,
+      -0.11709360832916128,
+      -0.17788691194785247
+    ],
+    "citizen/crisis": [
+      -0.0477515898106962,
+      0.2098615166356882,
+      -0.10675458320569733,
+      -0.05535534361929467
+    ],
+    "king/expedition": [
+      -0.069550724720154,
+      0.2237928167016076,
+      -0.16703321516644754,
+      0.012791123184993942
+    ],
+    "bishop/crisis": [
+      -0.15137403106144887,
+      0.01111703743795241,
+      0.10346183014508153,
+      0.03679516347841489
+    ],
+    "bishop/expedition": [
+      -0.0894219355523823,
+      0.12716048773143596,
+      0.060493821064769304,
+      -0.09823237324382292
+    ],
+    "merchant/crisis": [
+      -0.049999999999999996,
+      -0.049999999999999996,
+      0.15,
+      -0.049999999999999996
+    ]
+  },
+  "metadata": {
+    "episodes": 24,
+    "externalApi": true,
+    "model": "gpt-6-luna",
+    "calls": 233,
+    "updatedAt": "2026-10-13T18:46:21.233Z",
+    "evaluationProgress": {
+      "trained": {
+        "games": 12,
+        "wins": 8,
+        "changed": 14,
+        "exchanges": 28,
+        "winRate": 0.6666666666666666
+      },
+      "honest": {
+        "games": 12,
+        "wins": 4,
+        "changed": 12,
+        "exchanges": 28,
+        "winRate": 0.3333333333333333
+      }
+    },
+    "evaluation": {
+      "trained": {
+        "games": 12,
+        "wins": 8,
+        "changed": 14,
+        "exchanges": 28,
+        "winRate": 0.6666666666666666
+      },
+      "honest": {
+        "games": 12,
+        "wins": 4,
+        "changed": 12,
+        "exchanges": 28,
+        "winRate": 0.3333333333333333
+      },
+      "promoted": false,
+      "reason": "Pilot sample too small for deployment; retain existing game policy. Initial room is cloned for pairs, but later deck draws use crypto randomness.",
+      "limitations": "Up to 3 real natural-language exchanges with shared dialogue history per complete game; trains social strategy selection, not LLM weights. Only selectable expedition/mediation phases; not human-player validation."
+    },
+    "reward": "terminal team victory only; listener change logged but not rewarded",
+    "completed": true
+  }
+}
