@@ -81,6 +81,7 @@ app.use(express.static(path.join(root, 'public')));
 
 const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
+app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json(conversationAI.diagnostics()));
 function broadcast(room) {
   autoGameVotes(room);
   for (const socketId of new Set([...room.players,...(room.spectators||[])].map(p => sessions.get(p.token)).filter(Boolean))) {
@@ -189,7 +190,7 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
-          if(conversationAI.enabled)void conversationAI.respond(room,p,input);else respondToChat(room,p,input);
+          void conversationAI.respond(room,p,input);
           if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');
