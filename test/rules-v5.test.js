@@ -91,9 +91,9 @@ test('사형 투표는 반란 판정 후 시작하고 미중재 반란이 승리
   assert.equal(r2.status, 'finished'); assert.equal(r2.game.winner.side, 'rebel'); assert.equal(r2.game.pending, null);
 });
 
-test('주교 밤 교단회수는 전도2 소모, 원하는 한 사람의 교단 전부 실제 이전·전도/일반 유지·반복 가능', () => {
+test('주교 밤 교단회수는 전도1 소모, 원하는 한 사람의 교단 전부 실제 이전·전도/일반 유지·반복 가능', () => {
   const r = setup(4, true), b = bishop(r), target = r.players.find(p => p.role === 'citizen');
-  hand(b, 'evangelism', 'evangelism', 'evangelism', 'evangelism', 'church');
+  hand(b, 'evangelism', 'evangelism', 'church');
   const ids = hand(target, ...Array(30).fill('church'), 'evangelism', 'warWeapon', 'resource');
   r.game.phase = 'bishopNight'; r.game.pending = null;
   const options = candidates(view(r, b.id));
@@ -101,7 +101,7 @@ test('주교 밤 교단회수는 전도2 소모, 원하는 한 사람의 교단 
   const oldInfluence = b.churchInfluence;
   act(r, b.id, { type: 'reclaimChurch', target: target.id });
   assert.equal(b.hand.filter(c => c.type === 'church').length, 31);
-  assert.equal(b.hand.filter(c => c.type === 'evangelism').length, 2);
+  assert.equal(b.hand.filter(c => c.type === 'evangelism').length, 1);
   assert.ok(ids.slice(0,30).every(id => b.hand.some(c => c.id === id)));
   assert.deepEqual(target.hand.map(c => c.type), ['evangelism','warWeapon','resource']);
   assert.equal(b.churchInfluence, oldInfluence); assert.equal(r.game.phase, 'bishopNight');
@@ -121,9 +121,9 @@ test('교단회수는 주교 밤만 가능, 비용 부족·자기/위조 대상�
   const before = structuredClone(b.hand);
   for (const target of [b.id, 'fake']) assert.throws(() => act(r, b.id, { type: 'reclaimChurch', target }), RuleError);
   assert.deepEqual(b.hand, before); assert.equal(c.hand.length, 1);
-  hand(b, 'evangelism');
+  hand(b);
   assert.throws(() => act(r, b.id, { type: 'reclaimChurch', target: c.id }), RuleError);
-  assert.equal(b.hand.length, 1); assert.ok(candidates(view(r, b.id)).every(a => a.type !== 'reclaimChurch'));
+  assert.equal(b.hand.length, 0); assert.ok(candidates(view(r, b.id)).every(a => a.type !== 'reclaimChurch'));
 });
 
 test('인원별 서로 다른 목표에서도 동시 도달 시 중재 시도하지 않은 쪽이 우선 승리', () => {

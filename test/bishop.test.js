@@ -173,12 +173,12 @@ test('일반 중재 교단3·전도7 소모와 주교 비공개 영향력 획득
 
 test('주교는 반란군 행동 이후에만 행동, 종교전도 반복·비용 소모·도난 알림·빈 손패 처리', () => {
   const r = setup(), b = bishop(r), c = role(r, 'citizen');
-  hand(b, ...Array(10).fill('church')); hand(c, 'eternalMagic');
+  hand(b, ...Array(6).fill('church')); hand(c, 'eternalMagic');
   r.game.phase = 'evening'; act(r, king(r).id, { type: 'wanted', target: b.id });
   assert.throws(() => act(r, b.id, { type: 'evangelize', target: c.id }), RuleError);
   act(r, role(r, 'rebel').id, { type: 'revolt', cards: [] });
   act(r, b.id, { type: 'evangelize', target: c.id });
-  assert.deepEqual(types(c), ['evangelism']); assert.equal(b.hand.filter(c => c.type === 'church').length, 5);
+  assert.deepEqual(types(c), ['evangelism']); assert.equal(b.hand.filter(c => c.type === 'church').length, 3);
   assert.ok(b.hand.some(c => c.type === 'eternalMagic'));
   assert.equal(c.notes.findLast(n => n.effect === 'stolen').details.count, 1);
   hand(c); act(r, b.id, { type: 'evangelize', target: c.id });
@@ -189,9 +189,9 @@ test('주교는 반란군 행동 이후에만 행동, 종교전도 반복·비�
   act(r, b.id, { type: 'bishopDone' }); assert.equal(r.game.day, 2);
 });
 
-test('종교개혁은 전도5 소모·타인의 교단만 정리하고 전도 유지·교단2배 영향력', () => {
+test('종교개혁은 전도3 소모·타인의 교단만 정리하고 전도 유지·교단2배 영향력', () => {
   const r = setup(), b = bishop(r), c = role(r, 'citizen'), k = king(r);
-  hand(b, ...Array(6).fill('evangelism'), 'church'); hand(c, 'church', 'church', 'evangelism', 'resource'); hand(k, 'church', 'evangelism');
+  hand(b, ...Array(4).fill('evangelism'), 'church'); hand(c, 'church', 'church', 'evangelism', 'resource'); hand(k, 'church', 'evangelism');
   night(r); b.churchInfluence = 7;
   act(r, b.id, { type: 'reform' });
   assert.deepEqual(types(b), ['evangelism', 'church']); assert.deepEqual(types(c), ['evangelism', 'resource']); assert.deepEqual(types(k), ['evangelism']);
@@ -278,5 +278,13 @@ test('두 쪽 모두 중재 시도가 없고 동시에 목표에 도달하면 �
     assert.deepEqual(new Set(r.game.winner.players), new Set([b.id, rebel.id]));
     assert.equal(r.game.lastRevolt.strength, null); assert.equal(r.game.lastReligiousRevolt.strength, null);
     assert.equal(b.churchInfluence, 0);
+  }
+});
+
+test('새 주교 비용은 전도3·반란6·개혁3·회수1이며 부족하면 무소모 거부',()=>{
+  for(const [type,material,count] of [['evangelize','church',3],['religiousRevolt','church',6],['reform','evangelism',3],['reclaimChurch','evangelism',1]]){
+    const r=setup(),b=bishop(r),c=role(r,'citizen');r.game.phase='bishopNight';r.game.pending=null;
+    hand(b,...Array(count-1).fill(material));const before=structuredClone(b.hand);assert.throws(()=>act(r,b.id,{type,target:c.id}),RuleError);assert.deepEqual(b.hand,before);
+    hand(b,...Array(count).fill(material));hand(c);assert.ok(candidates(view(r,b.id)).some(a=>a.type===type));act(r,b.id,{type,target:c.id});assert.equal(b.hand.filter(c=>c.type===material).length,0);
   }
 });
