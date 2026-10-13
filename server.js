@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
 import {ratingEligible} from './lib/game.js';
-import {chatAct,chatView,removeChatMember,botChat,respondToChat} from './lib/chat.js';
+import {chatAct,chatView,removeChatMember,botChat,respondToChat,chatEnabled} from './lib/chat.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
@@ -89,10 +89,10 @@ function broadcast(room) {
     const device = room.devices?.find(d => d.id === socket.data.device);
     if (device) {
       if (room.status === 'playing' && !deviceMayOpen(room, socket.data.player)) socket.data.player = null;
-      socket.emit('state', deviceView(room, device, socket.data.player));
+      const snapshot=deviceView(room,device,socket.data.player);const active=room.players.find(p=>p.id===snapshot.device.active);if(active&&chatEnabled(room))snapshot.chat=chatView(room,active);socket.emit('state',snapshot);
     } else {
       const spectator=room.spectators?.find(p=>p.id===socket.data.player),p=spectator||room.players.find(p=>p.id===socket.data.player);
-      if(p){const snapshot=spectator?spectatorView(room,p):view(room,p.id);if(room.mode!=='offline')snapshot.chat=chatView(room,p,!!spectator);socket.emit('state',snapshot);}
+      if(p){const snapshot=spectator?spectatorView(room,p):view(room,p.id);if(chatEnabled(room))snapshot.chat=chatView(room,p,!!spectator);socket.emit('state',snapshot);}
     }
     const a=accounts.find(a=>a.id===socket.data.account);if(a)socket.emit('account',profile(a));
   }

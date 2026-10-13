@@ -2,7 +2,7 @@ let accountProfile=null,chatTab='public';
 const ACCOUNT_STORAGE='kingdom.account.v1';
 function renderAccount(){return `<section class="account-panel">${accountProfile?`<h3>${esc(accountProfile.name)}</h3><p>${accountProfile.points}점 · 승률 ${(accountProfile.winRate*100).toFixed(1)}% · ${accountProfile.wins}승 ${accountProfile.losses}패 ${accountProfile.draws}무</p><button data-ui="logout" class="quiet">로그아웃</button>`:`<h3>계정 로그인 / 가입</h3><p>이메일 없이 아이디와 비밀번호만 사용합니다. 게스트는 자동 숫자 닉네임으로 참가합니다.</p><label for="account-name">아이디(닉네임)</label><input id="account-name" maxlength="16" autocomplete="username"><label for="account-password">비밀번호 · 영어/숫자 4~64자</label><input id="account-password" type="password" maxlength="64" autocomplete="current-password"><div class="button-row"><button class="secondary" data-ui="login">로그인</button><button class="secondary" data-ui="register">가입</button></div>`}</section>`;}
 function renderSocialContent(){
- if(!state||state.mode==='offline'||state.device&&!state.device.active)return '';
+  if(!state||!state.chat||state.device&&!state.device.active)return '';
  const c=state.chat,sp=state.me.spectator;if(!c)return '';
  const tabs={public:'공개',...(sp?{spectator:'관전'}:{...(c.rebel?{rebel:'반란군'}:{}),pair:'1대1',...Object.fromEntries((c.secret||[]).filter(r=>r.joined).map(r=>[`secret:${r.id}`,r.name]))})};
  if(!tabs[chatTab])chatTab='public';let channel=chatTab,room=null,list;
