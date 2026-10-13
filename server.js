@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
+import {ratingEligible} from './lib/game.js';
 import {chatAct,chatView,removeChatMember} from './lib/chat.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
@@ -48,10 +49,10 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
 let saveQueue = Promise.resolve();
 function persist() {
-  for(const room of rooms.values())if(room.mode!=='offline')for(const p of room.players.filter(p=>p.surrendered)){
+  for(const room of rooms.values())if(ratingEligible(room))for(const p of room.players.filter(p=>p.surrendered)){
     const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(a)settleAccount(a,`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`,p.role,'surrender');
   }
-  for(const room of rooms.values())if(room.status==='finished'&&room.mode!=='offline'){
+  for(const room of rooms.values())if(room.status==='finished'&&ratingEligible(room)){
     for(const p of room.players){const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(!a||p.bot&&!p.gameAccountId)continue;
       const key=`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`;
       settleAccount(a,key,p.role,p.surrendered?'surrender':room.game.winner.side==='draw'?'draw':room.game.winner.players.includes(p.id)?'win':'loss',p.absent?300:0);
@@ -111,7 +112,7 @@ function attach(socket, room, p) {
   }
   socket.data.room = room.code; socket.data.player = p.id; socket.data.token = p.token;
   sessions.set(p.token, socket.id); p.online = true;
-  if(p.absent&&room.status==='playing'){const a=accounts.find(a=>a.id===p.accountId);if(a)changePoints(a,-20);p.returnPenalties=(p.returnPenalties||0)+1;p.absent=false;p.takeover=false;}
+  if(p.absent&&room.status==='playing'){const a=accounts.find(a=>a.id===p.accountId);if(a&&ratingEligible(room))changePoints(a,-20);p.returnPenalties=(p.returnPenalties||0)+1;p.absent=false;p.takeover=false;}
 }
 function attachDevice(socket, room, device) {
   const members = room.players.filter(p => device.players.includes(p.id));

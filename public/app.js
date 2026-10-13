@@ -514,6 +514,7 @@ app.addEventListener('click', async event => {
   const type = button.dataset.cmd;
   if (!type) return;
   const data = { type };
+  if(type==='addBot')toast('AI가 포함된 게임은 레이팅 점수와 승률 기록에 영향을 주지 않습니다.');
   if(button.dataset.mode)data.mode=button.dataset.mode;
   if(button.dataset.request)data.request=button.dataset.request;
   if(button.dataset.room)data.room=button.dataset.room;

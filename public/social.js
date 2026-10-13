@@ -1,13 +1,20 @@
 let accountProfile=null,chatTab='public';
 const ACCOUNT_STORAGE='kingdom.account.v1';
 function renderAccount(){return `<section class="account-panel">${accountProfile?`<h3>${esc(accountProfile.name)}</h3><p>${accountProfile.points}점 · 승률 ${(accountProfile.winRate*100).toFixed(1)}% · ${accountProfile.wins}승 ${accountProfile.losses}패 ${accountProfile.draws}무</p><button data-ui="logout" class="quiet">로그아웃</button>`:`<h3>계정 로그인 / 가입</h3><p>이메일 없이 아이디와 비밀번호만 사용합니다. 게스트는 자동 숫자 닉네임으로 참가합니다.</p><label for="account-name">아이디(닉네임)</label><input id="account-name" maxlength="16" autocomplete="username"><label for="account-password">비밀번호 · 영어/숫자 4~64자</label><input id="account-password" type="password" maxlength="64" autocomplete="current-password"><div class="button-row"><button class="secondary" data-ui="login">로그인</button><button class="secondary" data-ui="register">가입</button></div>`}</section>`;}
-function renderSocial(){
+function renderSocialContent(){
  if(!state||state.mode==='offline'||state.device&&!state.device.active)return '';
  const c=state.chat,sp=state.me.spectator;if(!c)return '';
  const tabs={public:'공개',...(sp?{spectator:'관전'}:{...(c.rebel?{rebel:'반란군'}:{}),pair:'1대1',...Object.fromEntries((c.secret||[]).filter(r=>r.joined).map(r=>[`secret:${r.id}`,r.name]))})};
  if(!tabs[chatTab])chatTab='public';let channel=chatTab,room=null,list;
- if(chatTab.startsWith('secret:')){channel='secret';room=chatTab.slice(7);list=c.secret.find(r=>r.id===room)?.messages;}else if(chatTab==='pair'){room=c.pair?.id;list=c.pair?.messages;}else list=c[chatTab];
+  if(chatTab.startsWith('secret:')){channel='secret';room=chatTab.slice(7);list=c.secret.find(r=>r.id===room)?.messages;}else if(chatTab==='pair'){room=c.pair?.id;list=c.pair?.messages;}else list=c[chatTab];
+  if(state.status==='lobby'){for(const tab of Object.keys(tabs))if(tab!=='public'&&tab!=='spectator')delete tabs[tab];if(!tabs[chatTab]){chatTab='public';channel='public';room=null;list=c.public;}}
+  list=list?.map(m=>({...m,text:m.name?`${m.name}: ${m.text}`:m.text}));
  return `<section class="social-panel"><h2>익명 채팅</h2><nav class="chat-tabs">${Object.entries(tabs).map(([tab,label])=>`<button data-ui="chatTab" data-tab="${tab}" class="${chatTab===tab?'active':''}">${esc(label)}</button>`).join('')}</nav><div class="chat-messages" aria-live="polite">${(list||[]).map(m=>`<p>${esc(m.text)}</p>`).join('')||'<p class="muted">메시지가 없습니다.</p>'}</div>${list?`<form id="chat-form" data-channel="${channel}" data-room="${room||''}"><input id="chat-message" maxlength="500" placeholder="익명 메시지" autocomplete="off"><button class="secondary">보내기</button></form>`:''}${!sp?`<div class="pair-controls"><button class="secondary" data-cmd="pairRequest" ${c.outgoing?'disabled':''}>랜덤 1대1 요청</button><button class="quiet" data-cmd="pairLeave">1대1 나가기</button>${c.incoming.map(r=>`<div>익명 매칭 요청 <button class="secondary" data-cmd="pairAnswer" data-request="${r.id}" data-accept="true">수락</button><button class="quiet" data-cmd="pairAnswer" data-request="${r.id}" data-accept="false">거절</button></div>`).join('')}</div><details><summary>비밀채팅방 만들기 / 참가</summary><input id="secret-name" maxlength="30" placeholder="새 비밀방 이름"><button class="secondary" data-ui="secretCreate">방 만들기</button>${c.secret.map(r=>`<div class="secret-room"><b>${esc(r.name)}</b>${r.owned?`<span>비밀번호 ${r.password}</span><button class="quiet" data-cmd="secretDelete" data-room="${r.id}">삭제</button>`:''}${r.joined?`<button class="quiet" data-cmd="secretLeave" data-room="${r.id}">나가기</button>`:`<input id="secret-${r.id}" maxlength="3" inputmode="numeric" placeholder="3자리 비밀번호"><button class="secondary" data-ui="secretJoin" data-room="${r.id}">참가</button>`}</div>`).join('')}</details>`:''}</section>`;
+}
+function renderSocial(){
+ const html=renderSocialContent();
+ const named=state?.status==='lobby'||chatTab==='spectator';
+ return named?html.replace('<h2>익명 채팅</h2>',`<h2>${state.status==='lobby'?'로비 전체채팅 · 실명':'관전자 채팅 · 실명'}</h2>`).replace('placeholder="익명 메시지"','placeholder="실명 메시지"'):html;
 }
 function renderGameVotes(){
  if(!state.game||state.status!=='playing'||state.me.spectator||state.me.surrendered)return '';
