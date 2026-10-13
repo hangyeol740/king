@@ -12,6 +12,8 @@ import {chatAct,chatView,removeChatMember,botChat,respondToChat} from './lib/cha
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
+import {createOpenAIChat} from './lib/openai-chat.js';
+import {createSupabaseStore} from './lib/persistent-store.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -23,6 +25,7 @@ const dataDir = process.env.DATA_DIR || path.join(root, '.data');
 const savePath = path.join(dataDir, 'rooms.json');
 const accountPath=path.join(dataDir,'accounts.json');
 let accounts=[];
+const permanentStore=createSupabaseStore();
 let policy = null;
 try {
   const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/policy.json'), 'utf8'));
@@ -30,9 +33,11 @@ try {
   console.log(`강화학습 모델 로드: ${policy.metadata.episodes}판 · ${policy.metadata.algorithm}`);
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
 await mkdir(dataDir, { recursive: true });
+const permanentSnapshot=permanentStore?await permanentStore.load():null;
 try{accounts=JSON.parse(await readFile(accountPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+if(permanentSnapshot)accounts=permanentSnapshot.accounts||[];
 try {
-  const saved = JSON.parse(await readFile(savePath, 'utf8'));
+  const saved = permanentSnapshot?permanentSnapshot.rooms||[]:JSON.parse(await readFile(savePath, 'utf8'));
   for (const room of saved) {
     room.players.forEach(p => { p.online = !!p.bot;if(room.status==='playing'&&!p.bot&&(room.mode||'online')==='online'){p.takeover=true;p.absent=true;} });
     (room.spectators||[]).forEach(p=>p.online=false);
@@ -64,6 +69,7 @@ function persist() {
     await writeFile(`${savePath}.tmp`, snapshot, { mode: 0o600 });
     await rename(`${savePath}.tmp`, savePath);
     await writeFile(`${accountPath}.tmp`,accountSnapshot,{mode:0o600});await rename(`${accountPath}.tmp`,accountPath);
+    if(permanentStore)await permanentStore.save({rooms:JSON.parse(snapshot),accounts:JSON.parse(accountSnapshot)});
   }).catch(error => console.error('게임 저장 실패:', error.message));
   return saveQueue;
 }
@@ -74,6 +80,7 @@ app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: pol
 app.use(express.static(path.join(root, 'public')));
 
 const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
+const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
 function broadcast(room) {
   autoGameVotes(room);
   for (const socketId of new Set([...room.players,...(room.spectators||[])].map(p => sessions.get(p.token)).filter(Boolean))) {
@@ -182,7 +189,7 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
-          respondToChat(room,p,input);
+          if(conversationAI.enabled)void conversationAI.respond(room,p,input);else respondToChat(room,p,input);
           if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');
@@ -190,10 +197,13 @@ io.on('connection', socket => {
           if(input.mode==='online'&&room.devices?.some(d=>d.players.length>1))throw new RuleError('공유 기기 추가 참가자를 먼저 삭제하세요.');room.mode=input.mode;
         }else if(input.type==='removeLocalPlayer'){
           if(room.mode!=='offline'||room.status!=='lobby'||!device||!device.players.includes(input.target)||input.target===room.host)throw new RuleError('오프라인 대기실의 추가 참가자만 삭제할 수 있습니다.');
-          const target=room.players.find(p=>p.id===input.target);sessions.delete(target.token);room.players=room.players.filter(p=>p!==target);device.players=device.players.filter(id=>id!==target.id);room.config=defaultRoles(room.players.length);room.citizenJobs=[];
-        }else if(input.type==='toSpectator'||input.type==='addSpectator'){
+          const target=room.players.find(p=>p.id===input.target);if(!target)throw new RuleError('삭제할 참가자가 없습니다.');sessions.delete(target.token);room.players=room.players.filter(p=>p!==target);device.players=device.players.filter(id=>id!==target.id);if(socket.data.player===target.id)socket.data.player=room.host;room.config=defaultRoles(room.players.length);room.citizenJobs=[];
+        }else if(input.type==='toSpectator'||input.type==='toPlayer'||input.type==='addSpectator'){
           if(room.mode==='offline'||room.host!==p?.id)throw new RuleError('온라인 방장만 관전자를 관리할 수 있습니다.');room.spectators||=[];
-          if(input.type==='toSpectator'){
+          if(input.type==='toPlayer'){
+            if(room.status!=='lobby')throw new RuleError('로비에서만 관전자를 참가자로 옮길 수 있습니다.');
+            const t=room.spectators.find(s=>s.id===input.target);if(!t)throw new RuleError('관전자를 선택하세요.');room.spectators=room.spectators.filter(s=>s!==t);room.players.push(t);room.config=defaultRoles(room.players.length);room.citizenJobs=[];
+          }else if(input.type==='toSpectator'){
             if(room.status!=='lobby')throw new RuleError('게임 중에는 참가자를 관전자로 전환할 수 없습니다.');
             const t=room.players.find(p=>p.id===input.target);if(!t||t.id===room.host||t.bot)throw new RuleError('다른 참가자를 선택하세요.');room.players=room.players.filter(p=>p!==t);room.spectators.push(t);room.config=defaultRoles(room.players.length);room.citizenJobs=[];
           }else{const t=makePlayer(guestName(room));room.spectators.push(t);personalResult={spectatorInvite:{code:room.code,token:t.token}};}

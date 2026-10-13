@@ -126,6 +126,7 @@ function render() {
   }
   if (state.status === 'lobby') renderLobby();
   else renderGame();
+  window.finishLobbyUI?.();
 }
 function renderHome() {
   const params = new URLSearchParams(location.search);
@@ -170,7 +171,7 @@ function renderLobby() {
         <div class="ai-controls"><div><b>강화학습 AI와 함께 플레이</b><p>${aiInfo?.available ? `PPO 셀프플레이 ${Number(aiInfo.episodes).toLocaleString()}판 학습 · 서버에서 자동 판단` : aiInfo ? '학습 모델이 없습니다. models/policy.json을 서버에 포함하세요.' : 'AI 모델을 확인하는 중…'}</p></div>${isHost ? `<button class="secondary compact" data-cmd="addBot" ${aiInfo?.available && state.players.filter(p => p.bot).length < 8 ? '' : 'disabled'}>AI 추가 ＋</button>` : ''}</div>
         <div class="lobby-seats">${state.players.map((p, i) => `<div class="lobby-seat"><div class="avatar avatar-${i % 4}">${p.bot ? '⚙' : esc(p.name.slice(0, 1))}</div><div><b>${esc(p.name)} ${p.id === state.me.id ? '<span class="you-tag">나</span>' : ''}</b><small>${p.bot ? '학습된 신경망 · 자동 플레이' : `${p.host ? '방장 · ' : ''}${p.online ? '플레이 준비 완료' : '재접속 대기 중'}`}</small></div>${p.bot && isHost ? `<button class="quiet remove-bot" data-cmd="removeBot" data-bot-target="${p.id}" aria-label="${esc(p.name)} 제거">✕</button>` : `<span class="status-dot ${p.online ? '' : 'offline'}"></span>`}</div>`).join('')}
         ${state.players.length < 3 ? Array.from({ length: 3 - state.players.length }, () => '<div class="lobby-seat empty-seat"><div class="avatar">＋</div><span>친구를 기다리고 있어요</span></div>').join('') : ''}</div>
-        <div class="invite-box"><div><span class="eyebrow">INVITE CODE</span><strong>${state.code}</strong></div><div><button class="secondary" data-ui="copyCode">코드 복사</button><button class="quiet" data-ui="copyLink">초대 링크 복사 ↗</button></div></div>
+        ${state.mode==='offline'?'':`<div class="invite-box"><div><span class="eyebrow">INVITE CODE</span><strong>${state.code}</strong></div><div><button class="secondary" data-ui="copyCode">코드 복사</button><button class="quiet" data-ui="copyLink">초대 링크 복사 ↗</button></div></div>`}
         ${state.mode==='offline'&&typeof localPlayerControls === 'function' ? localPlayerControls() : ''}
       </section>
       <section class="panel faction-settings"><span class="eyebrow">BALANCE OF POWER</span><h2>진영 구성</h2><p class="muted">왕은 한 명. 나머지 운명은 무작위.</p>
@@ -531,6 +532,7 @@ app.addEventListener('click', async event => {
   if(button.dataset.product)data.product=button.dataset.product;
   if(button.dataset.money){data.money=Number($('#mediation-money').value);data.cards=[];}
   if (button.dataset.seat) data.player = button.dataset.seat;
+  if (button.dataset.targetId) data.target=button.dataset.targetId;
   if (button.dataset.target) { if(!targetPlayer){toast('행동할 플레이어를 선택하세요.');return;}data.target = targetPlayer; }
   if (button.dataset.botTarget) data.target = button.dataset.botTarget;
   if (button.dataset.cards) data.cards = [...selected];
