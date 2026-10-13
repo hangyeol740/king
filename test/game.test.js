@@ -37,7 +37,7 @@ test('인원에 따른 기간, 왕 1명, 시작 손패 12장, 왕부터 고정 �
     assert.equal(r.game.maxDays, days);
     assert.equal(r.players.filter(p => p.role === 'king').length, 1);
     assert.equal(r.game.order[0], king(r).id);
-    assert.ok(r.players.every(p => p.hand.length === 12));
+    assert.ok(r.players.every(p => p.hand.length === (p.role === 'king' ? 20 : 12)));
   }
 });
 test('본인 손패만 제공하고 시민에게 타인 진영·손패·토큰을 숨김', () => {
@@ -136,7 +136,7 @@ test('30장은 유지, 31장 이상이면 아침에 30장으로 축소', () => {
   act(r, c.id, { type: 'redistribute', accept: true });
   act(r, b.id, { type: 'redistribute', accept: false });
   act(r, king(r).id, { type: 'redistribute', accept: true });
-  assert.equal(c.hand.length, 12); assert.deepEqual(b.hand.map(c => c.id), keep); assert.equal(king(r).hand.length, 12);
+  assert.equal(c.hand.length, 12); assert.deepEqual(b.hand.map(c => c.id), keep); assert.equal(king(r).hand.length, 20);
 });
 test('제작 반복·연속 제작과 영구 카드의 별도 재료 처리', () => {
   const r = setup(); r.game.phase = 'day'; r.game.round = 2;
@@ -155,7 +155,7 @@ test('제작 반복·연속 제작과 영구 카드의 별도 재료 처리', ()
   act(r, p.id, { type: 'craftDone' }); assert.equal(r.game.turn, 1);
 });
 test('사냥 9점 실패·10점 성공, 보상 7장, 영구 카드 유지, 보병 사용 불가', () => {
-  for (const [types, reward, retained] of [[['eternalMagic', 'magic'], 0, 1], [['eternalMagic', 'magic', 'sword'], 7, 1]]) {
+  for (const [types, reward, retained] of [[['eternalMagic', 'magic'], 0, 1], [['eternalMagic', 'magic', 'sword'], 8, 1]]) {
     const r = setup(); r.game.phase = 'day'; r.game.round = 2;
     const p = current(r), ids = hand(p, ...types);
     act(r, p.id, { type: 'hunt', cards: ids });

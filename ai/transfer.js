@@ -2,7 +2,7 @@ import { createPolicy, validatePolicy, CARD_TYPES, PHASES, ACTION_TYPES } from '
 import { RECIPES } from '../lib/game.js';
 
 export function compatiblePolicy(savedPolicy) {
-  if (![2, 3, 4, 5, 6].includes(savedPolicy?.version)) return validatePolicy(savedPolicy);
+  if (![2, 3, 4, 5, 6, 7].includes(savedPolicy?.version)) return validatePolicy(savedPolicy);
   const policy = transferPolicy(savedPolicy);
   policy.metadata = { ...savedPolicy.metadata, ...policy.metadata, episodes: savedPolicy.metadata.episodes, adaptedRules: true };
   return validatePolicy(policy);
@@ -10,18 +10,18 @@ export function compatiblePolicy(savedPolicy) {
 
 // 의미가 같은 입력/출력끼리 연결하여 이전 규칙의 학습 가중치를 보존합니다.
 export function transferPolicy(source, seed = 42) {
-  if (![2, 3, 4, 5, 6].includes(source?.version) || !(source.metadata?.episodes > 0)) throw new Error('v2~v6 학습 모델의 이전만 지원합니다.');
+  if (![2, 3, 4, 5, 6, 7].includes(source?.version) || !(source.metadata?.episodes > 0)) throw new Error('v2~v7 학습 모델의 이전만 지원합니다.');
   const roles = ['king', 'citizen', 'rebel', 'neutral'];
   const bishopRules = source.version >= 4, voteRules = source.version >= 5;
-  const supportRules=source.version>=6;
-  const oldPhases = PHASES.filter(p => !['market','merchantEvening'].includes(p) && (voteRules || p !== 'executionVote') && (bishopRules || p !== 'bishopNight'));
-  const oldCards = CARD_TYPES.filter(t => !['reinforcedSword','shiningSword'].includes(t) && (bishopRules || !['church', 'evangelism'].includes(t)));
-  const oldActions = ACTION_TYPES.slice(0, supportRules?35:voteRules ? 32 : bishopRules ? 30 : 26);
-  const oldRecipeCount = source.version === 2 ? 17 : bishopRules ? 24 : 20;
+  const supportRules=source.version>=6,merchantRules=source.version>=7;
+  const oldPhases = PHASES.filter(p => (merchantRules||!['market','merchantEvening'].includes(p)) && (voteRules || p !== 'executionVote') && (bishopRules || p !== 'bishopNight'));
+  const oldCards = CARD_TYPES.filter(t => t!=='huntingAxe' && (merchantRules||!['reinforcedSword','shiningSword'].includes(t)) && (bishopRules || !['church', 'evangelism'].includes(t)));
+  const oldActions = ACTION_TYPES.slice(0, merchantRules?41:supportRules?35:voteRules ? 32 : bishopRules ? 30 : 26);
+  const oldRecipeCount = source.version === 2 ? 17 : merchantRules?32:bishopRules ? 24 : 20;
   const obsKeys = (phases, cards, stats) => [...roles.map(r => `role:${r}`), ...phases.map(p => `phase:${p}`), ...cards.map(t => `card:${t}`), ...Array.from({ length: stats }, (_, i) => `stat:${i}`)];
   const actionKeys = (actions, recipeCount, cards, stats) => [...actions.map(a => `action:${a}`), ...Array.from({ length: recipeCount }, (_, i) => `recipe:${i}`), ...cards.map(t => `card:${t}`), ...Array.from({ length: stats }, (_, i) => `stat:${i}`)];
-  const oldObs = obsKeys(oldPhases, oldCards, supportRules?29:voteRules ? 26 : bishopRules ? 25 : 19), newObs = obsKeys(PHASES, CARD_TYPES, 34);
-  const oldOut = actionKeys(oldActions, oldRecipeCount, oldCards, bishopRules ? 18 : 17), newOut = actionKeys(ACTION_TYPES, RECIPES.length, CARD_TYPES, 25+CARD_TYPES.length);
+  const oldObs = obsKeys(oldPhases, oldCards, merchantRules?34:supportRules?29:voteRules ? 26 : bishopRules ? 25 : 19), newObs = obsKeys(PHASES, CARD_TYPES, 34);
+  const oldOut = actionKeys(oldActions, oldRecipeCount, oldCards, merchantRules?45:bishopRules ? 18 : 17), newOut = actionKeys(ACTION_TYPES, RECIPES.length, CARD_TYPES, 25+CARD_TYPES.length);
   if (source.observationSize !== oldObs.length || source.actionSize !== oldOut.length) throw new Error('이전 모델의 신경망 구조 오류');
   for (const [kind, output] of [['actor', oldOut.length], ['critic', 1]]) {
     const net = source[kind];

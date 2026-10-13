@@ -78,9 +78,9 @@ test('상점은 상품 정보만 표시하고 저녁 제작창 종료와 돈 중
   const b=await browser(),r=makeRoom('SHOPUI','이름1');for(let i=1;i<4;i++)joinRoom(r,`이름${i+1}`);act(r,r.host,{type:'neutralJobs',jobs:['merchant']});act(r,r.host,{type:'start'});
   const m=r.players.find(p=>p.job==='merchant'),k=r.players.find(p=>p.role==='king'),c=r.players.find(p=>p.role==='citizen');
   vm.runInContext(`rules = ${JSON.stringify({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS,merchantBuys:{resource:{cost:2,count:1},random:{cost:10,count:5}} })}`, b.context);
-  r.game.phase='evening';act(r,k.id,{type:'aid'});b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/상인의 저녁 준비/);assert.match(b.elements.get('#app').innerHTML,/돈 0점/);
+  r.game.phase='evening';act(r,k.id,{type:'aid'});b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/상인의 저녁 준비/);assert.match(b.elements.get('#app').innerHTML,/보유 돈 <strong>0점/);
   act(r,m.id,{type:'beginCraft'});b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/저녁 제작창 종료/);
-  act(r,m.id,{type:'craftDone'});b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/data-cmd="beginCraft"[^>]*disabled/);
-  r.game.phase='market';r.game.pending={done:[m.id]};b.handlers.state(view(r,c.id));assert.match(b.elements.get('#app').innerHTML,/낮의 익명 상점/);assert.match(b.elements.get('#app').innerHTML,/data-cmd="marketDone"/);assert.doesNotMatch(b.elements.get('#app').innerHTML,/money-counter/);
+  act(r,m.id,{type:'craftDone'});vm.runInContext("merchantTab='craft'",b.context);b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/data-cmd="beginCraft"[^>]*disabled/);
+  r.game.phase='market';r.game.pending={done:[m.id]};b.handlers.state(view(r,c.id));assert.match(b.elements.get('#app').innerHTML,/익명 상점/);assert.match(b.elements.get('#app').innerHTML,/data-cmd="marketDone"/);assert.doesNotMatch(b.elements.get('#app').innerHTML,/money-counter/);
   r.game.phase='morning';r.game.pending=null;r.game.revolt=10;act(r,k.id,{type:'mediate'});b.handlers.state(view(r,m.id));assert.match(b.elements.get('#app').innerHTML,/id="mediation-money"/);assert.doesNotMatch(b.elements.get('#app').innerHTML,/data-cmd="contribute"[^>]*data-cards/);
 });

@@ -53,7 +53,7 @@ test('실제 WebSocket: 방 생성·코드 입장·권한 검증·게임 시작�
   assert.ok((await send(a, { type: 'start' })).ok);
   await sleep(30);
   for (const client of [a, b, c]) {
-    assert.equal(client.state.status, 'playing'); assert.equal(client.state.me.hand.length, 12);
+    assert.equal(client.state.status, 'playing'); assert.equal(client.state.me.hand.length, client.state.me.role === 'king' ? 20 : 12);
     assert.ok(client.state.players.every(p => !('hand' in p) && !('token' in p)));
     assert.equal(client.state.players.filter(p => p.role === 'king').length, 1);
   }
@@ -284,7 +284,7 @@ test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례�
   const k=shared.state.players.find(p=>p.role==='king'),nonKing=shared.state.players.find(p=>p.id!==k.id);
   assert.equal((await send(shared,{type:'openSeat',player:nonKing.id})).ok,false);
   assert.equal((await send(shared,{type:'expedition'})).ok,false);
-  assert.ok((await send(shared,{type:'openSeat',player:k.id})).ok);assert.equal(shared.state.me.id,k.id);assert.equal(shared.state.me.hand.length,12);
+  assert.ok((await send(shared,{type:'openSeat',player:k.id})).ok);assert.equal(shared.state.me.id,k.id);assert.equal(shared.state.me.hand.length,20);
   assert.ok((await send(shared,{type:'lockSeat'})).ok);assert.equal(shared.state.me.hand.length,0);
   assert.ok((await send(shared,{type:'openSeat',player:k.id})).ok);assert.ok((await send(shared,{type:'expedition'})).ok);assert.equal(shared.state.device.active,null);
   shared.disconnect();const restored=await connect();assert.ok((await send(restored,{type:'resumeDevice',...session})).ok);assert.equal(restored.state.device.active,null);

@@ -36,7 +36,7 @@ test('반란군은 지원/0장 제출/선포 모두 금지, 시민·중립만 �
   assert.equal(r.game.lastRevolt.helperCount,1);assert.equal(r.game.lastRevolt.blocked,true);
 });
 test('공개 제작은 공통 9종, 본인 진영별 왕13/시민12/반란군13/중립9종만 제공',()=>{
-  const r=setup(4);assert.equal(RECIPES.length,32);assert.equal(visibleRecipes(null).length,9);
+  const r=setup(4);assert.equal(RECIPES.length,35);assert.equal(visibleRecipes(null).length,9);
   for(const [name,count] of [['king',13],['citizen',12],['rebel',13],['neutral',9]]){
     const p=role(r,name),recipes=view(r,p.id).me.recipes;assert.equal(recipes.length,count);
     assert.ok(recipes.every(recipe=>!recipe.role||recipe.role===name));

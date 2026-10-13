@@ -5,7 +5,7 @@ import { randomInt } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { act, makeRoom, joinRoom, view, canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
+import { act, makeRoom, joinRoom, view, canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
@@ -51,7 +51,7 @@ function persist() {
 }
 app.disable('x-powered-by');
 app.get('/health', (_req, res) => res.json({ ok: true }));
-app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS, merchantBuys: MERCHANT_BUYS }));
+app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({ cards: CARDS, recipes: visibleRecipes(null), roles: ROLES, neutralJobs: NEUTRAL_JOBS, citizenJobs: CITIZEN_JOBS, merchantBuys: MERCHANT_BUYS }));
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
