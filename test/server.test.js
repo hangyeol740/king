@@ -92,6 +92,7 @@ test('WebSocket 시민지원 6장·재접속 중복 없음·공개 API 공통 �
   const cr = await send(c, { type: 'join', code: created.session.code, name: '셋' });
   const group = [a, b, c], sessions = [created, br, cr];
   await send(a, { type: 'start' });
+  await sleep(30);
   const k = group.find(s => s.state.me.role === 'king');
   await send(k, { type: 'expedition' });
   for(const p of group)await send(p,{type:'voteExpedition',difficulty:'low'});

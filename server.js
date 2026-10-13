@@ -83,6 +83,7 @@ const bots = createBotRunner({ policy, changed: async room => { broadcast(room);
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
 app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json(conversationAI.diagnostics()));
 function broadcast(room) {
+  room.apiConversation=conversationAI.enabled;
   autoGameVotes(room);
   for (const socketId of new Set([...room.players,...(room.spectators||[])].map(p => sessions.get(p.token)).filter(Boolean))) {
     const socket = io.sockets.sockets.get(socketId);
