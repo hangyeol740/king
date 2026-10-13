@@ -39,7 +39,7 @@ async function command(data) {
       localStorage.setItem(STORAGE, JSON.stringify(result.session));
       if (['resume', 'resumeDevice'].includes(data.type)) localStorage.removeItem(RETURN_STORAGE);
     }
-    if(Object.hasOwn(result,'account')){accountProfile=result.account;if(result.accountToken)localStorage.setItem(ACCOUNT_STORAGE,result.accountToken);else localStorage.removeItem(ACCOUNT_STORAGE);render();}
+    if(Object.hasOwn(result,'account')){if(['login','logout','register'].includes(data.type)||accountProfile?.id!==result.account?.id){localStorage.removeItem(RETURN_STORAGE);localStorage.removeItem(STORAGE);}accountProfile=result.account;if(result.accountToken)localStorage.setItem(ACCOUNT_STORAGE,result.accountToken);else localStorage.removeItem(ACCOUNT_STORAGE);render();}
     if(result.personalResult?.spectatorInvite){const s=result.personalResult.spectatorInvite,url=`${location.origin}/?room=${s.code}&spectator=${s.token}`;try{await navigator.clipboard.writeText(url);toast('관전 초대 링크를 복사했습니다.');}catch{toast(`관전 초대: ${url}`);}}
     if (result.left) {
       if (result.resumeSession) localStorage.setItem(RETURN_STORAGE, JSON.stringify(result.resumeSession));
@@ -141,7 +141,7 @@ function renderHome() {
       </div>
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
-        ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>직업과 손패가 유지됩니다. 본인 차례에는 복귀를 기다립니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button></div>` : ''}
+        ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>복귀하면 원래 자리를 이어받습니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button><button class="quiet full" data-ui="forgetRoom">해당 방 삭제 · 내 기기에서만</button></div>` : ''}
         ${typeof renderAccount==='function'?renderAccount():''}
         <form id="entry-form">
           <p>참가 이름: ${typeof accountProfile!=='undefined'&&accountProfile?esc(accountProfile.name):'자동 게스트 숫자 닉네임'}</p>
@@ -467,6 +467,7 @@ app.addEventListener('click', async event => {
   if (!button || button.disabled || busy) return;
   const ui = button.dataset.ui;
   if (ui) {
+    if(ui==='forgetRoom'){localStorage.removeItem(RETURN_STORAGE);render();toast('이 기기의 복귀 정보만 삭제했습니다. 실제 방은 유지됩니다.');return;}
     if(['login','register'].includes(ui)){await command({type:ui,name:$('#account-name').value,password:$('#account-password').value});return;}
     if(ui==='logout'){await command({type:'logout',token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
     if(ui==='chatTab'){if(button.dataset.tab==='pair'&&!state.chat.pair){await command({type:'pairRequest'});return;}chatTab=button.dataset.tab;render();return;}

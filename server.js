@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
 import {ratingEligible} from './lib/game.js';
-import {chatAct,chatView,removeChatMember,botChat} from './lib/chat.js';
+import {chatAct,chatView,removeChatMember,botChat,respondToChat} from './lib/chat.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
@@ -182,6 +182,7 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
+          respondToChat(room,p,input);
           if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');
