@@ -266,7 +266,7 @@ test('WebSocket 3인 첫날 왕 사형 선택·투표 비공개·서버 재시�
   const restored = [];
   for (const session of sessions) { const c = await connect(); assert.ok((await send(c, { type: 'resume', ...session })).ok); restored.push(c); }
   assert.equal(restored[kingIndex].state.game.pending.myVote, targetId);
-  for (const p of restored.filter((_, i) => i !== kingIndex)) assert.ok((await send(p, { type: 'voteExecution', target: targetId })).ok);
+  for (const p of restored.filter((client, i) => i !== kingIndex && !client.state.game.pending?.myDone)) assert.ok((await send(p, { type: 'voteExecution', target: targetId })).ok);
   await sleep(20);
   assert.equal(restored[0].state.game.phase, 'redistribute');
   assert.equal(restored.find(p => p.state.me.id === targetId).state.me.hand.length, 12);
@@ -276,10 +276,11 @@ test('WebSocket 3인 첫날 왕 사형 선택·투표 비공개·서버 재시�
 
 test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례만 열고 전원 투표·재분배 진행', async()=>{
   const shared=await connect();await send(shared,{type:'create',name:'공유하나'});
+  await send(shared,{type:'mode',mode:'offline'});
   const added=await send(shared,{type:'addLocalPlayer',name:'공유둘'});assert.ok(added.ok);assert.equal(added.session.device,true);
   const last=await send(shared,{type:'addLocalPlayer',name:'공유셋'});assert.ok(last.ok);const session=last.session;
   assert.equal(shared.state.device.players.length,3);assert.equal(shared.state.players.filter(p=>p.online).length,3);
-  assert.equal((await send(shared,{type:'addLocalPlayer',name:'공유둘'})).ok,false);
+  assert.ok(shared.state.players.every(p=>/^게스트\d+$/.test(p.name)));
   await send(shared,{type:'start'});assert.equal(shared.state.device.active,null);assert.equal(shared.state.me.hand.length,0);assert.equal(shared.state.me.role,null);
   const k=shared.state.players.find(p=>p.role==='king'),nonKing=shared.state.players.find(p=>p.id!==k.id);
   assert.equal((await send(shared,{type:'openSeat',player:nonKing.id})).ok,false);
@@ -297,27 +298,22 @@ test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례�
   const current=restored.state.game.current;await send(restored,{type:'openSeat',player:current});assert.ok((await send(restored,{type:'gather'})).ok);assert.equal(restored.state.device.active,null);
 });
 
-test('한 기기2명 + 다른 기기1명 혼합 접속, 다른 기기 자리 열기 금지·복귀·전원 오프라인', async()=>{
+test('온라인 공유 추가 금지·오프라인 다른 기기/관전 참가 금지·추가 참가자 삭제', async()=>{
   const shared=await connect(),remote=await connect();const created=await send(shared,{type:'create',name:'혼합공유1'});
-  const group=await send(shared,{type:'addLocalPlayer',name:'혼합공유2'});const joined=await send(remote,{type:'join',code:created.session.code,name:'혼합외부'});
-  await send(shared,{type:'start'});await sleep(20);assert.equal(shared.state.players.length,3);assert.equal(remote.state.device,undefined);
-  assert.equal((await send(shared,{type:'openSeat',player:remote.state.me.id})).ok,false);
-  assert.ok(!JSON.stringify(remote.state).includes(group.session.token));assert.ok(!JSON.stringify(shared.state).includes(joined.session.token));
-  const result=await send(shared,{type:'leave'});assert.ok(result.left);assert.equal(result.resumeSession.device,true);await sleep(20);
-  assert.equal(remote.state.players.filter(p=>p.id!==remote.state.me.id&&p.online).length,0);
-  assert.ok((await send(shared,{type:'resumeDevice',...result.resumeSession})).ok);assert.equal(shared.state.device.active,null);await sleep(20);
-  assert.equal(remote.state.players.filter(p=>p.online).length,3);
-  const intruder=await connect();assert.equal((await send(intruder,{type:'resumeDevice',code:created.session.code,token:'fake'})).ok,false);
+  assert.equal((await send(shared,{type:'addLocalPlayer',name:'혼합공유2'})).ok,false);await send(shared,{type:'mode',mode:'offline'});
+  const group=await send(shared,{type:'addLocalPlayer',name:'혼합공유2'});assert.ok(group.ok);
+  assert.equal((await send(remote,{type:'join',code:created.session.code})).ok,false);assert.equal((await send(remote,{type:'spectate',code:created.session.code})).ok,false);
+  const target=shared.state.device.players.find(p=>p.id!==shared.state.host);assert.ok((await send(shared,{type:'removeLocalPlayer',target:target.id})).ok);assert.equal(shared.state.players.length,1);
 });
 
 test('대기실 공유 기기 퇴장 시 그 기기 참가자만 제거하고 다른 기기에 방장 위임', async()=>{
   const shared=await connect(),remote=await connect();const created=await send(shared,{type:'create',name:'퇴장공유1'});
-  await send(shared,{type:'addLocalPlayer',name:'퇴장공유2'});await send(remote,{type:'join',code:created.session.code,name:'남은참가'});
-  await send(shared,{type:'leave'});await sleep(20);assert.equal(remote.state.players.length,1);assert.equal(remote.state.host,remote.state.me.id);await send(remote,{type:'leave'});
+  await send(shared,{type:'mode',mode:'offline'});await send(shared,{type:'addLocalPlayer',name:'퇴장공유2'});
+  await send(shared,{type:'leave'});await sleep(20);assert.equal((await send(remote,{type:'join',code:created.session.code})).ok,false);
 });
 
 test('서버 재시작 뒤 공유 기기 인원·손패를 복구하되 이름 확인 전에는 비공개 상태를 보내지 않음', async()=>{
-  const shared=await connect();await send(shared,{type:'create',name:'저장공유1'});await send(shared,{type:'addLocalPlayer',name:'저장공유2'});
+  const shared=await connect();await send(shared,{type:'create',name:'저장공유1'});await send(shared,{type:'mode',mode:'offline'});await send(shared,{type:'addLocalPlayer',name:'저장공유2'});
   const added=await send(shared,{type:'addLocalPlayer',name:'저장공유3'});await send(shared,{type:'start'});
   const king=shared.state.players.find(p=>p.role==='king');await send(shared,{type:'openSeat',player:king.id});const before=structuredClone(shared.state.me.hand);
   clients.forEach(c=>c.disconnect());await stop();await start();const restored=await connect();
@@ -353,4 +349,30 @@ test('실제 익명 상점 동시 구매는 재고를 중복 판매하지 않으
   const shop=structuredClone(m.state.game.shop),money=m.state.me.money,session=sessions[group.indexOf(m)];
   clients.forEach(c=>c.disconnect());await stop();await start();const restored=await connect();assert.ok((await send(restored,{type:'resume',...session})).ok);
   assert.equal(restored.state.me.money,money);assert.deepEqual(restored.state.game.shop,shop);assert.equal(restored.state.game.phase,'market');
+});
+
+test('계정/게스트 이름·관전 손패·익명 채팅·게임 중 전환 금지·무승부 점수 저장',async()=>{
+ const g=[await connect(),await connect(),await connect()];const accounts=[];
+ for(let i=0;i<3;i++){const r=await send(g[i],{type:'register',name:`계정검증${i}`,password:'abc12345'});assert.ok(r.ok,r.error);accounts.push(r);}
+ const created=await send(g[0],{type:'create',name:'위조'});for(let i=1;i<3;i++)assert.ok((await send(g[i],{type:'join',code:created.session.code,name:'위조'})).ok);
+ await send(g[0],{type:'start'});await sleep(20);assert.equal(g[0].state.me.name,'계정검증0');
+ const s=await connect();assert.ok((await send(s,{type:'spectate',code:created.session.code,name:'위조'})).ok);assert.match(s.state.me.name,/^게스트\d+$/);assert.ok(s.state.players.every(p=>p.role&&p.hand));
+ assert.equal((await send(s,{type:'expedition'})).ok,false);assert.ok((await send(s,{type:'chatSend',channel:'spectator',text:'관전'})).ok);
+ assert.equal((await send(g[0],{type:'toSpectator',target:g[1].state.me.id})).ok,false);
+ await send(g[0],{type:'chatSend',channel:'public',text:'모두'});await sleep(20);assert.equal(s.state.chat.public.at(-1).text,'모두');assert.ok(!g[1].state.chat.spectator);
+ const requester=g.find(p=>p.state.me.role==='king');await send(requester,{type:'requestDraw'});const voter=g.find(p=>p!==requester);await send(voter,{type:'gameVote',vote:voter.state.game.vote.id,accept:true});await sleep(20);assert.equal(requester.state.game.winner.side,'draw');
+ for(let i=0;i<3;i++){await send(g[i],{type:'leave'});const r=await send(g[i],{type:'accountResume',token:accounts[i].accountToken});assert.ok(r.ok);assert.equal(r.account.points,30);assert.equal(r.account.draws,1);}
+});
+
+test('온라인 이탈 AI 대체·도중 복귀20점 차감·미복귀 종료300점 추가·점수0하한',async()=>{
+ const group=[await connect(),await connect(),await connect()],auth=[];
+ for(let i=0;i<3;i++){const r=await send(group[i],{type:'register',name:`이탈계정${i}`,password:'abc12345'});assert.ok(r.ok);auth.push(r);}
+ const created=await send(group[0],{type:'create'}),session=[created.session];for(let i=1;i<3;i++)session.push((await send(group[i],{type:'join',code:created.session.code})).session);
+  await send(group[0],{type:'start'});await sleep(20);const k=group.find(p=>p.state.me.role==='king'),v=group.find(p=>p!==k);await send(k,{type:'requestDraw'});for(let i=0;i<30&&!v.state.game.vote;i++)await sleep(10);await send(v,{type:'gameVote',vote:v.state.game.vote.id,accept:true});
+ await sleep(20);assert.equal(k.state.status,'finished');await send(group[0],{type:'rematch'});await send(group[0],{type:'start'});await sleep(20);
+  const id=group[1].state.me.id;group[1].disconnect();for(let i=0;i<50&&!group[0].state.players.find(p=>p.id===id).takeover;i++)await sleep(10);assert.equal(group[0].state.players.find(p=>p.id===id).takeover,true);
+ const restored=await connect();await send(restored,{type:'accountResume',token:auth[1].accountToken});assert.ok((await send(restored,{type:'resume',...session[1]})).ok);await sleep(20);assert.equal(restored.state.players.find(p=>p.id===id).takeover,false);
+ const check=await connect();const profile=await send(check,{type:'accountResume',token:auth[1].accountToken});assert.equal(profile.account.points,10);
+ group[2].disconnect();await sleep(10);const active=[group[0],restored],request=active.find(p=>p.state.me.role!=='citizen');await send(request,{type:'requestDraw'});const other=active.find(p=>p!==request);assert.ok((await send(other,{type:'gameVote',vote:other.state.game.vote.id,accept:true})).ok);await sleep(30);
+ const absent=await connect();const result=await send(absent,{type:'accountResume',token:auth[2].accountToken});assert.equal(result.account.points,0);assert.equal(result.account.draws,2);
 });

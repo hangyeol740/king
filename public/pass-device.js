@@ -5,7 +5,7 @@ function deviceToolbar() {
   return `<section class="device-toolbar"><div><b>한 기기로 ${state.device.players.length}명 참가</b><small>${state.device.active ? `${esc(state.me.name)}님의 화면` : '비공개 화면이 가려져 있습니다.'}</small></div>${state.status !== 'lobby' && state.device.active ? '<button class="secondary" data-cmd="lockSeat">화면 가리고 다음 사람에게 넘기기</button>' : ''}</section>`;
 }
 function localPlayerControls() {
-  return `<section class="local-player-controls"><h3>이 기기로 함께 참가하기</h3><p>폰·PC 한 대를 돌려 쓰려면 이름을 추가하세요. 다른 기기의 친구도 같은 방 코드로 참가할 수 있습니다.</p><label for="local-player-name">추가할 플레이어 이름</label><div><input id="local-player-name" maxlength="16" placeholder="함께 플레이할 이름" autocomplete="off"><button class="secondary" data-ui="addLocalPlayer">플레이어 추가</button></div>${state.device ? `<p class="small">이 기기의 참가자: ${state.device.players.map(p => esc(p.name)).join(' · ')}</p>` : ''}</section>`;
+  return `<section class="local-player-controls"><h3>오프라인 · 이 기기로 함께 참가하기</h3><p>다른 기기와 관전자는 참가할 수 없습니다. 게스트는 자동 이름이 배정됩니다.</p><label for="local-player-name">추가할 플레이어 이름 (로그인한 경우)</label><div><input id="local-player-name" maxlength="16" placeholder="이름 또는 게스트 자동 배정" autocomplete="off"><button class="secondary" data-ui="addLocalPlayer">플레이어 추가</button></div>${state.device ? `<p class="small">${state.device.players.map(p => `${esc(p.name)}${p.id!==state.host?` <button class="quiet" data-cmd="removeLocalPlayer" data-bot-target="${p.id}">삭제</button>`:''}`).join(' · ')}</p>` : ''}</section>`;
 }
 function renderDeviceGate() {
   const device = state.device, g = state.game, ended = state.status === 'finished';

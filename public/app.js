@@ -39,6 +39,8 @@ async function command(data) {
       localStorage.setItem(STORAGE, JSON.stringify(result.session));
       if (['resume', 'resumeDevice'].includes(data.type)) localStorage.removeItem(RETURN_STORAGE);
     }
+    if(Object.hasOwn(result,'account')){accountProfile=result.account;if(result.accountToken)localStorage.setItem(ACCOUNT_STORAGE,result.accountToken);else localStorage.removeItem(ACCOUNT_STORAGE);render();}
+    if(result.personalResult?.spectatorInvite){const s=result.personalResult.spectatorInvite,url=`${location.origin}/?room=${s.code}&spectator=${s.token}`;try{await navigator.clipboard.writeText(url);toast('관전 초대 링크를 복사했습니다.');}catch{toast(`관전 초대: ${url}`);}}
     if (result.left) {
       if (result.resumeSession) localStorage.setItem(RETURN_STORAGE, JSON.stringify(result.resumeSession));
       localStorage.removeItem(STORAGE); state = null; selected.clear(); actionMode = null; freshCards.clear();
@@ -56,7 +58,9 @@ async function command(data) {
 socket.on('connect', async () => {
   $('#connection').innerHTML = '<i></i> 서버 연결됨'; $('#connection').classList.remove('offline');
   if (replaced) return;
+  const accountToken=localStorage.getItem('kingdom.account.v1');if(accountToken){const r=await socket.timeout(15000).emitWithAck('command',{type:'accountResume',token:accountToken});if(r.ok)accountProfile=r.account;else localStorage.removeItem('kingdom.account.v1');}
   const session = savedSession();
+  const invite=new URLSearchParams(location.search);if(!session&&invite.get('spectator')){await command({type:'resume',code:invite.get('room'),token:invite.get('spectator')});return;}
   if (session) {
     try {
       const response = await socket.timeout(15000).emitWithAck('command', resumeCommand(session));
@@ -69,6 +73,7 @@ socket.on('connect', async () => {
 socket.on('disconnect', () => {
   $('#connection').innerHTML = '<i></i> 재연결 중'; $('#connection').classList.add('offline');
 });
+socket.on('account',a=>{if(typeof accountProfile!=='undefined')accountProfile=a;});
 socket.on('replaced', () => {
   replaced = true; state = null;
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
@@ -113,6 +118,7 @@ function render() {
   if(rules)renderRules();
   if (!state) { renderHome(); return; }
   if (!rules) { app.innerHTML = '<div class="loading">카드 정보를 불러오는 중…</div>'; return; }
+  if(state.me.spectator){renderSpectator();return;}
   if (state.device && state.status !== 'lobby' && !state.device.active) {
     if (typeof renderDeviceGate === 'function') renderDeviceGate();
     else app.innerHTML = '<div class="loading">공유 기기 화면을 불러오지 못했습니다. 새로고침해주세요.</div>';
@@ -136,12 +142,14 @@ function renderHome() {
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
         ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>직업과 손패가 유지됩니다. 본인 차례에는 복귀를 기다립니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button></div>` : ''}
+        ${typeof renderAccount==='function'?renderAccount():''}
         <form id="entry-form">
-          <label for="nickname">플레이어 이름</label><input id="nickname" name="name" maxlength="16" placeholder="왕국에서 사용할 닉네임" required autocomplete="nickname" value="${esc(localStorage.getItem('kingdom.nickname') || '')}">
+          <p>참가 이름: ${typeof accountProfile!=='undefined'&&accountProfile?esc(accountProfile.name):'자동 게스트 숫자 닉네임'}</p>
           <button type="submit" name="entry" value="create" class="primary full">새로운 왕국 만들기 <span>→</span></button>
           <div class="divider"><span>또는 초대받은 왕국에 입장</span></div>
           <label for="room-code">방 코드</label><input id="room-code" name="code" maxlength="6" placeholder="6자리 코드 입력" class="code-input" value="${esc(params.get('room') || '')}" autocomplete="off">
           <button type="submit" name="entry" value="join" class="secondary full">코드로 참가하기 <span>↗</span></button>
+          <button type="submit" name="entry" value="spectate" class="quiet full">이 방 관전하기</button>
         </form>
         <div class="entry-note"><span>◉</span><p>폰·PC 모두 플레이 가능 · 대화는 자유롭게<br>한 기기로 여러 명: 방 참가 → 이 기기의 플레이어 추가<br>혼자 플레이: 방 만들기 → AI 추가 2명 → 시작</p></div>
       </div>
@@ -161,9 +169,10 @@ function renderLobby() {
         <div class="lobby-seats">${state.players.map((p, i) => `<div class="lobby-seat"><div class="avatar avatar-${i % 4}">${p.bot ? '⚙' : esc(p.name.slice(0, 1))}</div><div><b>${esc(p.name)} ${p.id === state.me.id ? '<span class="you-tag">나</span>' : ''}</b><small>${p.bot ? '학습된 신경망 · 자동 플레이' : `${p.host ? '방장 · ' : ''}${p.online ? '플레이 준비 완료' : '재접속 대기 중'}`}</small></div>${p.bot && isHost ? `<button class="quiet remove-bot" data-cmd="removeBot" data-bot-target="${p.id}" aria-label="${esc(p.name)} 제거">✕</button>` : `<span class="status-dot ${p.online ? '' : 'offline'}"></span>`}</div>`).join('')}
         ${state.players.length < 3 ? Array.from({ length: 3 - state.players.length }, () => '<div class="lobby-seat empty-seat"><div class="avatar">＋</div><span>친구를 기다리고 있어요</span></div>').join('') : ''}</div>
         <div class="invite-box"><div><span class="eyebrow">INVITE CODE</span><strong>${state.code}</strong></div><div><button class="secondary" data-ui="copyCode">코드 복사</button><button class="quiet" data-ui="copyLink">초대 링크 복사 ↗</button></div></div>
-        ${typeof localPlayerControls === 'function' ? localPlayerControls() : ''}
+        ${state.mode==='offline'&&typeof localPlayerControls === 'function' ? localPlayerControls() : ''}
       </section>
       <section class="panel faction-settings"><span class="eyebrow">BALANCE OF POWER</span><h2>진영 구성</h2><p class="muted">왕은 한 명. 나머지 운명은 무작위.</p>
+        <div class="mode-controls">${['online','offline'].map(mode=>`<button class="${state.mode===mode?'primary':'secondary'}" data-cmd="mode" data-mode="${mode}" ${isHost?'':'disabled'}>${mode==='online'?'온라인':'오프라인'}</button>`).join('')}</div><p class="small">온라인은 각자 기기·관전 가능, 오프라인은 이 기기 참가자만 가능</p>
         <div class="role-settings">${Object.entries(labels).map(([role, label]) => `<div class="role-setting"><span class="role-symbol ${role}">${roleIcon(role)}</span><div><b>${label}</b><small>${roleDescription(role)}</small></div><input aria-label="${label} 인원" data-role-count="${role}" type="number" min="${role === 'king' ? 1 : 0}" max="${role === 'king' ? 1 : state.players.length}" value="${state.config[role]}" ${!isHost || role === 'king' || state.players.length <= 4 ? 'disabled' : ''}></div>`).join('')}</div>
         <p class="config-summary ${valid ? '' : 'warn'}">진영 합계 ${total}명 · 참가자 ${state.players.length}명${!valid ? ' — 인원과 필수 진영을 확인하세요.' : ''}</p>
         ${isHost ? `<button class="primary full" data-cmd="start" ${valid ? '' : 'disabled'}>왕국의 첫날 시작하기 <span>→</span></button>` : '<div class="waiting-box">방장이 게임을 시작하면 입장합니다.</div>'}
@@ -172,7 +181,7 @@ function renderLobby() {
         <p class="small muted">${state.players.length >= 5 ? '5인의 추가 자리는 시민·반란군·중립 중 선택 가능합니다. 주교·상인 직업은 중복 배정되지 않습니다.' : '3인: 왕·시민·반란군 / 4인: 중립 추가'}<br>3인 게임에는 중립 직업이 없습니다.</p>
       </section>
     </div>
-    <div class="lobby-tip"><span>✦</span><div><b>말은 자유롭게, 카드는 비밀스럽게.</b><p>손패와 낮 행동은 다른 사람에게 공개되지 않습니다. 반란군끼리는 서로의 진영을 알아봅니다.</p></div><button class="quiet" data-ui="guide">규칙 둘러보기 ↗</button></div>`;
+    <div class="lobby-tip"><span>✦</span><div><b>말은 자유롭게, 카드는 비밀스럽게.</b><p>손패와 낮 행동은 다른 사람에게 공개되지 않습니다.</p></div><button class="quiet" data-ui="guide">규칙 둘러보기 ↗</button></div>${typeof renderSocial==='function'?renderSocial():''}${state.mode!=='offline'?`<section class="spectators-list">관전자 ${(state.spectators||[]).map(p=>esc(p.name)).join(' · ')||'없음'}${isHost?'<button class="secondary" data-cmd="addSpectator">관전자 초대 만들기</button>':''}${isHost?state.players.filter(p=>p.id!==state.host&&!p.bot).map(p=>`<button class="quiet" data-cmd="toSpectator" data-bot-target="${p.id}">${esc(p.name)} 관전 전환</button>`).join(''):''}</section>`:''}`;
 }
 function roleIcon(role) { return { king: '♛', citizen: '♟', rebel: '⚑', neutral: '◇' }[role] || '?'; }
 function roleDescription(role) { return { king: '왕국을 다스리는 단 한 사람', citizen: '왕과 함께 왕국을 지킨다', rebel: '인원별 반란 목표를 달성한다', neutral: '어느 편에도 속하지 않는다' }[role]; }
@@ -193,6 +202,7 @@ function renderGame() {
         ${renderReligiousBanner()}
         ${renderTheftAlert()}
         ${renderMajorResults()}
+        ${typeof renderGameVotes==='function'?renderGameVotes():''}
         <div class="table-players">${state.players.map(p => `<div class="table-player ${p.id === g.current && !ended ? 'active' : ''} ${p.id === me.id ? 'self' : ''}"><div class="player-top"><span class="avatar small-avatar ${p.role || 'hidden'}">${p.job === 'bishop' ? '✝' : p.role ? roleIcon(p.role) : '?'}</span><span class="status-dot ${p.online ? '' : 'offline'}" title="${p.online ? '연결됨' : '재접속 대기'}"></span></div><strong>${esc(p.name)} ${p.id === me.id ? '<small>나</small>' : ''}</strong><span class="player-role ${p.role || ''}">${p.role ? playerLabel(p) : '비공개 진영'}</span>${g.current === p.id && !ended ? '<span class="turn-indicator">현재 차례</span>' : ''}</div>`).join('')}</div>
         <section class="action-panel ${acting ? 'your-turn' : ''}"><div class="action-kicker"><span class="eyebrow">${ended ? 'THE FINAL CHAPTER' : acting ? 'YOUR MOVE' : 'THE KINGDOM MOVES'}</span>${g.revolt !== null && g.revolt > 0 ? `<span class="revolt-alert">⚑ 반란력 ${g.revolt}</span>` : ''}</div>${renderAssistance()}${renderAction()}</section>
         <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > (me.handLimit||30) && !ended ? `<div class="hand-warning">다음 아침에 ${me.handLimit||30}장까지 줄어듭니다. 자원 → 나머지 일반 카드 → 보호되는 교단·전도 순서로 버립니다.</div>` : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
@@ -203,7 +213,7 @@ function renderGame() {
         <section class="panel personal-notes"><div class="panel-heading"><h2>나의 비밀 기록</h2><span class="live-label">PRIVATE</span></div><div class="notes-scroll">${[...me.notes].reverse().map(renderNote).join('') || '<p class="muted">아직 기록이 없습니다.</p>'}</div></section>
         <div class="sidebar-foot">방 코드 <button class="quiet" data-ui="copyCode">${state.code} ⧉</button><span>대화는 디스코드에서</span></div>
       </aside>
-    </div>`;
+    </div>${typeof renderSocial==='function'?renderSocial():''}`;
 }
 function renderRevoltBanner() {
   const g = state.game;
@@ -277,8 +287,10 @@ function renderAction() {
   const g = state.game, p = g.pending, me = state.me, isKing = g.king === me.id;
   if (state.status === 'finished') {
     const won = g.winner.players.includes(me.id);
+    if(g.winner.side==='draw')return `<h2>무승부</h2><p>${esc(g.winner.reason)}</p><p>계정 점수 +30점 · 무승부 기록</p>${state.host===me.id?'<button class="primary" data-cmd="rematch">다시 준비하기</button>':''}<button class="secondary" data-cmd="leave">방 나가기</button>`;
     return `<div class="victory-symbol">${won ? '♛' : '⚑'}</div><h2>${g.winner.side === 'royal' ? '왕과 시민의 승리' : g.winner.side === 'rebel' ? '반란군의 승리' : g.winner.side === 'bishop' ? '주교의 승리' : g.winner.side === 'merchant' ? '상인의 승리' : g.winner.side === 'rebel+bishop' ? '반란군과 주교의 공동 승리' : '중립의 승리'}</h2><p class="action-description">${esc(g.winner.reason)}</p><p class="outcome ${won ? 'won' : ''}">${won ? '당신의 진영이 왕국의 역사를 썼습니다.' : me.role === 'neutral' ? '중립의 여정이 끝났습니다.' : '다음 왕국에서는 운명이 달라질지도 모릅니다.'}</p><div class="button-row">${state.host === me.id ? '<button class="primary" data-cmd="rematch">같은 사람들과 다시 준비하기 →</button>' : '<span class="muted">방장이 다시 시작할 수 있습니다.</span>'}<button class="secondary" data-cmd="leave">방 나가기</button></div>`;
   }
+  if(me.surrendered)return wait('중립 기권으로 게임에서 나왔습니다.','기권패 -120점이 적용됩니다. 게임에 복귀할 수 없습니다.');
   if (me.executed && ['morning', 'redistribute', 'day','market'].includes(g.phase)) return wait('처형 당일 아침·낮에는 행동할 수 없습니다.', '아침 재분배는 자동 수락합니다. 저녁 세금 납부와 밤 행동은 가능하며 다음 날부터 정상 참여합니다.');
   if(g.phase==='market')return renderMarket();
   if(g.phase==='merchantEvening')return renderMerchantEvening();
@@ -416,10 +428,11 @@ function submitCards(type, text) {
 }
 
 app.addEventListener('submit', async event => {
+  if(event.target.id==='chat-form'){event.preventDefault();const text=$('#chat-message').value;await command({type:'chatSend',channel:event.target.dataset.channel,room:event.target.dataset.room,text});return;}
   if (event.target.id !== 'entry-form') return;
   event.preventDefault();
   const form = new FormData(event.target), type = event.submitter?.value || 'create', name = String(form.get('name')).trim();
-  if (type === 'join' && !String(form.get('code')).trim()) { toast('초대받은 방 코드를 입력하세요.'); $('#room-code').focus(); return; }
+  if (['join','spectate'].includes(type) && !String(form.get('code')).trim()) { toast('초대받은 방 코드를 입력하세요.'); $('#room-code').focus(); return; }
   localStorage.setItem('kingdom.nickname', name);
   await command({ type, name, code: String(form.get('code')) });
 });
@@ -452,13 +465,18 @@ app.addEventListener('click', async event => {
   if (!button || button.disabled || busy) return;
   const ui = button.dataset.ui;
   if (ui) {
+    if(['login','register'].includes(ui)){await command({type:ui,name:$('#account-name').value,password:$('#account-password').value});return;}
+    if(ui==='logout'){await command({type:'logout',token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
+    if(ui==='chatTab'){chatTab=button.dataset.tab;render();return;}
+    if(ui==='secretCreate'){await command({type:'secretCreate',name:$('#secret-name').value});return;}
+    if(ui==='secretJoin'){await command({type:'secretJoin',room:button.dataset.room,password:document.getElementById(`secret-${button.dataset.room}`).value});return;}
     if(ui==='shopPick'){shopStockId=button.dataset.stock;shopQuantity=1;suggestPayment();render();return;}
     if(ui==='suggestPayment'){suggestPayment();render();return;}
     if(ui==='merchantTab'){merchantTab=button.dataset.tab;actionMode=null;selected.clear();render();return;}
     if(ui==='displayMode'){actionMode='display';selected.clear();render();return;}
     if (ui === 'addLocalPlayer') {
       const name = $('#local-player-name').value.trim();
-      if (!name) { toast('추가할 플레이어 이름을 입력하세요.'); return; }
+      if (!name&&typeof accountProfile!=='undefined'&&accountProfile) { toast('추가할 플레이어 이름을 입력하세요.'); return; }
       await command({ type: 'addLocalPlayer', name }); return;
     }
     if (ui === 'chooseSeat' || ui === 'cancelSeat') { deviceSeatChoice = ui === 'chooseSeat' ? button.dataset.seat : null; render(); return; }
@@ -496,6 +514,10 @@ app.addEventListener('click', async event => {
   const type = button.dataset.cmd;
   if (!type) return;
   const data = { type };
+  if(button.dataset.mode)data.mode=button.dataset.mode;
+  if(button.dataset.request)data.request=button.dataset.request;
+  if(button.dataset.room)data.room=button.dataset.room;
+  if(button.dataset.vote)data.vote=button.dataset.vote;
   if(type==='marketBuy'){data.stock=shopStockId;data.quantity=shopQuantity;}
   if(type==='displayGoods')data.price=Number($('#display-price').value);
   if(button.dataset.stock)data.stock=button.dataset.stock;
@@ -529,6 +551,7 @@ $('#rules').addEventListener('click', event => { if (event.target === $('#rules'
 function renderRules() {
   $('#rules-content').innerHTML = `
     <div class="guide-banner">왕은 공개, 나머지 진영과 손패는 비밀. 반란군끼리는 서로를 압니다.</div>
+    <h3>온라인·오프라인·계정·채팅</h3><p>온라인은 각자 기기로 참가하며 게스트는 자동 숫자 이름, 로그인 계정은 가입 아이디를 사용합니다. 오프라인은 한 기기로만 참가·추가·삭제할 수 있고 관전과 다른 기기 입장은 불가합니다. 모든 채팅은 메시지 내용만 표시하며 발신 이름·직업·내 메시지 구분이 없습니다. 공개·랜덤1대1·반란군·비밀방·관전 채팅을 지원합니다. 비밀방 비밀번호는 서버가 중복 없는3자리 숫자를 발급하며 한 사람 최대3방 개설·개설자 삭제 가능합니다.</p><p>관전자는 공개 상황·공개/관전채팅·개인 손패·직업을 볼 수 있지만 게임 행동·비밀채팅은 불가합니다. 기권은3일차부터 요청자당3일마다, 진영 과반수(2명은 만장일치). 중립 기권은 혼자 빠지고-120점. 무승부는 왕·반란군·중립이 요청하고 전체 과반수로 성립합니다. 온라인 이탈은 AI가 대신하며 도중 복귀-20점, 끝까지 미복귀-300점 추가. 점수는0 미만이 되지 않습니다.</p>
     <h3>왕·사냥·시민 직업 최신 규칙</h3><p>왕은 시작 손패20장·재분배20장·아침 손패제한50장, 다른 직업은 시작12장·재분배12장·제한30장입니다. 사냥 성공 보상은 랜덤8장입니다. 일반 사냥은 공격력10점, 사냥꾼은8점이 필요합니다. 시민 직업은 선택하지 않아도 되며 시민 인원 이내에서 중복 없이 배정하고 남는 자리는 일반 시민입니다.</p><p>사냥꾼: 첫날 포함 매일 아침 사냥도끼1장(공격5·일회용) 추가. 전용 제작은 도끼1장→자원1장입니다. 대장장이: 낮 시작에 자원1~10장을 무작위로 받고 받은 수량은 개인 기록에 표시합니다. 채집은 자원9장. 전용 제작은 영구칼2장→강화된 영구칼1장, 자원4장→보병1장입니다.</p>
     <h3>승리와 하루의 흐름</h3><p>게임 기간: 3인 10일·4인 9일·5인 7일·6인 이상 6일. 일반 반란은 3인 1일·4인 2일·5인 이상 3일 성공하면 반란군이 즉시 승리합니다. 종교반란은 4인 1일·5인 2일·6인 이상 3일 성공하면 주교가 승리합니다. 마지막 저녁까지 두 반란의 승리 목표를 막으면 왕·시민 승리. 마지막 날에는 밤이 없습니다. 철혈의 검 획득 시 즉시 승리합니다.</p>
     <h3>강화학습 AI</h3><p>대기실의 AI 추가로 혼자 또는 친구와 함께 학습된 AI를 상대할 수 있습니다. AI도 무작위 진영 배정과 동일한 규칙을 적용받으며, 자기 손패와 공개 정보만 보고 서버에서 행동합니다. 사람과 AI를 합쳐 3명 이상이면 시작할 수 있습니다. 학습된 초기 모델이라 진영별 실력 차이가 있으며, 디스코드 대화를 듣지는 않습니다.</p>
