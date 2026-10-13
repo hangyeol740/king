@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
 import {ratingEligible} from './lib/game.js';
-import {chatAct,chatView,removeChatMember} from './lib/chat.js';
+import {chatAct,chatView,removeChatMember,botChat} from './lib/chat.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
@@ -151,7 +151,7 @@ io.on('connection', socket => {
       if (['create', 'join','spectate','resume', 'resumeDevice'].includes(input.type)) {
         if (socket.data.room) throw new RuleError('이미 방에 접속했습니다.');
         if (input.type === 'create') {
-          const a=accounts.find(a=>a.id===socket.data.account);room = makeRoom(code(),a?a.name:guestName());room.players[0].accountId=a?.id||null; rooms.set(room.code, room); p = room.players[0];
+          const a=accounts.find(a=>a.id===socket.data.account);room = makeRoom(code(),a?a.name:guestName());room.mode=input.mode==='offline'?'offline':'online';room.players[0].accountId=a?.id||null; rooms.set(room.code, room); p = room.players[0];
         } else {
           room = rooms.get(typeof input.code === 'string' ? input.code.trim().toUpperCase() : '');
           if (!room) throw new RuleError('방을 찾을 수 없습니다. 방 코드를 확인하세요.');
@@ -182,6 +182,7 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
+          if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');
           if(input.mode==='offline'&&(room.spectators?.length||room.players.some(q=>q.id!==p.id&&!q.bot&&!device?.players.includes(q.id))))throw new RuleError('다른 기기 참가자와 관전자를 먼저 내보내세요.');

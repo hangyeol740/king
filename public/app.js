@@ -137,7 +137,7 @@ function renderHome() {
         <h1>왕관을 지킬 것인가,<br><em>왕국을 뒤집을 것인가.</em></h1>
         <p class="hero-description">충성은 보이지 않고, 반란은 밤에 시작된다.<br>친구들과 함께하는 비밀 카드 전략 게임.</p>
         <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="art-star s1">✦</span><span class="art-star s2">✧</span><div class="art-crown">♛</div><div class="art-land"></div><span class="art-caption">ONE CROWN. MANY INTENTIONS.</span></div>
-        <div class="home-facts"><span><b>3명 이상</b> 함께 플레이</span><span><b>6–10일</b> 운명의 라운드</span><span><b>4개 진영</b> 하나의 왕국</span></div>
+        <div class="home-facts"><span><b>2명 이상</b> 함께 플레이</span><span><b>6–10일</b> 운명의 라운드</span><span><b>자유 구성</b> 하나의 왕국</span></div>
       </div>
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
@@ -145,7 +145,7 @@ function renderHome() {
         ${typeof renderAccount==='function'?renderAccount():''}
         <form id="entry-form">
           <p>참가 이름: ${typeof accountProfile!=='undefined'&&accountProfile?esc(accountProfile.name):'자동 게스트 숫자 닉네임'}</p>
-          <button type="submit" name="entry" value="create" class="primary full">새로운 왕국 만들기 <span>→</span></button>
+          <div class="mode-controls main-mode-choice"><button type="submit" name="entry" value="create" class="primary full">온라인 왕국 만들기</button><button type="submit" name="entry" value="createOffline" class="secondary full">오프라인 · 한 기기로 만들기</button></div>
           <div class="divider"><span>또는 초대받은 왕국에 입장</span></div>
           <label for="room-code">방 코드</label><input id="room-code" name="code" maxlength="6" placeholder="6자리 코드 입력" class="code-input" value="${esc(params.get('room') || '')}" autocomplete="off">
           <button type="submit" name="entry" value="join" class="secondary full">코드로 참가하기 <span>↗</span></button>
@@ -160,11 +160,13 @@ function renderLobby() {
   const isHost = state.host === state.me.id;
   const total = Object.values(state.config).reduce((a, b) => a + b, 0);
   const neutralLimit = state.players.length === 5 && Object.keys(rules.neutralJobs || {}).length < 2 ? 1 : state.players.length;
-  const valid = state.players.length >= 3 && total === state.players.length && state.config.king === 1 && state.config.citizen >= 1 && state.config.rebel >= 1 && state.config.neutral <= neutralLimit && (state.players.length < 4 || state.config.neutral >= 1);
+  const valid = state.players.length >= 2 && total === state.players.length && state.config.king === 1 && state.config.rebel >= 1 && state.config.neutral <= neutralLimit;
+  const expected=state.players.length<=2?{king:1,citizen:0,rebel:1,neutral:0}:{king:1,citizen:state.players.length===3?1:Math.max(1,state.players.length-3),rebel:1,neutral:state.players.length===3?0:1};
+  const unrated=state.mode==='offline'||state.players.length===2||state.players.some(p=>p.bot)||Object.keys(expected).some(k=>state.config[k]!==expected[k]);
   app.innerHTML = `
     <section class="page-heading"><div><span class="eyebrow">THE GATHERING</span><h1>왕국의 개막을 기다리며<span class="heading-dot">.</span></h1><p class="muted">친구들을 초대하고, 진영을 준비하세요. 직업은 시작할 때 무작위로 배정됩니다.</p></div><button class="quiet border" data-cmd="leave">대기실 나가기 ↗</button></section>
     <div class="lobby-grid">
-      <section class="panel lobby-players"><div class="panel-heading"><h2>모인 사람들</h2><span class="pill">${state.players.length}명 / 최소 3명</span></div>
+       <section class="panel lobby-players"><div class="panel-heading"><h2>모인 사람들</h2><span class="pill">${state.players.length}명 / 최소 2명 · ${state.mode==='offline'?'오프라인':'온라인'}</span></div>
         <div class="ai-controls"><div><b>강화학습 AI와 함께 플레이</b><p>${aiInfo?.available ? `PPO 셀프플레이 ${Number(aiInfo.episodes).toLocaleString()}판 학습 · 서버에서 자동 판단` : aiInfo ? '학습 모델이 없습니다. models/policy.json을 서버에 포함하세요.' : 'AI 모델을 확인하는 중…'}</p></div>${isHost ? `<button class="secondary compact" data-cmd="addBot" ${aiInfo?.available && state.players.filter(p => p.bot).length < 8 ? '' : 'disabled'}>AI 추가 ＋</button>` : ''}</div>
         <div class="lobby-seats">${state.players.map((p, i) => `<div class="lobby-seat"><div class="avatar avatar-${i % 4}">${p.bot ? '⚙' : esc(p.name.slice(0, 1))}</div><div><b>${esc(p.name)} ${p.id === state.me.id ? '<span class="you-tag">나</span>' : ''}</b><small>${p.bot ? '학습된 신경망 · 자동 플레이' : `${p.host ? '방장 · ' : ''}${p.online ? '플레이 준비 완료' : '재접속 대기 중'}`}</small></div>${p.bot && isHost ? `<button class="quiet remove-bot" data-cmd="removeBot" data-bot-target="${p.id}" aria-label="${esc(p.name)} 제거">✕</button>` : `<span class="status-dot ${p.online ? '' : 'offline'}"></span>`}</div>`).join('')}
         ${state.players.length < 3 ? Array.from({ length: 3 - state.players.length }, () => '<div class="lobby-seat empty-seat"><div class="avatar">＋</div><span>친구를 기다리고 있어요</span></div>').join('') : ''}</div>
@@ -172,8 +174,8 @@ function renderLobby() {
         ${state.mode==='offline'&&typeof localPlayerControls === 'function' ? localPlayerControls() : ''}
       </section>
       <section class="panel faction-settings"><span class="eyebrow">BALANCE OF POWER</span><h2>진영 구성</h2><p class="muted">왕은 한 명. 나머지 운명은 무작위.</p>
-        <div class="mode-controls">${['online','offline'].map(mode=>`<button class="${state.mode===mode?'primary':'secondary'}" data-cmd="mode" data-mode="${mode}" ${isHost?'':'disabled'}>${mode==='online'?'온라인':'오프라인'}</button>`).join('')}</div><p class="small">온라인은 각자 기기·관전 가능, 오프라인은 이 기기 참가자만 가능</p>
-        <div class="role-settings">${Object.entries(labels).map(([role, label]) => `<div class="role-setting"><span class="role-symbol ${role}">${roleIcon(role)}</span><div><b>${label}</b><small>${roleDescription(role)}</small></div><input aria-label="${label} 인원" data-role-count="${role}" type="number" min="${role === 'king' ? 1 : 0}" max="${role === 'king' ? 1 : state.players.length}" value="${state.config[role]}" ${!isHost || role === 'king' || state.players.length <= 4 ? 'disabled' : ''}></div>`).join('')}</div>
+        <p class="small">모드는 메인 화면에서 선택합니다. 왕1명·반란군1명 이상을 유지하며 자유롭게 구성할 수 있습니다.</p>${unrated?'<div class="rating-warning" role="status">이 게임은 레이팅 점수·승률 기록에 영향을 주지 않습니다. (오프라인 / AI / 2인 / 자유 진영 구성)</div>':''}
+        <div class="role-settings">${Object.entries(labels).map(([role, label]) => `<div class="role-setting"><span class="role-symbol ${role}">${roleIcon(role)}</span><div><b>${label}</b><small>${roleDescription(role)}</small></div><input aria-label="${label} 인원" data-role-count="${role}" type="number" min="${['king','rebel'].includes(role)?1:0}" max="${role === 'king' ? 1 : state.players.length}" value="${state.config[role]}" ${!isHost || role === 'king' ? 'disabled' : ''}></div>`).join('')}</div>
         <p class="config-summary ${valid ? '' : 'warn'}">진영 합계 ${total}명 · 참가자 ${state.players.length}명${!valid ? ' — 인원과 필수 진영을 확인하세요.' : ''}</p>
         ${isHost ? `<button class="primary full" data-cmd="start" ${valid ? '' : 'disabled'}>왕국의 첫날 시작하기 <span>→</span></button>` : '<div class="waiting-box">방장이 게임을 시작하면 입장합니다.</div>'}
         <div class="neutral-job-settings"><h3>중립 직업 선택</h3><p class="small muted">선택한 직업 중 무작위 배정 · 같은 직업은 최대 1명. 선택한 직업보다 중립 인원이 많으면 나머지는 일반 중립입니다.</p>${Object.entries(rules.neutralJobs || {}).map(([job, label]) => `<label><input type="checkbox" data-neutral-job="${job}" ${(state.neutralJobs || []).includes(job) ? 'checked' : ''} ${!isHost || state.players.length < 4 ? 'disabled' : ''}> ${label}</label>`).join('')}</div>
@@ -194,7 +196,7 @@ function renderGame() {
   const acting = g.current === me.id || (g.phase === 'morning' && g.king === me.id) || (g.phase === 'executionVote' && !g.pending.myDone);
   app.innerHTML = `
     ${typeof deviceToolbar === 'function' ? deviceToolbar() : ''}
-    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions"><button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
+    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions">${state.host===me.id&&state.mode!=='offline'?'<button class="quiet border compact-spectator" data-cmd="addSpectator">관전 초대</button>':''}<button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
     <div class="game-layout">
       <div class="game-main">
         <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="score-tracks">${state.neutralJobs.includes('bishop') ? `<div class="rebellion-track religion-track"><span>✝ 종교반란 성공</span>${Array.from({length:g.religiousGoal},(_,i)=>i+1).map(n => `<i class="${g.religiousSuccesses >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.religiousSuccesses}/${g.religiousGoal}</b></div>` : ''}<div class="rebellion-track"><span>반란 성공</span>${Array.from({length:g.revoltGoal},(_,i)=>i+1).map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/${g.revoltGoal}</b></div></div></div>
@@ -209,11 +211,11 @@ function renderGame() {
         <section class="recipe-reference"><h2>나의 제작법 <span>${myRecipes().length}종</span></h2><p class="small muted">공통 제작과 본인 진영·직업의 특수 제작만 표시합니다.</p><div class="guide-recipes">${myRecipes().map(r => `<p><b>${recipeLabel(r)}</b> · ${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} ${r.amount || 1}장</p>`).join('')}</div><p class="small muted">화염대검 + 북부의 검 → 철혈의 검 · 두 검의 재료는 영구 칼·영구 마법이며 제작 시 소모됩니다.</p></section>
       </div>
       <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'merchant' ? '◆' : me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'merchant' ? '돈 100점을 모으면 승리합니다.<br>비밀거래 불가 · 원정 자동 0장 · 돈으로 중재.' : me.job === 'bishop' ? `종교반란을 ${g.religiousGoal}일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.` : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일${state.neutralJobs.includes('bishop') ? `,<br>종교반란 ${g.religiousGoal}일` : ''} 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : me.job==='merchant'?`<div class="money-counter"><span>나에게만 공개 · 보유 돈</span><strong>${me.money} / 100점</strong></div>`:''}</section>
-        <section class="panel journal"><div class="panel-heading"><h2>왕국의 기록</h2><span class="live-label">PUBLIC</span></div><div class="journal-scroll">${[...g.logs].reverse().map(l => `<div class="journal-entry"><span>DAY ${l.day}</span><p>${esc(l.text)}</p></div>`).join('')}</div></section>
+         ${typeof renderSocial==='function'?renderSocial():''}<section class="panel journal"><div class="panel-heading"><h2>왕국의 기록</h2><span class="live-label">PUBLIC</span></div><div class="journal-scroll">${[...g.logs].reverse().map(l => `<div class="journal-entry"><span>DAY ${l.day}</span><p>${esc(l.text)}</p></div>`).join('')}</div></section>
         <section class="panel personal-notes"><div class="panel-heading"><h2>나의 비밀 기록</h2><span class="live-label">PRIVATE</span></div><div class="notes-scroll">${[...me.notes].reverse().map(renderNote).join('') || '<p class="muted">아직 기록이 없습니다.</p>'}</div></section>
         <div class="sidebar-foot">방 코드 <button class="quiet" data-ui="copyCode">${state.code} ⧉</button><span>대화는 디스코드에서</span></div>
       </aside>
-    </div>${typeof renderSocial==='function'?renderSocial():''}`;
+    </div>`;
 }
 function renderRevoltBanner() {
   const g = state.game;
@@ -434,7 +436,7 @@ app.addEventListener('submit', async event => {
   const form = new FormData(event.target), type = event.submitter?.value || 'create', name = String(form.get('name')).trim();
   if (['join','spectate'].includes(type) && !String(form.get('code')).trim()) { toast('초대받은 방 코드를 입력하세요.'); $('#room-code').focus(); return; }
   localStorage.setItem('kingdom.nickname', name);
-  await command({ type, name, code: String(form.get('code')) });
+  await command({ type:type==='createOffline'?'create':type,mode:type==='createOffline'?'offline':'online', name, code: String(form.get('code')) });
 });
 app.addEventListener('change', async event => {
   if(event.target.matches('[data-citizen-job]')){await command({type:'citizenJobs',jobs:[...document.querySelectorAll('[data-citizen-job]:checked')].map(el=>el.dataset.citizenJob)});return;}
@@ -467,7 +469,7 @@ app.addEventListener('click', async event => {
   if (ui) {
     if(['login','register'].includes(ui)){await command({type:ui,name:$('#account-name').value,password:$('#account-password').value});return;}
     if(ui==='logout'){await command({type:'logout',token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
-    if(ui==='chatTab'){chatTab=button.dataset.tab;render();return;}
+    if(ui==='chatTab'){if(button.dataset.tab==='pair'&&!state.chat.pair){await command({type:'pairRequest'});return;}chatTab=button.dataset.tab;render();return;}
     if(ui==='secretCreate'){await command({type:'secretCreate',name:$('#secret-name').value});return;}
     if(ui==='secretJoin'){await command({type:'secretJoin',room:button.dataset.room,password:document.getElementById(`secret-${button.dataset.room}`).value});return;}
     if(ui==='shopPick'){shopStockId=button.dataset.stock;shopQuantity=1;suggestPayment();render();return;}
@@ -515,6 +517,7 @@ app.addEventListener('click', async event => {
   if (!type) return;
   const data = { type };
   if(type==='addBot')toast('AI가 포함된 게임은 레이팅 점수와 승률 기록에 영향을 주지 않습니다.');
+  if(type==='start'&&document.querySelector('.rating-warning'))toast('이 게임은 레이팅 점수·승률 기록에 영향을 주지 않습니다.');
   if(button.dataset.mode)data.mode=button.dataset.mode;
   if(button.dataset.request)data.request=button.dataset.request;
   if(button.dataset.room)data.room=button.dataset.room;

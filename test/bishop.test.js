@@ -42,8 +42,8 @@ function mediate(r, revoltType, cards = new Map()) {
   act(r, k.id, { type: 'contribute', cards: cards.get(k.id) || [] });
 }
 
-test('중립 직업 선택 권한·중복 검증, 3인 제외, 여러 중립 중 주교 단 1명과 비공개 배정', () => {
-  const three = lobby(3);
+test('중립 직업 선택 권한·중복 검증, 2인 제외, 여러 중립 중 주교 단 1명과 비공개 배정', () => {
+  const three = lobby(2);
   assert.throws(() => act(three, three.host, { type: 'neutralJobs', jobs: ['bishop'] }), RuleError);
   const r = lobby(6);
   assert.throws(() => act(r, r.players[1].id, { type: 'neutralJobs', jobs: ['bishop'] }), RuleError);

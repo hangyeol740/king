@@ -150,7 +150,7 @@ test('게임 중 방 나가기로 연결 해제, 다른 사람에게 오프라�
   assert.equal((await send(a, { type: 'aid' })).ok, false);
   assert.ok((await send(a, { type: 'resume', ...result.resumeSession })).ok);
   assert.deepEqual(a.state.me.hand, before.me.hand); assert.equal(a.state.me.role, before.me.role);
-  assert.equal(a.state.game.phase, before.game.phase); assert.equal(a.state.host, before.host);
+  assert.equal(a.state.host, before.host); // 이탈 중 AI가 단계를 진행할 수 있습니다.
   await sleep(20); assert.equal(b.state.players.find(p => p.id === before.me.id).online, true);
   await send(a, { type: 'leave' });
   const newRoom = await send(a, { type: 'create', name: '새로운방' });
@@ -373,6 +373,6 @@ test('온라인 이탈 AI 대체·도중 복귀20점 차감·미복귀 종료300
   const id=group[1].state.me.id;group[1].disconnect();for(let i=0;i<50&&!group[0].state.players.find(p=>p.id===id).takeover;i++)await sleep(10);assert.equal(group[0].state.players.find(p=>p.id===id).takeover,true);
  const restored=await connect();await send(restored,{type:'accountResume',token:auth[1].accountToken});assert.ok((await send(restored,{type:'resume',...session[1]})).ok);await sleep(20);assert.equal(restored.state.players.find(p=>p.id===id).takeover,false);
  const check=await connect();const profile=await send(check,{type:'accountResume',token:auth[1].accountToken});assert.equal(profile.account.points,10);
- group[2].disconnect();await sleep(10);const active=[group[0],restored],request=active.find(p=>p.state.me.role!=='citizen');await send(request,{type:'requestDraw'});const other=active.find(p=>p!==request);assert.ok((await send(other,{type:'gameVote',vote:other.state.game.vote.id,accept:true})).ok);await sleep(30);
+  group[2].disconnect();await sleep(10);const active=[group[0],restored],request=active.find(p=>p.state.me.role!=='citizen');await send(request,{type:'requestDraw'});const other=active.find(p=>p!==request);for(let i=0;i<30&&!other.state.game.vote;i++)await sleep(10);assert.ok((await send(other,{type:'gameVote',vote:other.state.game.vote.id,accept:true})).ok);await sleep(30);
  const absent=await connect();const result=await send(absent,{type:'accountResume',token:auth[2].accountToken});assert.equal(result.account.points,0);assert.equal(result.account.draws,2);
 });
