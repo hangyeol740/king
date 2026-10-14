@@ -6,6 +6,15 @@ const STORAGE = 'kingdom.session.v1';
 const RETURN_STORAGE = 'kingdom.returnSession.v1';
 let state = null, rules = null, busy = false, replaced = false, actionMode = null, selected = new Set(), turnKey = '';
 let freshCards = new Set(), freshTimer;
+const craftQueue=[];let crafting=false;
+async function enqueueCraft(data){
+  craftQueue.push({data,code:state.code,id:state.me.id});
+  if(crafting)return;crafting=true;
+  try{while(craftQueue.length){const job=craftQueue.shift();if(state?.code!==job.code||state?.me.id!==job.id||state?.game?.pending?.kind!=='craft'){craftQueue.length=0;break;}
+    if(!socket.connected){toast('재연결 후 다시 제작하세요.');craftQueue.length=0;break;}
+    try{const result=await socket.timeout(15000).emitWithAck('command',job.data);if(!result.ok){toast(result.error);craftQueue.length=0;break;}}catch{toast('제작 응답을 확인하지 못했습니다.');craftQueue.length=0;break;}
+  }}finally{crafting=false;}
+}
 let aiInfo = null;
 let expeditionTargets = new Set();
 let targetPlayer = null;
@@ -79,8 +88,6 @@ socket.on('replaced', () => {
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
 });
 socket.on('state', next => {
-  const chatScroll=$('.chat-messages');
-  const savedChatScroll=chatScroll?{top:chatScroll.scrollTop,bottom:chatScroll.scrollHeight-chatScroll.scrollTop-chatScroll.clientHeight<24}:null;
   const draft=$('#chat-message')?.value;
   const focusedChat=document.activeElement?.id==='chat-message';
   const pageScroll={x:window.scrollX,y:window.scrollY};
@@ -113,7 +120,7 @@ socket.on('state', next => {
   selected = new Set([...selected].filter(id => available.has(id)));
   render();
   const newChatScroll=$('.chat-messages');
-  if(newChatScroll&&savedChatScroll)newChatScroll.scrollTop=savedChatScroll.bottom?newChatScroll.scrollHeight:savedChatScroll.top;
+  if(newChatScroll)newChatScroll.scrollTop=newChatScroll.scrollHeight;
   if(draft&&$('#chat-message'))$('#chat-message').value=draft;
   if(focusedChat)$('#chat-message')?.focus({preventScroll:true});
   if(previous?.code===next.code&&!changedIdentity)window.scrollTo?.(pageScroll.x,pageScroll.y);
@@ -493,7 +500,7 @@ app.addEventListener('change', async event => {
 });
 app.addEventListener('click', async event => {
   const button = event.target.closest('button');
-  if (!button || button.disabled || busy) return;
+  if (!button || button.disabled || (busy&&button.dataset.cmd!=='craft')) return;
   const ui = button.dataset.ui;
   if (ui) {
     if(ui==='forgetRoom'){localStorage.removeItem(RETURN_STORAGE);render();toast('이 기기의 복귀 정보만 삭제했습니다. 실제 방은 유지됩니다.');return;}
@@ -572,6 +579,8 @@ app.addEventListener('click', async event => {
   if (button.dataset.recipe !== undefined) {
     data.recipe = Number(button.dataset.recipe); data.count = Number($(`#recipe-count-${data.recipe}`).value);
   }
+  if(type==='craft'){void enqueueCraft(data);return;}
+  if(crafting&&['craftDone','merchantDone','leave'].includes(type)){toast('예약된 제작을 처리하고 있습니다.');return;}
   await command(data);
 });
 document.addEventListener?.('visibilitychange', () => {

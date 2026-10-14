@@ -15,6 +15,7 @@ import { compatiblePolicy } from './ai/transfer.js';
 import {createOpenAIChat} from './lib/openai-chat.js';
 import {createCognitiveAgent} from './lib/cognitive-agent.js';
 import {createAgentClient} from './lib/agent-client.js';
+import {createLiveLearning} from './lib/live-learning.js';
 import {createSupabaseStore} from './lib/persistent-store.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,9 @@ try {
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
 await mkdir(dataDir, { recursive: true });
 const permanentSnapshot=permanentStore?await permanentStore.load():null;
+let savedLearning=permanentSnapshot?.learning;
+if(!savedLearning)try{savedLearning=JSON.parse(await readFile(path.join(dataDir,'ai-learning.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')console.error('AI 학습 기록 읽기 실패:',e.message);}
+const learning=createLiveLearning(savedLearning);
 try{accounts=JSON.parse(await readFile(accountPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 if(permanentSnapshot)accounts=permanentSnapshot.accounts||[];
 try {
@@ -56,6 +60,7 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
 let saveQueue = Promise.resolve();
 function persist() {
+  for(const room of rooms.values())learning.settle(room);
   for(const room of rooms.values())if(ratingEligible(room))for(const p of room.players.filter(p=>p.surrendered)){
     const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(a)settleAccount(a,`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`,p.role,'surrender');
   }
@@ -67,11 +72,13 @@ function persist() {
   }
   const snapshot = JSON.stringify([...rooms.values()]);
   const accountSnapshot=JSON.stringify(accounts);
+  const learningSnapshot=JSON.stringify(learning.snapshot());
   saveQueue = saveQueue.catch(() => {}).then(async () => {
     await writeFile(`${savePath}.tmp`, snapshot, { mode: 0o600 });
     await rename(`${savePath}.tmp`, savePath);
     await writeFile(`${accountPath}.tmp`,accountSnapshot,{mode:0o600});await rename(`${accountPath}.tmp`,accountPath);
-    if(permanentStore)await permanentStore.save({rooms:JSON.parse(snapshot),accounts:JSON.parse(accountSnapshot)});
+    await writeFile(path.join(dataDir,'ai-learning.json.tmp'),learningSnapshot,{mode:0o600});await rename(path.join(dataDir,'ai-learning.json.tmp'),path.join(dataDir,'ai-learning.json'));
+    if(permanentStore)await permanentStore.save({rooms:JSON.parse(snapshot),accounts:JSON.parse(accountSnapshot),learning:JSON.parse(learningSnapshot)});
   }).catch(error => console.error('게임 저장 실패:', error.message));
   return saveQueue;
 }
@@ -81,10 +88,10 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const agent=createCognitiveAgent({client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||8000)}),changed:async room=>{broadcast(room);await persist();}});
+const agent=createCognitiveAgent({learning,policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||8000)}),changed:async room=>{broadcast(room);void persist();}});
 const bots = createBotRunner({ policy, agent:agent.enabled?agent:null, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
-app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics() }));
+app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics() }));
 function broadcast(room) {
   autoGameVotes(room);
   agent.observe(room);
@@ -270,7 +277,7 @@ io.on('connection', socket => {
         }
         }
       }
-      await persist();
+      void persist();
       broadcast(room);
       const device = room.devices?.find(d => d.id === socket.data.device);
       reply({ ok: true, session: device ? { code: room.code, token: device.token, device: true } : { code: room.code, token: p.token }, ...(personalResult ? { personalResult } : {}) });
