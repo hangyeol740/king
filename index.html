@@ -9,19 +9,28 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/effects.css">
   <link rel="stylesheet" href="/bishop.css">
+  <link rel="stylesheet" href="/mobile.css?v=7">
+  <link rel="stylesheet" href="/merchant.css?v=citizen1">
+  <link rel="stylesheet" href="/social.css?v=1">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/effects.js" defer></script>
-  <script src="/app.js?v=5" defer></script>
+  <script src="/pass-device.js?v=7" defer></script>
+  <script src="/results.js?v=7" defer></script>
+  <script src="/merchant.js?v=citizen1" defer></script>
+  <script src="/social.js?v=active6" defer></script>
+  <script src="/lobby-fixes.js?v=1" defer></script>
+  <script src="/app.js?v=api-chat5" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/" aria-label="왕국과 반란 홈"><span class="brand-mark">♛</span><span>왕국과 반란<small>KINGDOM & REBELLION</small></span></a>
-    <div class="top-actions"><span id="connection" class="connection"><i></i> 연결 중</span><button class="quiet" id="sound-toggle" aria-pressed="true">효과음 켜짐 ♪</button><button class="quiet" id="rules-open">플레이 가이드 <span>↗</span></button></div>
+    <div class="top-actions"><span id="connection" class="connection"><i></i> 연결 중</span><button class="quiet" id="sound-toggle" aria-pressed="true">효과음 켜짐 ♪</button><button class="quiet" id="alarm-toggle-public" aria-pressed="true">공채 알림 켜짐</button><button class="quiet" id="alarm-toggle-pair" aria-pressed="true">1대1 알림 켜짐</button><button class="quiet" id="alarm-toggle-secret" aria-pressed="true">비밀방 알림 켜짐</button><button class="quiet" id="rules-open">플레이 가이드 <span>↗</span></button></div>
   </header>
   <main id="app"><div class="loading">왕국으로 가는 길을 열고 있습니다…</div></main>
   <div id="toast" role="status" aria-live="polite"></div>
   <section id="action-effect" class="action-effect" role="status" aria-live="polite" aria-atomic="true" hidden></section>
   <dialog id="rules"><div class="dialog-head"><div><span class="eyebrow">FIELD GUIDE</span><h2>왕국의 법칙</h2></div><button class="icon-button" id="rules-close" aria-label="가이드 닫기">✕</button></div><div id="rules-content"></div></dialog>
+  <dialog id="result-dialog" class="result-dialog"><div class="dialog-head"><h2 data-result-title></h2><button class="icon-button" data-result-close aria-label="결과 확인 닫기">✕</button></div><div data-result-body></div></dialog>
   <noscript>이 게임은 JavaScript가 활성화된 PC 브라우저에서 실행됩니다.</noscript>
 </body>
 </html>
