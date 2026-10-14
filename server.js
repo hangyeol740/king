@@ -13,6 +13,8 @@ import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
 import {createOpenAIChat} from './lib/openai-chat.js';
+import {createCognitiveAgent} from './lib/cognitive-agent.js';
+import {createAgentClient} from './lib/agent-client.js';
 import {createSupabaseStore} from './lib/persistent-store.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +30,7 @@ let accounts=[];
 const permanentStore=createSupabaseStore();
 let policy = null;
 try {
-  const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/policy.json'), 'utf8'));
+  const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/strategy-v10-candidate.json'), 'utf8'));
   policy = compatiblePolicy(savedPolicy);
   console.log(`강화학습 모델 로드: ${policy.metadata.episodes}판 · ${policy.metadata.algorithm}`);
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
@@ -79,7 +81,8 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
+const agent=createCognitiveAgent({client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||1500)}),changed:async room=>{broadcast(room);await persist();}});
+const bots = createBotRunner({ policy, agent:agent.enabled?agent:null, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
 app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json(conversationAI.diagnostics()));
 function broadcast(room) {
@@ -190,7 +193,7 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
-          void conversationAI.respond(room,p,input);
+          void (room.status==='playing'&&agent.enabled?agent.respond(room,p,input):conversationAI.respond(room,p,input));
           if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');

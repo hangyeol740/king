@@ -25,9 +25,12 @@ export function baseline(snapshot, actions, random = Math.random, style = 'balan
   const royal = ['king', 'citizen'].includes(me.role);
   const score = (action, key) => me.hand.filter(c => action.cards?.includes(c.id)).reduce((s, c) => s + (CARDS[c.type][key] || 0), 0);
   const pick=type=>{const list=actions.filter(a=>a.type===type);return list[Math.floor(random()*list.length)];};
+  if(g.pending?.kind==='battle')return actions.find(a=>a.type==='battleAnswer'&&a.accept===(style==='aggressive'))||[...actions].sort((a,b)=>score(b,'attack')-score(a,'attack'))[0];
+  if(g.phase==='ambush')return style==='aggressive'?(pick('ambush')||actions[0]):pick('ambushSkip');
   if(g.phase==='day'&&!g.pending?.kind){
     if(g.round===1&&style==='trader'&&random()<.65){const a=pick('trade');if(a)return a;}
-    if(g.round===1&&style==='builder')return pick('gather')||actions[0];
+    if(g.round===1&&style==='aggressive'&&random()<.4)return pick('battle')||actions[0];
+    if(g.round===2&&style==='builder')return pick('gather')||actions[0];
     if(g.round===3&&style==='aggressive')return pick('steal')||pick('royalSupport')||actions[0];
     if(g.round===3&&style==='trader')return pick('revealHand')||pick('refresh')||actions[0];
   }

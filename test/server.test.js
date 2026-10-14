@@ -16,7 +16,7 @@ const clients = [];
 let server, dataDir, url, port;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function start() {
-  server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: String(port), DATA_DIR: dataDir, AI_DELAY_MS: '50' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  server = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, OPENAI_API_KEY:'',BAZE_API_KEY:'',PORT: String(port), DATA_DIR: dataDir, AI_DELAY_MS: '50' }, stdio: ['ignore', 'pipe', 'pipe'] });
   let errors = '';
   server.stderr.on('data', data => { errors += data; });
   for (let i = 0; i < 100; i++) {
@@ -92,6 +92,7 @@ test('WebSocket 시민지원 6장·재접속 중복 없음·공개 API 공통 �
   const cr = await send(c, { type: 'join', code: created.session.code, name: '셋' });
   const group = [a, b, c], sessions = [created, br, cr];
   await send(a, { type: 'start' });
+  for(let i=0;i<100&&!group.every(s=>s.state?.status==='playing');i++)await sleep(10);
   const k = group.find(s => s.state.me.role === 'king');
   await send(k, { type: 'expedition' });
   for(const p of group)await send(p,{type:'voteExpedition',difficulty:'low'});

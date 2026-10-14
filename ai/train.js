@@ -29,7 +29,8 @@ if (resume) {
 const beforeEpisodes = policy.metadata.episodes;
 console.log(`PPO 셀프플레이 시작 · CPU · ${episodes}판 · ${counts.join('/')}인 · 외부 API 없음`);
 const initialPolicy=structuredClone(policy);
-const before = { mixed: evaluate(policy, { games: evalGames, counts, random,opponent:'mixed' }), random: evaluate(policy, { games: evalGames, counts, random, opponent: 'random' }) };
+const evaluationSeed=seed+100000;
+const before = { mixed: evaluate(policy, { games: evalGames, counts, random:seededRandom(evaluationSeed),opponent:'mixed' }), random: evaluate(policy, { games: evalGames, counts, random:seededRandom(evaluationSeed+1), opponent: 'random' }) };
 console.log('학습 전 평가:', JSON.stringify(before));
 const history = [], opponents = [null], started = Date.now();
 let trajectories = [], decisions = policy.metadata.decisions || 0;
@@ -54,7 +55,7 @@ for (let episode = 1; episode <= episodes && !stop; episode++) {
   }
 }
 await save();
-const after = { mixed: evaluate(policy, { games: evalGames, counts, random,opponent:'mixed' }), random: evaluate(policy, { games: evalGames, counts, random, opponent: 'random' }), previous: evaluate(policy,{games:evalGames,counts,random,opponent:initialPolicy}) };
+const after = { mixed: evaluate(policy, { games: evalGames, counts, random:seededRandom(evaluationSeed),opponent:'mixed' }), random: evaluate(policy, { games: evalGames, counts, random:seededRandom(evaluationSeed+1), opponent: 'random' }), previous: evaluate(policy,{games:evalGames,counts,random:seededRandom(evaluationSeed+2),opponent:initialPolicy}) };
 policy.metadata.evaluation.after = after;
 validatePolicy(policy);
 await writeFile(`${output}.tmp`, JSON.stringify(policy)); await rename(`${output}.tmp`, output);
