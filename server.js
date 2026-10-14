@@ -14,6 +14,7 @@ import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
 import {createOpenAIChat} from './lib/openai-chat.js';
 import {createSupabaseStore} from './lib/persistent-store.js';
+import {createCognitiveAgent} from './lib/cognitive-agent.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -79,8 +80,10 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const bots = createBotRunner({ policy, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
-const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
+const agent=createCognitiveAgent({changed:async room=>{await persist();broadcast(room);}});
+const bots = createBotRunner({ policy, agent, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
+const lobbyConversation=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
+const conversationAI={enabled:agent.enabled,diagnostics:()=>agent.diagnostics(),respond:(room,sender,input)=>room.status==='playing'?agent.respond(room,sender,input):lobbyConversation.respond(room,sender,input)};
 app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json(conversationAI.diagnostics()));
 function broadcast(room) {
   room.apiConversation=conversationAI.enabled;

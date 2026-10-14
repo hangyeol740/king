@@ -1,0 +1,101 @@
+{
+  "pairs": [
+    {
+      "index": 0,
+      "candidate": {
+        "win": true,
+        "calls": 7,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 7,
+        "revisions": 3,
+        "spoken": 5,
+        "silent": 2,
+        "learnerDecisions": 1,
+        "steps": 86
+      },
+      "honest": {
+        "win": true,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 4,
+        "spoken": 8,
+        "silent": 1,
+        "learnerDecisions": 1,
+        "steps": 80
+      }
+    },
+    {
+      "index": 1,
+      "candidate": {
+        "win": true,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 4,
+        "spoken": 8,
+        "silent": 1,
+        "learnerDecisions": 3,
+        "steps": 363
+      },
+      "honest": {
+        "win": true,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 3,
+        "spoken": 6,
+        "silent": 3,
+        "learnerDecisions": 3,
+        "steps": 375
+      }
+    },
+    {
+      "index": 2,
+      "candidate": {
+        "win": false,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 4,
+        "spoken": 7,
+        "silent": 2,
+        "learnerDecisions": 1,
+        "steps": 615
+      },
+      "honest": {
+        "win": false,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 3,
+        "spoken": 5,
+        "silent": 4,
+        "learnerDecisions": 1,
+        "steps": 572
+      }
+    }
+  ],
+  "candidate": {
+    "games": 3,
+    "wins": 2
+  },
+  "honest": {
+    "games": 3,
+    "wins": 2
+  },
+  "promoted": false,
+  "limitations": [
+    "Pilot sample, not a win-rate claim",
+    "Same production agent loop and memory, bounded API calls per game; fallback uses original game policy",
+    "No LLM fine tuning; only social option selection is updated",
+    "Identical initial evaluation rooms, but future deck draws are not paired",
+    "Honest comparison changes strategy, not a causal no-message ablation"
+  ]
+}

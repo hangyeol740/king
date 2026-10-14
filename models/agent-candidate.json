@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "algorithm": "REINFORCE-unified-observe-plan-act",
+  "values": {
+    "citizen/expedition": [
+      0.024999999999999994,
+      -0.024999999999999994,
+      -0.024999999999999994,
+      0.024999999999999994
+    ],
+    "citizen/other": [
+      -0.012499999999999997,
+      -0.012499999999999997,
+      -0.012499999999999997,
+      0.03749999999999999
+    ],
+    "bishop/expedition": [
+      0.0375,
+      0.0375,
+      -0.11249999999999999,
+      0.0375
+    ],
+    "bishop/crisis": [
+      0.0375,
+      0.0375,
+      0.0375,
+      -0.11249999999999999
+    ],
+    "king/crisis": [
+      0.024999999999999994,
+      -0.024999999999999994,
+      -0.024999999999999994,
+      0.024999999999999994
+    ],
+    "king/expedition": [
+      -0.006249999999999999,
+      -0.006249999999999999,
+      0.018749999999999996,
+      -0.006249999999999999
+    ],
+    "king/other": [
+      -0.006249999999999999,
+      0.018749999999999996,
+      -0.006249999999999999,
+      -0.006249999999999999
+    ]
+  },
+  "metadata": {
+    "episodes": 4,
+    "seed": 142028,
+    "maxCalls": 9,
+    "externalApi": true,
+    "promoted": false,
+    "training": [
+      {
+        "win": true,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 3,
+        "spoken": 9,
+        "silent": 0,
+        "learnerDecisions": 3,
+        "steps": 347
+      },
+      {
+        "win": false,
+        "calls": 7,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 7,
+        "revisions": 4,
+        "spoken": 6,
+        "silent": 1,
+        "learnerDecisions": 2,
+        "steps": 110
+      },
+      {
+        "win": false,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 4,
+        "spoken": 8,
+        "silent": 1,
+        "learnerDecisions": 1,
+        "steps": 533
+      },
+      {
+        "win": true,
+        "calls": 9,
+        "errors": 0,
+        "lastDecisionError": null,
+        "decisions": 9,
+        "revisions": 5,
+        "spoken": 6,
+        "silent": 3,
+        "learnerDecisions": 6,
+        "steps": 290
+      }
+    ],
+    "completed": true,
+    "api": {
+      "configured": true,
+      "provider": "baze",
+      "model": "gpt-6-luna",
+      "attempts": 86,
+      "successes": 86,
+      "failures": 0,
+      "lastError": null
+    },
+    "reward": "terminal team win +1/loss -1; no reward for speech/lying volume"
+  }
+}
