@@ -318,7 +318,7 @@ function renderAction() {
   }
   if (g.phase === 'executionVote') {
     if (p.myDone) return wait('사형 투표를 마쳤습니다.', `당신은 ${esc(nameOf(p.myVote))}님에게 투표했습니다. ${p.voteCount}/${state.players.length}명 투표 완료 · 전원의 투표를 기다립니다.`);
-    return `<h2>사형 대상을 투표하세요.</h2><p class="action-description">왕을 포함한 전원이 한 표씩 투표합니다. 왕은 사형할 수 없습니다. 최다 득표 동률이면 아무도 처형하지 않습니다. 처형 시 교단·전도·영구 카드까지 <b>모든 카드를 몰수</b>하고 당일 아침·낮 행동이 금지됩니다.<br>${p.voteCount}/${state.players.length}명 투표 완료</p>${targetSelect('사형 투표 대상', state.players.filter(p => p.id !== g.king))}<div class="action-choices">${btn('voteExecution', '사형 투표 확정', '전원 완료 후 득표 합계와 결과 공개', 'data-target="true"')}</div>`;
+    return `<h2>사형 대상을 투표하세요.</h2><p class="action-description">왕과 자신에게는 투표할 수 없습니다. 최다 득표 동률이면 아무도 처형하지 않습니다. 처형 시 교단·전도·영구 카드까지 <b>모든 카드를 몰수</b>하고 당일 아침·낮 행동이 금지됩니다.<br>${p.voteCount}/${state.players.length}명 투표 완료</p>${targetSelect('사형 투표 대상', state.players.filter(p => p.id !== g.king&&p.id!==me.id))}<div class="action-choices">${btn('voteExecution', '사형 투표 확정', '전원 완료 후 득표 합계와 결과 공개', 'data-target="true"')}</div>`;
   }
   if (g.phase === 'mediationSupport') {
     if(me.role==='rebel' && p.revoltType !== 'religion')return wait('반란군은 일반 반란 중재에 참여할 수 없습니다.', '카드 지원과 0장 제출 모두 불가합니다. 왕과 다른 진영의 중재 결과를 기다립니다.');
@@ -355,7 +355,7 @@ function renderAction() {
     if(p?.kind==='battle'){
       if(!p.accepted)return p.to===me.id?`<h2>전투 신청이 도착했습니다.</h2><div class="button-row"><button class="primary" data-cmd="battleAnswer" data-accept="true">수락</button><button class="secondary" data-cmd="battleAnswer" data-accept="false">거절</button></div>`:wait('전투 응답을 기다립니다.','거절되면 차례가 끝납니다.');
       if(p.myDone)return wait('전투 카드를 확정했습니다.','상대의 확정을 기다립니다.');
-      return `<h2>전투 카드를 선택하세요.</h2><p>공격 카드를 비공개 제출합니다. 사용한 비영구 카드는 버리고 남은 손패와 영구 카드는 유지합니다.</p>${submitCards('battleSubmit','전투 카드 확정')}`;
+      return `<h2>전투 카드를 선택하세요.</h2><p>공격 카드를 비공개 제출합니다. 사용한 비영구 카드는 버리고, 패자의 남은 손패 전부를 승자에게 넘깁니다. 동점이면 이전하지 않습니다.</p>${submitCards('battleSubmit','전투 카드 확정')}`;
     }
     if (p?.kind === 'royalSupport') {
       if (p.from === me.id) return wait('왕국지원 응답을 기다립니다.', `${esc(nameOf(p.to))}님이 거절하면 왕의 차례가 바로 끝납니다.`);
@@ -374,7 +374,7 @@ function renderAction() {
     if (g.current !== me.id) return wait(`${nameOf(g.current)}님의 차례입니다.`, `${g.round}번째 바퀴를 진행하고 있습니다. 선택한 행동과 카드 변화는 비공개입니다.`);
     if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><div class="action-choices">${me.job==='merchant'?'':btn('trade','비밀 거래','비공개 카드 교환','data-target="true"')}${btn('battle','전투신청','상대 수락 후 전투','data-target="true"')}${btn('draw3','카드받기','무작위 카드 6장 획득')}</div>${targetSelect('거래·전투 대상',state.players.filter(p=>p.id!==me.id&&!p.executed&&!p.surrendered))}`;
     if (g.round === 2) {
-      if(!p?.kind&&actionMode!=='hunt')return `<h2>두 번째 행동을 선택하세요.</h2><div class="button-row"><button class="primary" data-cmd="beginCraft">제작</button><button class="secondary" data-ui="hunt">사냥</button><button class="secondary" data-cmd="gather">자원얻기 · 5~12개</button></div>`;
+      if(!p?.kind&&actionMode!=='hunt')return `<h2>두 번째 행동을 선택하세요.</h2><div class="action-choices">${btn('beginCraft','제작','재료를 조합해 필요한 카드 제작')}<button class="action-choice" data-ui="hunt"><strong>사냥<span>↗</span></strong><small>공격력 ${me.huntGoal||10}점 이상 · 카드 8장</small></button>${btn('gather','자원얻기','자원 5~12개 획득')}</div>`;
       if (p?.kind === 'craft') return `<h2>필요한 만큼 제작하세요.</h2><p class="action-description">공통 제작과 자신의 진영 제작만 가능합니다. 영구 카드는 제작 재료로 쓰면 소모됩니다.</p><div class="recipes">${myRecipes().map(r => {
         const i=r.id;
         const available = recipeAvailable(r, me.hand);
@@ -453,7 +453,13 @@ function submitCards(type, text) {
 }
 
 app.addEventListener('submit', async event => {
-  if(event.target.id==='chat-form'){event.preventDefault();const text=$('#chat-message').value;await command({type:'chatSend',channel:event.target.dataset.channel,room:event.target.dataset.room,text});return;}
+  if(event.target.id==='chat-form'){
+    event.preventDefault();const form=event.target,input=form.querySelector('input'),text=input.value;
+    input.value='';
+    try{const result=await socket.timeout(15000).emitWithAck('command',{type:'chatSend',channel:form.dataset.channel,room:form.dataset.room,text});if(!result.ok){if($('#chat-message')&&!$('#chat-message').value)$('#chat-message').value=text;toast(result.error);}}
+    catch{if($('#chat-message')&&!$('#chat-message').value)$('#chat-message').value=text;toast('메시지를 보내지 못했습니다. 다시 시도하세요.');}
+    return;
+  }
   if (event.target.id !== 'entry-form') return;
   event.preventDefault();
   const form = new FormData(event.target), type = event.submitter?.value || 'create', name = String(form.get('name')).trim();
@@ -609,6 +615,7 @@ function renderRules() {
     .replace('① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥','① 거래 / 전투신청 / 카드6장 받기 ② 제작 / 사냥 / 자원5~12개 받기')
     .replace('일반 반란 성공 시 왕·시민 손패 몰수','일반 반란을 막았을 때 왕·시민 손패 몰수')
     .replace('사냥은 공격력 10점 이상이면 본인에게 7장.','사냥은 공격력 10점 이상이면 본인에게 8장.')
+    .replace('사용한 비영구 카드는 버리고 나머지 손패는 유지합니다.','사용한 비영구 카드는 버리고 패자의 남은 손패 전부를 승자에게 이전합니다. 동점은 이전하지 않습니다.')
     .replace('다음 사람에게 넘기기 → 이름 확인 → 내 화면 열기로 전환','오프라인에서는 다음 사람의 이름 버튼을 눌러 바로 화면을 열어 전환');
   $('#rules-content').innerHTML+='<h3>전투·기습·신원조사</h3><p>전투는 양측 비공개 확정 후 공격력을 비교합니다. 결과는 당사자에게만 알려주며 사용한 비영구 카드는 버리고 나머지 손패는 유지합니다. 동점은 무승부입니다. 저녁 왕의 정책 전 반란군이 순서대로 기습하거나 건너뜁니다. 기습은 거절할 수 없습니다. 낮 세 번째 바퀴 신원조사는 현재 1대1 상대 닉네임만 공개하며 새 매칭에서 초기화됩니다.</p><h3>AI 난이도</h3><p>매우쉬움·쉬움·보통·어려움·광란·혼돈을 AI 이름 옆에서 선택합니다. 혼돈의 낮 행동 횟수는 1회15%·2회60%·3회25%입니다. 높은 난이도는 손패 제한 증가, 제작 재료 반환, 추가 행동과 지명수배 회피 효과를 적용받습니다.</p>';
 }

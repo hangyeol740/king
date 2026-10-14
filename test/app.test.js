@@ -58,9 +58,10 @@ test('사형 화면의 후보는 왕 제외·자신 포함이며 1표 확정 후
   act(r, king.id, { type: 'execute' }); b.handlers.state(view(r, voter.id));
   let html = b.elements.get('#app').innerHTML;
   assert.ok(!html.includes(`data-target-player="${king.id}"`));
-  assert.ok(html.includes(`data-target-player="${voter.id}"`));
+   assert.ok(!html.includes(`data-target-player="${voter.id}"`));
   assert.match(html, /data-cmd="voteExecution"/);
-  act(r, voter.id, { type: 'voteExecution', target: voter.id }); b.handlers.state(view(r, voter.id));
+   assert.throws(()=>act(r,voter.id,{type:'voteExecution',target:voter.id}));
+   act(r, voter.id, { type: 'voteExecution', target: r.players.find(p=>p!==voter&&p!==king).id }); b.handlers.state(view(r, voter.id));
   html = b.elements.get('#app').innerHTML;
   assert.match(html, /사형 투표를 마쳤습니다/); assert.doesNotMatch(html, /data-cmd="voteExecution"/);
 });

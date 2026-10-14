@@ -87,6 +87,7 @@ const conversationAI=createOpenAIChat({changed:async room=>{await persist();broa
 app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics() }));
 function broadcast(room) {
   autoGameVotes(room);
+  agent.observe(room);
   for (const socketId of new Set([...room.players,...(room.spectators||[])].map(p => sessions.get(p.token)).filter(Boolean))) {
     const socket = io.sockets.sockets.get(socketId);
     if (!socket) continue;
@@ -289,5 +290,5 @@ io.on('connection', socket => {
 const port = Number(process.env.PORT) || 3000;
 http.listen(port, '0.0.0.0', () => console.log(`왕국과 반란 서버: http://localhost:${port}`));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, async () => {
-  bots.close(); await persist(); io.close(); http.close(() => process.exit(0));
+  agent.close();bots.close(); await persist(); io.close(); http.close(() => process.exit(0));
 });

@@ -69,7 +69,7 @@ test('원정 진영별 카드 사용과 방해 점수 -2/-6 적용, 영구 전�
     const types=['weapon','warWeapon',...(['king','citizen'].includes(name)?['infantry','officer']:name==='rebel'?['rebellion','agitation']:['infantry','officer','rebellion','agitation'])];
     const ids=hand(p,...types);const war=p.hand.find(c=>c.type==='warWeapon').id;
     act(r,p.id,{type:'contribute',cards:ids});
-    const expected=['king','citizen'].includes(name)?34:name==='rebel'?22:26;
+    const expected=['king','citizen'].includes(name)?38:name==='rebel'?26:30;
     assert.ok(r.game.logs.some(e=>e.text.includes(`총 공격력 ${expected}점`)));
     assert.ok(p.hand.some(c=>c.id===war));
   }

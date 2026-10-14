@@ -62,7 +62,7 @@
       oscillator.type = ['breached', 'failure', 'loss', 'stolen'].includes(kind) ? 'triangle' : 'sine';
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(kind === 'notice' ? .025 : .065, start + .015);
+      gain.gain.linearRampToValueAtTime(kind === 'notice' ? .055 : .065, start + .015);
       gain.gain.exponentialRampToValueAtTime(.001, start + .14);
       oscillator.connect(gain); gain.connect(audio.destination); voices.add(oscillator);
       oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };

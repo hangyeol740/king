@@ -268,7 +268,7 @@ test('WebSocket 3인 첫날 왕 사형 선택·투표 비공개·서버 재시�
   const restored = [];
   for (const session of sessions) { const c = await connect(); assert.ok((await send(c, { type: 'resume', ...session })).ok); restored.push(c); }
   assert.equal(restored[kingIndex].state.game.pending.myVote, targetId);
-  for (const p of restored.filter((client, i) => i !== kingIndex && !client.state.game.pending?.myDone)) assert.ok((await send(p, { type: 'voteExecution', target: targetId })).ok);
+  for (const p of restored.filter((client, i) => i !== kingIndex && !client.state.game.pending?.myDone)) assert.ok((await send(p, { type: 'voteExecution', target: p.state.me.id===targetId?restored.find(q=>q.state.me.id!==targetId&&q.state.me.role!=='king').state.me.id:targetId })).ok);
   await sleep(20);
   assert.equal(restored[0].state.game.phase, 'redistribute');
   assert.equal(restored.find(p => p.state.me.id === targetId).state.me.hand.length, 12);

@@ -82,7 +82,7 @@ test('낮 시작은 익명 상점부터, 구매 완료 뒤 재구매 불가·처
   for(const p of r.players)act(r,p.id,{type:'redistribute',accept:false});assert.equal(r.game.phase,'market');assert.equal(canAct(r,m.id),false);
   act(r,c.id,{type:'marketDone'});assert.throws(()=>act(r,c.id,{type:'marketDone'}),RuleError);assert.equal(canAct(r,c.id),false);
   for(const p of r.players.filter(p=>p!==m&&p!==c))act(r,p.id,{type:'marketDone'});assert.equal(r.game.phase,'day');
-  r.game.phase='morning';r.game.pending=null;act(r,role(r,'king').id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:c.id});
+  r.game.phase='morning';r.game.pending=null;act(r,role(r,'king').id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:p===c?r.players.find(q=>q!==c&&q.role!=='king').id:c.id});
   for(const p of r.players.filter(p=>p!==c))act(r,p.id,{type:'redistribute',accept:false});assert.equal(r.game.phase,'market');assert.ok(r.game.pending.done.includes(c.id));
 });
 
@@ -100,7 +100,7 @@ test('진열 카드는 손패 제한·교체·지명수배·처형·상급 원�
     if(effect==='limit'){hand(m,...Array(40).fill('resource'));act(r,m.id,{type:'merchantDone'});act(r,role(r,'rebel').id,{type:'revolt',cards:[]});assert.equal(m.hand.length,30);}
     if(effect==='replace'){day(r,m,3);act(r,m.id,{type:'replace'});}
     if(effect==='wanted'){hand(m,'rebellion','agitation','weapon');r.game.phase='evening';act(r,k.id,{type:'wanted',target:m.id});assert.equal(m.hand.length,0);}
-    if(effect==='execute'){r.game.phase='morning';r.game.pending=null;act(r,k.id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:m.id});assert.equal(m.hand.length,12);}
+    if(effect==='execute'){r.game.phase='morning';r.game.pending=null;act(r,k.id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:p===m?r.players.find(q=>q!==m&&q!==k).id:m.id});assert.equal(m.hand.length,12);}
     if(effect==='expedition'){r.game.phase='morning';r.game.pending=null;act(r,k.id,{type:'expedition'});for(const p of r.players)act(r,p.id,{type:'voteExpedition',difficulty:'high'});const c=role(r,'citizen');act(r,k.id,{type:'selectExpedition',targets:[m.id,c.id]});for(const p of [k,c])act(r,p.id,{type:'contribute',cards:[]});}
     assert.deepEqual(m.stock,stock);
   }

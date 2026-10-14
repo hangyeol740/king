@@ -44,13 +44,13 @@ test('3인 첫날 왕 사형 선언 → 전원 투표 → 최다 득표자 전�
   assert.equal(r.game.day, 1); assert.equal(r.game.phase, 'executionVote'); assert.equal(target.hand.length, 5);
   for (const p of r.players) {
     const options = candidates(view(r, p.id));
-    assert.equal(options.length, 2); assert.ok(options.every(a => a.target !== k.id));
-    act(r, p.id, { type: 'voteExecution', target: target.id });
+    assert.equal(options.length, p===k?2:1); assert.ok(options.every(a => a.target !== k.id&&a.target!==p.id));
+    act(r, p.id, { type: 'voteExecution', target: p===target?r.players.find(q=>q!==k&&q!==target).id:target.id });
   }
   assert.equal(r.game.phase, 'redistribute'); assert.equal(target.hand.length, 12); assert.equal(target.executedDay, 1);
   assert.deepEqual(k.hand, oldKing); assert.ok(r.game.order.includes(target.id));
   assert.equal(r.game.lastExecution.target, target.id);
-  assert.equal(r.game.lastExecution.tallies.find(t => t.id === target.id).count, 3);
+  assert.equal(r.game.lastExecution.tallies.find(t => t.id === target.id).count, 2);
 });
 
 test('사형 투표는 왕/위조 대상/중복 차단·전원 완료 전 투표 비공개·한 표씩 확정', () => {
@@ -64,7 +64,7 @@ test('사형 투표는 왕/위조 대상/중복 차단·전원 완료 전 투표
   assert.equal(own.myVote, b.id); assert.equal(other.myVote, null); assert.equal(other.voteCount, 1);
   assert.equal(other.votes, undefined); assert.ok(!r.game.logs.some(l => l.text.includes(`${a.name}님이 ${b.name}`)));
   assert.deepEqual(candidates(view(r, a.id)), []);
-  for (const p of [k, b, c]) act(r, p.id, { type: 'voteExecution', target: b.id });
+  for (const p of [k, b, c]) act(r, p.id, { type: 'voteExecution', target: p===b?a.id:b.id });
   assert.equal(r.game.lastExecution.target, b.id);
 });
 

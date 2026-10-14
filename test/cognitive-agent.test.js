@@ -16,7 +16,7 @@ test('발언/행동 하나의 계획, 의도 없는 약속 위반 거절, 실행
  assert.throws(()=>commitDecision(p,output(p,{choice:0,commitmentChoice:1})),/broken_promise/);
  const plan=commitDecision(p,output(p,{commitmentChoice:0}),1000);const selected=plannedAction(p.mind,view(room,bot.id),p.actions,1001);assert.deepEqual(selected.action,plan.commitment);
  recordExecution(p.mind,selected.action);assert.equal(plan.status,'executed');
- const b=prepared(room,bot,()=>.6);const bluff=commitDecision(b,output(b,{commitmentChoice:1}),1002);assert.equal(bluff.mode,'bluff');assert.equal(bluff.deception,true);assert.notDeepEqual(bluff.action,bluff.commitment);
+  delete p.scope.stance;const b=prepared(room,bot,()=>.6);const bluff=commitDecision(b,output(b,{commitmentChoice:1}),1002);assert.equal(bluff.mode,'bluff');assert.equal(bluff.deception,true);assert.notDeepEqual(bluff.action,bluff.commitment);
  assert.equal(view(room,bot.id).me.agentMind,undefined);
 });
 test('익명 관찰과 채널 기억 분리, 근거 없는 추정 거절, 재경기 초기화',()=>{

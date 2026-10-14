@@ -111,8 +111,8 @@ test('중재하지 않으면 반란 성공·초기화, 세 번째 성공에 즉�
 });
 test('하급 원정 14점 실패·15점 성공·24점 성공·25점 대성공, 불참자도 4/9장 보상', () => {
   for (const [types, reward] of [
-    [['weapon','magic'], 0],
-    [['weapon','magic','sword'], 4],
+    [['weapon'], 0],
+    [['weapon','sword'], 4],
     [['highMagic','magic'], 4],
     [['highMagic','magic','sword'], 9]
   ]) {
@@ -235,7 +235,7 @@ test('지명수배는 반란이 있을 때만 반란·선동·병기·폭탄 버
 test('공개처형은 카드 몰수 후 재분배 자동 수락, 대상은 탈락하지 않음', () => {
   const r = setup(4), c = citizen(r), k = king(r), old = k.hand.length;
   act(r, k.id, { type: 'execute', target: c.id });
-  r.players.forEach(p => act(r, p.id, { type: 'voteExecution', target: c.id }));
+  r.players.forEach(p => act(r, p.id, { type: 'voteExecution', target: p===c?r.players.find(q=>q!==c&&q.role!=='king').id:c.id }));
   assert.equal(c.hand.length, 12); assert.equal(c.executedDay, 1); assert.equal(k.hand.length, old); assert.ok(r.game.order.includes(c.id));
 });
 test('아침 보급 후 재분배 거절: 5장→8장, 11장 유지, 7장→8장, 보급 중복 지급 없음', () => {

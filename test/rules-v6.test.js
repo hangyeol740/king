@@ -8,7 +8,7 @@ function setup(n=4, church=false) { const r=lobby(n); if(church)act(r,r.host,{ty
 const role=(r,name)=>r.players.find(p=>p.role===name);
 const hand=(p,...types)=>{p.hand=types.map(card);return p.hand.map(c=>c.id);};
 function day(r,p,round=3){r.game.phase='day';r.game.pending=null;r.game.round=round;r.game.turn=r.game.order.indexOf(p.id);}
-function execute(r,target){act(r,role(r,'king').id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:target.id});}
+function execute(r,target){act(r,role(r,'king').id,{type:'execute'});for(const p of r.players)act(r,p.id,{type:'voteExecution',target:p===target?r.players.find(q=>q!==target&&q.role!=='king').id:target.id});}
 
 test('세금은 전원 확정 전 손패와 왕 손패를 유지하고 마지막 확정 때 모든 카드가 동시에 이전',()=>{
   const r=setup(3),k=role(r,'king'),c=role(r,'citizen'),b=role(r,'rebel');
