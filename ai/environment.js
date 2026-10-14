@@ -1,23 +1,39 @@
 import { act, makeRoom, joinRoom, view, CARDS, RECIPES, expeditionPower } from '../lib/game.js';
-import { candidates, actionFeatures, observe, distribution, sample, forward } from '../lib/ai-policy.js';
+import { candidates, decisionInputs, createDecisionContext, recordDecision, distribution, sample, forward } from '../lib/ai-policy.js';
 
 export function readyPlayers(room) {
   if (room.status !== 'playing') return [];
   return room.players.filter(p => candidates(view(room, p.id)).length > 0);
 }
-export function newGame(count = 3) {
+export function newGame(count = 3, random = Math.random) {
   const room = makeRoom('TRAIN', '학습 1');
   for (let i = 1; i < count; i++) joinRoom(room, `학습 ${i + 1}`);
-  if (count >= 4) act(room, room.host, { type: 'neutralJobs', jobs: ['bishop','merchant'] });
-  if (count === 5) act(room, room.host, {type:'config',roles:{king:1,citizen:1,rebel:1,neutral:2}});
+  if (count >= 4) {
+    const choices=[[],['bishop'],['merchant'],['bishop','merchant']];
+    act(room,room.host,{type:'neutralJobs',jobs:choices[Math.floor(random()*choices.length)]});
+    const roles={king:1,citizen:1,rebel:1,neutral:1};
+    for(let i=4;i<count;i++){const extra=['citizen','rebel','neutral'][Math.floor(random()*3)];roles[extra]++;}
+    act(room,room.host,{type:'config',roles});
+  }
   act(room, room.host, { type: 'start' });
   return room;
 }
 // 학습 및 평가의 상대. 이 전략은 배포용 학습 모델과 구분합니다.
-export function baseline(snapshot, actions, random = Math.random) {
+export const OPPONENT_STYLES = ['balanced','cooperative','aggressive','builder','trader'];
+export function baseline(snapshot, actions, random = Math.random, style = 'balanced') {
   const { me, game: g } = snapshot;
   const royal = ['king', 'citizen'].includes(me.role);
   const score = (action, key) => me.hand.filter(c => action.cards?.includes(c.id)).reduce((s, c) => s + (CARDS[c.type][key] || 0), 0);
+  const pick=type=>{const list=actions.filter(a=>a.type===type);return list[Math.floor(random()*list.length)];};
+  if(g.phase==='day'&&!g.pending?.kind){
+    if(g.round===1&&style==='trader'&&random()<.65){const a=pick('trade');if(a)return a;}
+    if(g.round===1&&style==='builder')return pick('gather')||actions[0];
+    if(g.round===3&&style==='aggressive')return pick('steal')||pick('royalSupport')||actions[0];
+    if(g.round===3&&style==='trader')return pick('revealHand')||pick('refresh')||actions[0];
+  }
+  if(g.pending?.kind==='trade'&&style==='trader'){
+    return actions.find(a=>a.type==='tradeAnswer'&&a.accept)||actions.filter(a=>a.type==='tradeSubmit'&&a.cards.length>0&&a.cards.length<=3)[0]||actions[0];
+  }
   if (g.phase === 'morning') return actions.find(a => a.type === 'mediate') || actions.find(a => a.type === 'expedition');
   if (g.phase.startsWith('mediation')) {
     const sorted = [...actions].sort((a, b) => score(b, 'mediation') - score(a, 'mediation'));
@@ -25,10 +41,10 @@ export function baseline(snapshot, actions, random = Math.random) {
   }
   if (g.phase === 'night') return [...actions].sort((a, b) => score(b, 'revolt') - score(a, 'revolt'))[0];
   if (g.phase === 'bishopNight') return actions.find(a => a.type === 'religiousRevolt' && me.churchInfluence >= 10) || actions.find(a => a.type === 'reform') || actions.find(a => a.type === 'evangelize') || actions[0];
-  if(g.phase==='market')return actions.find(a=>a.type==='marketDone');
+  if(g.phase==='market')return style==='trader'&&random()<.6?(pick('marketBuy')||actions[0]):actions.find(a=>a.type==='marketDone');
   if(g.phase==='merchantEvening'){
     if(g.pending.kind==='craft')return actions.find(a=>a.type==='craftDone');
-    return actions.find(a=>a.type==='displayGoods'&&a.price===3)||actions.find(a=>a.type==='merchantDone');
+    return actions.find(a=>a.type==='displayGoods'&&a.price===(style==='trader'?1:style==='aggressive'?5:3))||actions.find(a=>a.type==='merchantDone');
   }
   if (g.phase === 'expeditionVote') return actions[0];
   if (g.phase === 'expeditionSelect') return actions[0];
@@ -55,51 +71,69 @@ export function baseline(snapshot, actions, random = Math.random) {
   return actions[Math.floor(random() * actions.length)];
 }
 export function rollout(policy, { count = 3, random = Math.random, opponents = [], collect = true, maxSteps = 1800 } = {}) {
-  const room = newGame(count), trajectories = new Map(room.players.map(p => [p.id, []]));
+  const room = newGame(count,random), trajectories = new Map(room.players.map(p => [p.id, []]));
   const choices = new Map(room.players.map(p => [p.id, opponents.length && random() < .25 ? opponents[Math.floor(random() * opponents.length)] : policy]));
+  const contexts=new Map(room.players.map(p=>[p.id,createDecisionContext(random)]));
+  const styles=new Map(room.players.map(p=>[p.id,OPPONENT_STYLES[Math.floor(random()*OPPONENT_STYLES.length)]]));
+  const metrics={actions:{},byRole:{},byPersonality:{},phaseActions:{},candidateEntropy:0,decisions:0};
   let steps = 0;
   while (room.status === 'playing') {
     if (++steps > maxSteps) throw new Error(`학습 게임 단계 제한 초과: ${room.game.phase}`);
     const ready = readyPlayers(room);
     if (!ready.length) throw new Error(`행동 가능한 참가자 없음: ${room.game.phase}`);
-    const p = ready[0], snapshot = view(room, p.id), actions = candidates(snapshot), controller = choices.get(p.id);
+    const p = ready[Math.floor(random()*ready.length)], snapshot = view(room, p.id),context=contexts.get(p.id), {actions,obs,features}=decisionInputs(snapshot,context), controller = choices.get(p.id);
     let index;
-    if (!controller) index = actions.indexOf(baseline(snapshot, actions, random));
+    if (!controller) index = actions.indexOf(baseline(snapshot, actions, random,styles.get(p.id)));
     else {
-      const obs = observe(snapshot), features = actions.map(a => actionFeatures(snapshot, a));
       const { probabilities } = distribution(controller, obs, features);
+      metrics.candidateEntropy-=probabilities.reduce((s,p)=>s+p*Math.log(Math.max(p,1e-12)),0);metrics.decisions++;
       index = sample(probabilities, random);
       if (collect && controller === policy) trajectories.get(p.id).push({ obs, features, chosen: index, oldLogProbability: Math.log(Math.max(1e-12, probabilities[index])), value: forward(policy.critic, obs).output[0], reward: 0 });
     }
+    const type=actions[index].type,role=p.job||p.role;
+    metrics.actions[type]=(metrics.actions[type]||0)+1;
+    for(const [bucket,key] of [[metrics.byRole,role],[metrics.byPersonality,context.name],[metrics.phaseActions,`${room.game.phase}/${room.game.round}`]]){bucket[key]||={};bucket[key][type]=(bucket[key][type]||0)+1;}
+    recordDecision(context,actions[index]);
     act(room, p.id, actions[index]);
   }
   for (const p of room.players) {
     const records = trajectories.get(p.id);
     if (records.length) records.at(-1).reward = room.game.winner.players.includes(p.id) ? 1 : -1;
   }
-  return { room, trajectories, steps };
+  return { room, trajectories, steps, metrics };
 }
 export function evaluate(policy, { games = 60, counts = [3, 4, 5], random = Math.random, opponent = 'baseline' } = {}) {
-  const results = { games, opponent, wins: 0, byRole: {}, averageDecisions: 0 };
+  const results = { games, opponent:typeof opponent==='object'?'previous-model':opponent, wins: 0, byRole: {}, byPersonality:{}, actions:{}, phaseActions:{}, candidateEntropy:0,policyDecisions:0, averageDecisions: 0 };
   for (let game = 0; game < games; game++) {
-    const room = newGame(counts[game % counts.length]), learner = room.players[Math.floor(random() * room.players.length)];
+    const room = newGame(counts[game % counts.length],random), learner = room.players[Math.floor(random() * room.players.length)];
+    const contexts=new Map(room.players.map(p=>[p.id,createDecisionContext(random)]));
+    const styles=new Map(room.players.map(p=>[p.id,OPPONENT_STYLES[Math.floor(random()*OPPONENT_STYLES.length)]]));
     let steps = 0;
     while (room.status === 'playing') {
       if (++steps > 1800) throw new Error('평가 게임 단계 제한 초과');
-      const p = readyPlayers(room)[0], s = view(room, p.id), actions = candidates(s);
+      const ready=readyPlayers(room),p=ready[Math.floor(random()*ready.length)], s = view(room, p.id),context=contexts.get(p.id),{actions,obs,features}=decisionInputs(s,context);
       let index;
       if (p.id === learner.id) {
-        const probabilities = distribution(policy, observe(s), actions.map(a => actionFeatures(s, a))).probabilities;
+        const probabilities = distribution(policy, obs, features).probabilities;
         index = sample(probabilities, random);
+        results.candidateEntropy-=probabilities.reduce((sum,p)=>sum+p*Math.log(Math.max(p,1e-12)),0);results.policyDecisions++;
+        const type=actions[index].type,key=`${room.game.phase}/${room.game.round}`;
+        results.actions[type]=(results.actions[type]||0)+1;results.phaseActions[key]||={};results.phaseActions[key][type]=(results.phaseActions[key][type]||0)+1;
       } else if (opponent === 'random') index = Math.floor(random() * actions.length);
-      else index = actions.indexOf(baseline(s, actions, random));
+      else if(opponent && typeof opponent==='object')index=sample(distribution(opponent,obs,features).probabilities,random);
+      else index = actions.indexOf(baseline(s, actions, random,opponent==='mixed'?styles.get(p.id):'balanced'));
+      recordDecision(context,actions[index]);
       act(room, p.id, actions[index]);
     }
     const won = room.game.winner.players.includes(learner.id);
     results.wins += Number(won); results.averageDecisions += steps;
     const row = results.byRole[learner.job || learner.role] ||= { games: 0, wins: 0 };
     row.games++; row.wins += Number(won);
+    const personality=results.byPersonality[contexts.get(learner.id).name]||={games:0,wins:0};personality.games++;personality.wins+=Number(won);
   }
   results.winRate = results.wins / games; results.averageDecisions /= games;
+  results.averageCandidateEntropy=results.candidateEntropy/Math.max(1,results.policyDecisions);
+  results.distinctActionTypes=Object.keys(results.actions).length;
+  results.phaseDiversity=Object.fromEntries(Object.entries(results.phaseActions).map(([phase,actions])=>{const n=Object.values(actions).reduce((s,n)=>s+n,0),probs=Object.values(actions).map(x=>x/n);return [phase,{decisions:n,types:probs.length,entropy:-probs.reduce((s,p)=>s+p*Math.log(p),0),topShare:Math.max(...probs)}];}));
   return results;
 }

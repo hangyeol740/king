@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { act, makeRoom, joinRoom, view, card, RECIPES, RuleError } from '../lib/game.js';
-import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, forward, OBS_SIZE, ACTION_SIZE, PHASES, CARD_TYPES, ACTION_TYPES } from '../lib/ai-policy.js';
+import { createPolicy, seededRandom, observe, candidates, actionFeatures, distribution, sample, validatePolicy, forward, createDecisionContext,decisionInputs,recordDecision,OBS_SIZE, ACTION_SIZE, PHASES, CARD_TYPES, ACTION_TYPES } from '../lib/ai-policy.js';
 import { rollout } from '../ai/environment.js';
 import { PPO } from '../ai/ppo.js';
 import { createBotRunner } from '../lib/ai-runner.js';
@@ -81,7 +81,7 @@ test('봇 스케줄러는 사람이 없을 때 정지하고 사람이 복귀하�
   } finally {runner.close();}
 });
 test('v2~v6 모델의 관측·행동·제작·카드 선호를 상인 규칙으로 위치를 맞춰 이전',()=>{
-  for(const [version,phases,cards,recipes,actions,stats,outStats] of [[2,12,16,17,26,19,17],[3,12,16,20,26,19,17],[4,13,18,24,30,25,18],[5,14,18,24,32,26,18],[6,14,18,24,35,29,18]]){
+  for(const [version,phases,cards,recipes,actions,stats,outStats] of [[2,12,16,17,26,19,17],[3,12,16,20,26,19,17],[4,13,18,24,30,25,18],[5,14,18,24,32,26,18],[6,14,18,24,35,29,18],[7,16,20,32,41,34,45]]){
     const input=4+phases+cards+stats,output=actions+recipes+cards+outStats;
     const net=output=>({input,hidden:16,output,w1:Array.from({length:input*16},(_,i)=>Math.sin(i)*.02),b1:Array(16).fill(.1),w2:Array.from({length:16*output},(_,i)=>Math.cos(i)*.03),b2:Array(output).fill(.2)});
     const old={version,ruleset:`v${version}`,observationSize:input,actionSize:output,actor:net(output),critic:net(1),metadata:{episodes:800}};
@@ -97,4 +97,18 @@ test('v2~v6 모델의 관측·행동·제작·카드 선호를 상인 규칙으�
     }
     assert.equal(next.metadata.episodes,0);assert.equal(next.metadata.transferredFrom.version,version);assert.throws(()=>transferPolicy({...old,version:1}));
   }
+});
+
+test('행동 종류의 후보 개수가 달라도 초기 확률은 균등하며 성향은 게임 동안 유지',()=>{
+  const policy=createPolicy(1,8);for(const key of ['w1','b1','w2','b2'])policy.actor[key].fill(0);
+  const obs=Array(OBS_SIZE).fill(0),features=Array.from({length:11},(_,i)=>{const f=Array(ACTION_SIZE).fill(0);f[i===0?ACTION_TYPES.indexOf('gather'):ACTION_TYPES.indexOf('trade')]=1;return f;});
+  const p=distribution(policy,obs,features).probabilities;assert.ok(Math.abs(p[0]-.5)<1e-10);assert.ok(Math.abs(p.slice(1).reduce((s,n)=>s+n,0)-.5)<1e-10);
+  const c=createDecisionContext(seededRandom(17));assert.equal(c.traits.length,5);assert.ok(c.traits.every(n=>n>=-1&&n<=1));
+});
+
+test('상인의 왕복 제작은 같은 인벤토리를 재방문하지 않아 무한 반복 방지',()=>{
+  const r=makeRoom('CYCLE','1');for(let i=2;i<=4;i++)joinRoom(r,String(i));act(r,r.host,{type:'neutralJobs',jobs:['merchant']});act(r,r.host,{type:'start'});
+  const m=r.players.find(p=>p.job==='merchant');r.game.phase='day';r.game.round=2;r.game.turn=r.game.order.indexOf(m.id);m.hand=[card('infantry'),card('infantry')];act(r,m.id,{type:'beginCraft'});
+  const c=createDecisionContext(seededRandom(1));const a=decisionInputs(view(r,m.id),c).actions.find(a=>a.type==='craft'&&RECIPES[a.recipe].output==='officer');assert.ok(a);recordDecision(c,a);act(r,m.id,a);
+  const next=decisionInputs(view(r,m.id),c).actions;assert.ok(!next.some(a=>a.type==='craft'&&RECIPES[a.recipe].input==='officer'));assert.ok(next.some(a=>a.type==='craftDone'));
 });

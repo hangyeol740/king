@@ -92,7 +92,6 @@ test('WebSocket 시민지원 6장·재접속 중복 없음·공개 API 공통 �
   const cr = await send(c, { type: 'join', code: created.session.code, name: '셋' });
   const group = [a, b, c], sessions = [created, br, cr];
   await send(a, { type: 'start' });
-  await sleep(30);
   const k = group.find(s => s.state.me.role === 'king');
   await send(k, { type: 'expedition' });
   for(const p of group)await send(p,{type:'voteExpedition',difficulty:'low'});
@@ -151,7 +150,7 @@ test('게임 중 방 나가기로 연결 해제, 다른 사람에게 오프라�
   assert.equal((await send(a, { type: 'aid' })).ok, false);
   assert.ok((await send(a, { type: 'resume', ...result.resumeSession })).ok);
   assert.deepEqual(a.state.me.hand, before.me.hand); assert.equal(a.state.me.role, before.me.role);
-  assert.equal(a.state.host, before.host); // 이탈 중 AI가 단계를 진행할 수 있습니다.
+  assert.equal(a.state.game.phase, before.game.phase); assert.equal(a.state.host, before.host);
   await sleep(20); assert.equal(b.state.players.find(p => p.id === before.me.id).online, true);
   await send(a, { type: 'leave' });
   const newRoom = await send(a, { type: 'create', name: '새로운방' });
