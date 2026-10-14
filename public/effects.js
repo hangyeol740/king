@@ -3,6 +3,16 @@
   const panel = document.querySelector('#action-effect');
   const toggle = document.querySelector('#sound-toggle');
   let enabled = localStorage.getItem('kingdom.sound') !== 'off';
+  // 알람 설정: 각 채널별로 알림 켜기/끄기 (localStorage에 저장)
+  const alarmChannels = {
+    public: localStorage.getItem('kingdom.alarm.public') !== 'false',
+    pair: localStorage.getItem('kingdom.alarm.pair') !== 'false'
+  };
+  // 비밀방 개별 설정: 최대 3개까지 지원, basic는 basic2, basic3으로 저장
+  for (let i = 1; i <= 3; i++) {
+    const val = localStorage.getItem(`kingdom.alarm.secret${i}`);
+    if (val !== null) alarmChannels[`secret${i}`] = val !== 'false';
+  }
   let audio, timer, lastSoundAt = -Infinity;
   const voices = new Set();
   const themes = {
@@ -22,7 +32,6 @@
     turn: ['◉', '당신의 차례입니다', [523, 698]],
     notice: ['◈', '나의 행동 결과', [440, 523]]
   };
-  const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function updateToggle() {
     toggle.textContent = enabled ? '효과음 켜짐 ♪' : '효과음 꺼짐';
     toggle.setAttribute('aria-pressed', String(enabled));
@@ -45,7 +54,7 @@
     const now = performance.now();
     if (!important && now - lastSoundAt < 70) return;
     lastSoundAt = now;
-    stopSound(); // 이전 예약 음을 중단하고 최신 행동을 즉시 재생합니다.
+    stopSound();
     const frequencies = (themes[kind] || themes.notice)[2];
     frequencies.forEach((frequency, index) => {
       const oscillator = audio.createOscillator(), gain = audio.createGain();
@@ -53,7 +62,7 @@
       oscillator.type = ['breached', 'failure', 'loss', 'stolen'].includes(kind) ? 'triangle' : 'sine';
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(.065, start + .015);
+      gain.gain.linearRampToValueAtTime(kind === 'notice' ? .025 : .065, start + .015);
       gain.gain.exponentialRampToValueAtTime(.001, start + .14);
       oscillator.connect(gain); gain.connect(audio.destination); voices.add(oscillator);
       oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
@@ -65,6 +74,51 @@
     if (!enabled) stopSound();
     updateToggle(); unlock(); if (enabled) sound('submit');
   });
+  const alarmTogglePublic = document.querySelector('#alarm-toggle-public');
+  const alarmTogglePair = document.querySelector('#alarm-toggle-pair');
+  const alarmToggleSecret = document.querySelector('#alarm-toggle-secret');
+  function updateAlarmButton(button, key) {
+    const isOn = alarmChannels[key];
+    button.textContent = isOn ? '알림 끔' : '알림 켜짐';
+    button.setAttribute('aria-pressed', String(isOn));
+  }
+  if (alarmTogglePublic) {
+    alarmTogglePublic.addEventListener('click', () => {
+      alarmChannels.public = !alarmChannels.public;
+      localStorage.setItem('kingdom.alarm.public', alarmChannels.public ? 'on' : 'false');
+      updateAlarmButton(alarmTogglePublic, 'public');
+    });
+    updateAlarmButton(alarmTogglePublic, 'public');
+  }
+  if (alarmTogglePair) {
+    alarmTogglePair.addEventListener('click', () => {
+      alarmChannels.pair = !alarmChannels.pair;
+      localStorage.setItem('kingdom.alarm.pair', alarmChannels.pair ? 'on' : 'false');
+      updateAlarmButton(alarmTogglePair, 'pair');
+    });
+    updateAlarmButton(alarmTogglePair, 'pair');
+  }
+  if (alarmToggleSecret) {
+    let secretEnabled = false;
+    for (let i = 1; i <= 3; i++) {
+      if (alarmChannels[`secret${i}`]) secretEnabled = true;
+    }
+    alarmToggleSecret.textContent = secretEnabled ? '알림 끔' : '알림 켜짐';
+    alarmToggleSecret.setAttribute('aria-pressed', String(secretEnabled));
+    alarmToggleSecret.addEventListener('click', () => {
+      for (let i = 1; i <= 3; i++) {
+        alarmChannels[`secret${i}`] = !alarmChannels[`secret${i}`];
+        localStorage.setItem(`kingdom.alarm.secret${i}`, alarmChannels[`secret${i}`] ? 'on' : 'false');
+      }
+      let secretEnabled = false;
+      for (let i = 1; i <= 3; i++) {
+        if (alarmChannels[`secret${i}`]) secretEnabled = true;
+      }
+      alarmToggleSecret.textContent = secretEnabled ? '알림 끔' : '알림 켜짐';
+      alarmToggleSecret.setAttribute('aria-pressed', String(secretEnabled));
+    });
+  }
+   const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function show(events) {
     if (!events.length) return;
     clearTimeout(timer);
@@ -75,7 +129,7 @@
     const message = e => e.details?.kind === 'hand' ? `${e.details.name}님의 손패 ${e.details.cardTypes.length}장을 확인했습니다. 비밀 기록에서 확인하세요.` : e.text;
     const texts = [...new Set([message(event), ...events.filter(e => e !== event).slice(-2).map(message)])];
     panel.className = `action-effect effect-${kind}`;
-    panel.innerHTML = `<div class="effect-seal">${icon}</div><div><span class="eyebrow">${events.some(e => e.private) ? 'PRIVATE · 나에게만 표시' : 'KINGDOM EVENT'}</span><h2>${title}</h2><p>${texts.map(t => escape(t.length > 260 ? `${t.slice(0, 260)}…` : t)).join('<br>')}</p></div><button type="button" class="icon-button" aria-label="효과 알림 닫기">✕</button>`;
+    panel.innerHTML = `<div class="effect-seal">${icon}</div><div><span class="eyebrow">${events.some(e => e.private) ? 'PRIVATE · 나에게만 표시' : 'KINGDOM EVENT'}</span><h2>${title}</h2><p>${texts.map(t => escapeHTML(t.length > 260 ? `${t.slice(0, 260)}…` : t)).join('<br>')}</p></div><button type="button" class="icon-button" aria-label="효과 알림 닫기">✕</button>`;
     panel.hidden = false;
     panel.querySelector('button').onclick = () => { clearTimeout(timer); panel.hidden = true; };
     panel.getAnimations().forEach(animation => animation.cancel());
@@ -85,6 +139,7 @@
     timer = setTimeout(() => { panel.hidden = true; }, important ? 3600 : 1600);
   }
   window.kingdomEffects = {
+    chatSound() { sound('notice'); },
     handle(previous, current) {
       if (!previous || previous.code !== current.code || current.status === 'lobby') {
         clearTimeout(timer); stopSound(); panel.hidden = true; return;
@@ -95,6 +150,18 @@
       const events = [...publicEvents, ...privateEvents];
       if (current.game?.current === current.me.id && previous.game?.current !== current.me.id) {
         events.push({ effect: 'turn', text: `낮 ${current.game.round}번째 바퀴의 행동을 선택하세요.`, private: true });
+      }
+      // 알림 처리 - 채널별 알림 설정 확인
+      if (alarmChannels.public && events.some(e => e.channel === 'public')) {
+        sound('notice', true);
+      }
+      if (alarmChannels.pair && events.some(e => e.channel === 'pair')) {
+        sound('notice', true);
+      }
+      for (let i = 1; i <= 3; i++) {
+        if (alarmChannels[`secret${i}`] && events.some(e => e.channel === `secret${i}`)) {
+          sound('notice', true);
+        }
       }
       // 큐 없이 최신 상태의 결과를 표시합니다. 빠른 연속 행동에도 밀리지 않습니다.
       show(events);

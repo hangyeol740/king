@@ -12,7 +12,7 @@ async function browser() {
     return elements.get(selector);
   };
   const context = vm.createContext({
-    document: { querySelector: element, querySelectorAll: () => [], body: { classList: { add() {}, remove() {} } } },
+    document: { addEventListener() {},querySelector: element, querySelectorAll: () => [], body: { classList: { add() {}, remove() {} } } },
     localStorage: { getItem: () => null }, location: { search: '' }, URLSearchParams,
     io: () => ({ on: (name, callback) => { handlers[name] = callback; } }),
     fetch: () => new Promise(() => {}), setTimeout: () => 1, clearTimeout() {},

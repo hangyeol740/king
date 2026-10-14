@@ -24,11 +24,12 @@ function expedition(r, scoreCards = []) {
 }
 function redistribute(r, accept = false) { r.players.forEach(p => act(r, p.id, { type: 'redistribute', accept })); }
 function fullDay(r) {
-  for (let i = 0; i < r.players.length; i++) act(r, current(r).id, { type: 'gather' });
+  for (let i = 0; i < r.players.length; i++) act(r, current(r).id, { type: 'draw3' });
   for (let i = 0; i < r.players.length; i++) {
     const p = current(r); act(r, p.id, { type: 'beginCraft' }); act(r, p.id, { type: 'craftDone' });
   }
   for (let i = 0; i < r.players.length; i++) act(r, current(r).id, { type: 'refresh', cards: [] });
+  while(r.game.phase==='ambush')act(r,r.game.pending.queue[r.game.pending.index],{type:'ambushSkip'});
 }
 
 test('인원에 따른 기간, 왕 1명, 시작 손패 12장, 왕부터 고정 순서', () => {
@@ -210,7 +211,7 @@ test('낮 전체 교체 유지·타인 손패 전체 확인·무작위 2장 가�
   act(r, b.id, { type: 'steal', target: p.id });
   assert.equal(p.hand.length,2);assert.equal(b.hand.length,before+2);
   assert.equal(ids.filter(id=>b.hand.some(c=>c.id===id)).length,2);
-  assert.equal(r.game.phase, 'evening');
+  assert.equal(r.game.phase, 'ambush');
   assert.ok(!JSON.stringify(view(r,b.id)).includes(c.notes.at(-1).id));
   assert.ok(!JSON.stringify(view(r, p.id).game.logs).includes('손패 전체 확인'));
 });
@@ -271,19 +272,20 @@ test('재분배 거절은 기존 손패를 유지하면서 8장까지 보충, 8�
     assert.deepEqual(p.hand, before);
   }
 });
-test('낮 첫 바퀴: 채집 자원 6장, 무작위 카드 4장 지급, 각 차례 한 번', () => {
-  const r = setup(); r.game.phase = 'day'; r.game.round = 1;
+test('낮 두 바퀴 자원5~12개, 첫 바퀴 카드6장 지급', () => {
+  const r = setup(); r.game.phase = 'day'; r.game.round = 2;
   const a = current(r); const old = hand(a, 'eternalMagic');
   act(r, a.id, { type: 'gather' });
-  assert.equal(a.hand.length, 7);
-  assert.equal(a.hand.filter(c => c.type === 'resource').length, 6);
+  assert.ok(a.hand.length>=6&&a.hand.length<=13);
+  assert.ok(a.hand.filter(c => c.type === 'resource').length>=5);
   assert.ok(a.hand.some(c => c.id === old[0]));
   assert.throws(() => act(r, a.id, { type: 'gather' }), RuleError);
   const b = current(r); hand(b);
+  r.game.round=1;
   act(r, b.id, { type: 'draw3' });
-  assert.equal(b.hand.length, 4);
+  assert.equal(b.hand.length, 6);
   assert.ok(b.hand.every(c => CARDS[c.type].chance > 0));
-  assert.match(b.notes.at(-1).text, /\+4장/);
+  assert.match(b.notes.at(-1).text, /\+6장/);
   assert.ok(!JSON.stringify(view(r, a.id)).includes(b.notes.at(-1).id));
 });
 test('시민지원은 왕 제외 모든 진영에 정확히 6장 지급하고 기존 카드 유지·개인 수령 기록 제공', () => {
@@ -346,7 +348,7 @@ test('완전한 10일 게임: 아침·낮 세 바퀴·저녁·밤, 마지막 밤
 });
 test('철혈의 검을 보유하면 즉시 해당 진영 승리, 랜덤에서는 제작 전용 카드가 안 나옴', () => {
   const r = setup(); r.game.phase = 'day'; const p = current(r); p.hand.push(card('ironSword'));
-  act(r, p.id, { type: 'gather' });
+  act(r, p.id, { type: 'draw3' });
   assert.equal(r.status, 'finished'); assert.equal(r.game.winner.side, 'royal');
   assert.ok(draw(5000).every(c => CARDS[c.type].chance > 0));
   assert.equal(Object.values(CARDS).reduce((s, c) => s + c.chance, 0), 100);

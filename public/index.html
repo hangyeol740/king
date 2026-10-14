@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="/social.css?v=1">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/effects.js" defer></script>
+  <script src="/chat-alerts.js" defer></script>
   <script src="/pass-device.js?v=7" defer></script>
   <script src="/results.js?v=7" defer></script>
   <script src="/merchant.js?v=citizen1" defer></script>
@@ -28,6 +29,7 @@
   </header>
   <main id="app"><div class="loading">왕국으로 가는 길을 열고 있습니다…</div></main>
   <div id="toast" role="status" aria-live="polite"></div>
+  <section id="pair-request-alert" class="pair-request-alert" role="status" aria-live="polite" hidden></section>
   <section id="action-effect" class="action-effect" role="status" aria-live="polite" aria-atomic="true" hidden></section>
   <dialog id="rules"><div class="dialog-head"><div><span class="eyebrow">FIELD GUIDE</span><h2>왕국의 법칙</h2></div><button class="icon-button" id="rules-close" aria-label="가이드 닫기">✕</button></div><div id="rules-content"></div></dialog>
   <dialog id="result-dialog" class="result-dialog"><div class="dialog-head"><h2 data-result-title></h2><button class="icon-button" data-result-close aria-label="결과 확인 닫기">✕</button></div><div data-result-body></div></dialog>

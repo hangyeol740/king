@@ -19,6 +19,13 @@ function renderSocial(){
  html=html.replace('placeholder="새 비밀방 이름"','placeholder="새 비밀방 이름 / 방 비밀번호"');
  if(chatTab==='spectator'&&state?.chat?.spectator){for(const m of state.chat.spectator){html=html.replace(`<p>${esc(`${m.name}: ${m.text}`)}</p>`,`<p><small class="message-author">${esc(m.name)}</small>${esc(m.text)}</p>`);}}
  const named=state?.status==='lobby'||chatTab==='spectator';
+ const channel=chatTab.startsWith('secret:')?chatTab:chatTab;
+ const alertButton=window.kingdomChatAlerts?.button(channel)||'';
+ html=html.replace(/<h2>(.*?)<\/h2>/,`<div class="chat-heading"><h2>$1</h2>${alertButton}</div>`);
+ if(state?.game?.phase==='day'&&state.game.round===3&&state.me.canAct&&state.chat?.pair&&!state.game.pending)html+=`<button class="secondary" data-cmd="investigateIdentity">신원조사 · 낮 행동 사용</button>`;
+ const messages=chatTab.startsWith('secret:')?state?.chat?.secret.find(r=>r.id===chatTab.slice(7))?.messages:chatTab==='pair'?state?.chat?.pair?.messages:state?.chat?.[chatTab];
+ for(const message of messages||[]){if(message.mine){const content=message.name?`${message.name}: ${message.text}`:message.text;html=html.replace(`<p>${esc(content)}</p>`,`<p class="my-chat-message">${esc(content)}</p>`);if(message.name)html=html.replace(`<p><small class="message-author">${esc(message.name)}</small>${esc(message.text)}</p>`,`<p class="my-chat-message"><small class="message-author">${esc(message.name)}</small>${esc(message.text)}</p>`);}}
+ if(state?.chat&&!state.me.spectator)html=html.replace('<div class="pair-controls">',`<p class="pair-status" role="status">${state.chat.pair?'1대1 채팅방 · 매칭된 상태':'1대1 채팅방 · 매칭되지 않음'}</p><div class="pair-controls">`);
  return named?html.replace('<h2>익명 채팅</h2>',`<h2>${state.status==='lobby'?'로비 전체채팅 · 실명':'관전자 채팅 · 실명'}</h2>`).replace('placeholder="익명 메시지"','placeholder="실명 메시지"'):html;
 }
 function renderGameVotes(){

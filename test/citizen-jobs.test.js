@@ -27,7 +27,7 @@ test('일반 사냥10점 성공8장·9점 실패',()=>{
 test('대장장이 낮 보급1~10은 하루 한번 개인 알림·채집9·전용제작2종',()=>{
  const r=setup(['blacksmith']),s=r.players.find(p=>p.job==='blacksmith'),other=r.players.find(p=>p!==s);r.game.phase='redistribute';r.game.pending={done:[]};for(const p of r.players)act(r,p.id,{type:'redistribute',accept:false});
  const n=s.notes.find(n=>n.details?.kind==='blacksmithSupply');assert.ok(n.details.count>=1&&n.details.count<=10);assert.equal(s.hand.filter(c=>c.type==='resource').length>=n.details.count,true);assert.ok(!JSON.stringify(view(r,other.id)).includes(n.id));
- const before=s.hand.length;view(r,s.id);assert.equal(s.hand.length,before);r.game.turn=r.game.order.indexOf(s.id);hand(s);act(r,s.id,{type:'gather'});assert.equal(s.hand.length,9);
+ const before=s.hand.length;view(r,s.id);assert.equal(s.hand.length,before);r.game.turn=r.game.order.indexOf(s.id);r.game.round=2;hand(s);act(r,s.id,{type:'gather'});assert.ok(s.hand.length>=5&&s.hand.length<=12);
  r.game.round=2;r.game.turn=r.game.order.indexOf(s.id);act(r,s.id,{type:'beginCraft'});for(const recipe of view(r,s.id).me.recipes.filter(r=>r.job==='blacksmith')){hand(s,...Array(recipe.count).fill(recipe.input));act(r,s.id,{type:'craft',recipe:recipe.id,count:1});assert.deepEqual(s.hand.map(c=>c.type),[recipe.output]);}
 });
 test('다른 시민 직업과 타진영은 전용 레시피 사용 불가·직업 비공개',()=>{

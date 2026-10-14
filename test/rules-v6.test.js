@@ -71,7 +71,8 @@ test('처형은 모든 기존 카드 몰수 후 재분배 자동수락·낮 차�
   assert.ok(lost.every(id=>!b.hand.some(c=>c.id===id)));assert.equal(b.hand.length,12);assert.equal(r.game.pending.done.includes(b.id),true);assert.equal(canAct(r,b.id),false);
   assert.throws(()=>act(r,b.id,{type:'redistribute',accept:false}),RuleError);
   for(const p of [k,c])act(r,p.id,{type:'redistribute',accept:false});
-  while(r.game.phase==='day'){const p=r.players.find(p=>p.id===r.game.order[r.game.turn]);assert.notEqual(p.id,b.id);act(r,p.id,r.game.round===1?{type:'gather'}:r.game.round===2?{type:'hunt',cards:[]}:{type:'refresh',cards:[]});}
+  while(r.game.phase==='day'){const p=r.players.find(p=>p.id===r.game.order[r.game.turn]);assert.notEqual(p.id,b.id);act(r,p.id,r.game.round===1?{type:'draw3'}:r.game.round===2?{type:'hunt',cards:[]}:{type:'refresh',cards:[]});}
+  while(r.game.phase==='ambush')act(r,r.game.pending.queue[r.game.pending.index],{type:'ambushSkip'});
   assert.throws(()=>act(r,k.id,{type:'wanted',target:b.id}),RuleError);act(r,k.id,{type:'tax'});
   for(const p of [b,c])act(r,p.id,{type:'payTax',cards:p.hand.slice(0,3).map(c=>c.id)});
   assert.equal(canAct(r,b.id),true);act(r,b.id,{type:'revolt',cards:[]});assert.equal(r.game.day,2);assert.equal(view(r,b.id).me.executed,false);

@@ -108,11 +108,12 @@ test('WebSocket 시민지원 6장·재접속 중복 없음·공개 API 공통 �
     }
     throw new Error('플레이어 차례 상태 동기화 시간 초과');
   };
-  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'gather' });
+  for (let i = 0; i < 3; i++) await send(await actor(), { type: 'draw3' });
   for (let i = 0; i < 3; i++) {
     const p = await actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' });
   }
   for (let i = 0; i < 3; i++) await send(await actor(), { type: 'refresh', cards: [] });
+  await sleep(30);for(const s of group.filter(s=>s.state.me.role==='rebel'))await send(s,{type:'ambushSkip'});
   for (let i = 0; i < 100 && group.some(s => s.state.game.phase !== 'evening'); i++) await sleep(10);
   const counts = new Map(group.map(s => [s.state.me.id, s.state.me.hand.length]));
   assert.ok((await send(k, { type: 'aid' })).ok); await sleep(30);
@@ -235,7 +236,7 @@ test('WebSocket 중립 직업 설정·주교 배정·밤 순서·재접속과 �
   for (let i = 0; i < 4; i++) await send(await actor(), { type: 'draw3' });
   for (let i = 0; i < 4; i++) { const p = await actor(); await send(p, { type: 'beginCraft' }); await send(p, { type: 'craftDone' }); }
   for (let i = 0; i < 4; i++) await send(await actor(), { type: 'refresh', cards: [] });
-  await sleep(30); await send(k, { type: 'aid' }); await sleep(30);
+  await sleep(30);await send(rebel,{type:'ambushSkip'});await sleep(30); await send(k, { type: 'aid' }); await sleep(30);
   assert.equal((await send(b, { type: 'bishopDone' })).ok, false);
   assert.ok((await send(rebel, { type: 'revolt', cards: [] })).ok); await sleep(30);
   assert.equal(b.state.game.phase, 'bishopNight');
@@ -295,7 +296,7 @@ test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례�
   await send(restored,{type:'openSeat',player:k.id});await send(restored,{type:'contribute',cards:[]});
   for(const id of ids){await send(restored,{type:'openSeat',player:id});assert.ok((await send(restored,{type:'redistribute',accept:false})).ok);}
   assert.equal(restored.state.game.phase,'day');assert.equal(restored.state.device.active,null);
-  const current=restored.state.game.current;await send(restored,{type:'openSeat',player:current});assert.ok((await send(restored,{type:'gather'})).ok);assert.equal(restored.state.device.active,null);
+  const current=restored.state.game.current;await send(restored,{type:'openSeat',player:current});assert.ok((await send(restored,{type:'draw3'})).ok);assert.equal(restored.state.device.active,null);
 });
 
 test('온라인 공유 추가 금지·오프라인 다른 기기/관전 참가 금지·추가 참가자 삭제', async()=>{
@@ -332,9 +333,9 @@ test('실제 익명 상점 동시 구매는 재고를 중복 판매하지 않으
   async function morning(){await command(k,{type:'expedition'});for(const p of group)await command(p,{type:'voteExpedition',difficulty:'low'});for(const p of group.filter(p=>p!==k))await command(p,{type:'joinExpedition',join:p===m});assert.equal(m.state.game.pending.myDone,true);await command(k,{type:'contribute',cards:[]});for(const p of group)await command(p,{type:'redistribute',accept:false});assert.equal(k.state.game.phase,'market');}
   await morning();for(const p of group.filter(p=>p!==m))await command(p,{type:'marketDone'});
   const actor=()=>group.find(p=>p.state.me.id===k.state.game.current);
-  for(let i=0;i<5;i++){const p=actor();await command(p,{type:p===m?'gather':'draw3'});}
+  for(let i=0;i<5;i++){const p=actor();await command(p,{type:'draw3'});}
   for(let i=0;i<5;i++){const p=actor();await command(p,{type:'beginCraft'});if(p===m)await command(p,{type:'craft',recipe:0,count:1});await command(p,{type:'craftDone'});}
-  for(let i=0;i<5;i++)await command(actor(),{type:'refresh',cards:[]});await command(k,{type:'aid'});assert.equal(k.state.game.phase,'merchantEvening');
+  for(let i=0;i<5;i++)await command(actor(),{type:'refresh',cards:[]});await command(reb,{type:'ambushSkip'});await command(k,{type:'aid'});assert.equal(k.state.game.phase,'merchantEvening');
   const goods=[m.state.me.hand.find(c=>c.type==='resource'),m.state.me.hand.find(c=>c.type==='sword')];
   await command(m,{type:'displayGoods',cards:goods.map(c=>c.id),price:1});const [first,second]=m.state.game.shop;
   await command(m,{type:'changePrice',stock:second.id,price:3});

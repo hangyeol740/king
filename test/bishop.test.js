@@ -122,7 +122,7 @@ test('교체·재분배·폭탄은 타인의 종교카드를 보호하고 상급
       act(r, b.id, { type: 'redistribute', accept: true }); assert.equal(b.hand.length, 12);
     } else if (action === 'bomb') {
       r.game.revolt = 5; r.game.bombs = 1;
-      act(r, k.id, { type: 'expedition' }); assert.equal(c.hand.length, 2);
+      act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});k.hand=[card('officer')];act(r,k.id,{type:'contribute',cards:[k.hand[0].id]});assert.equal(c.hand.length,2);
     } else {
       act(r, k.id, { type: 'expedition' });
       for (const p of r.players) act(r, p.id, { type: 'voteExpedition', difficulty: 'high' });
@@ -264,7 +264,7 @@ test('주교의 철혈의 검 승리는 다른 중립을 포함하지 않음', (
   act(r, r.host, { type: 'config', roles: { king: 1, citizen: 2, rebel: 1, neutral: 2 } });
   act(r, r.host, { type: 'neutralJobs', jobs: ['bishop'] }); act(r, r.host, { type: 'start' });
   const b = bishop(r); day(r, b, 1); hand(b, 'ironSword');
-  act(r, b.id, { type: 'gather' });
+  act(r, b.id, { type: 'draw3' });
   assert.equal(r.game.winner.side, 'bishop'); assert.deepEqual(r.game.winner.players, [b.id]);
 });
 

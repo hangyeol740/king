@@ -79,6 +79,11 @@ socket.on('replaced', () => {
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
 });
 socket.on('state', next => {
+  const chatScroll=$('.chat-messages');
+  const savedChatScroll=chatScroll?{top:chatScroll.scrollTop,bottom:chatScroll.scrollHeight-chatScroll.scrollTop-chatScroll.clientHeight<24}:null;
+  const draft=$('#chat-message')?.value;
+  const focusedChat=document.activeElement?.id==='chat-message';
+  const pageScroll={x:window.scrollX,y:window.scrollY};
   next = { ...next, neutralJobs: next.neutralJobs || [], game: next.game ? { shop: null, religiousRevolt: null, religiousSuccesses: 0, religiousGoal: next.players.length === 4 ? 1 : next.players.length === 5 ? 2 : 3, ...next.game } : null };
   const previous = state;
   const changedIdentity = previous?.me.id !== next.me.id;
@@ -107,8 +112,14 @@ socket.on('state', next => {
   const available = new Set(state.me.hand.map(c => c.id));
   selected = new Set([...selected].filter(id => available.has(id)));
   render();
+  const newChatScroll=$('.chat-messages');
+  if(newChatScroll&&savedChatScroll)newChatScroll.scrollTop=savedChatScroll.bottom?newChatScroll.scrollHeight:savedChatScroll.top;
+  if(draft&&$('#chat-message'))$('#chat-message').value=draft;
+  if(focusedChat)$('#chat-message')?.focus({preventScroll:true});
+  if(previous?.code===next.code&&!changedIdentity)window.scrollTo?.(pageScroll.x,pageScroll.y);
   window.kingdomEffects.handle(next.device && changedIdentity ? null : previous, next);
   window.kingdomResults?.handle(previous, next);
+  window.kingdomChatAlerts?.handle(previous, next);
 });
 fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = { ...data, neutralJobs: data.neutralJobs || {} }; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
@@ -288,6 +299,10 @@ function targetSelect(label = '대상 선택', candidates = null) {
 function wait(title, description) { return `<h2>${esc(title)}</h2><p class="action-description">${description}</p><div class="wait-indicator"><i></i><i></i><i></i><span>다른 플레이어의 선택을 기다리고 있습니다.</span></div>`; }
 function renderAction() {
   const g = state.game, p = g.pending, me = state.me, isKing = g.king === me.id;
+  if(g.phase==='ambush'){
+    if(p?.kind==='battle')return p.myDone?wait('기습 전투 카드를 확정했습니다.','상대의 제출을 기다립니다.'):`<h2>기습 전투</h2><p>기습은 거절할 수 없습니다. 전투 카드를 선택하세요.</p>${submitCards('battleSubmit','전투 확정')}`;
+    return p?.current===me.id?`<h2>기습하시겠습니까?</h2>${targetSelect('기습 대상')}<div class="button-row"><button class="primary" data-cmd="ambush" data-target="true">기습</button><button class="secondary" data-cmd="ambushSkip">건너뛰기</button></div>`:wait('반란군의 저녁 준비를 기다립니다.','기습 단계가 끝나면 왕이 정책을 선택합니다.');
+  }
   if (state.status === 'finished') {
     const won = g.winner.players.includes(me.id);
     if(g.winner.side==='draw')return `<h2>무승부</h2><p>${esc(g.winner.reason)}</p><p>계정 점수 +30점 · 무승부 기록</p>${state.host===me.id?'<button class="primary" data-cmd="rematch">다시 준비하기</button>':''}<button class="secondary" data-cmd="leave">방 나가기</button>`;
@@ -337,6 +352,11 @@ function renderAction() {
     return `<h2>새로운 손패를 받으시겠습니까?</h2><p class="action-description">수락하면 보호 카드를 제외한 기존 손패를 버리고 <b>새 카드 ${me.redistributionCount||12}장</b>을 받습니다. 보호되는 교단·전도는 유지합니다. 거절하면 기존 손패를 유지하고 8장 미만이면 부족한 만큼 보충합니다.</p><div class="button-row"><button class="primary" data-cmd="redistribute" data-accept="true">재분배 수락 · 새로 ${me.redistributionCount||12}장</button><button class="secondary" data-cmd="redistribute" data-accept="false">거절 · 손패 유지${me.hand.length < 8 ? ` +${8 - me.hand.length}장 보충` : ''}</button></div>`;
   }
   if (g.phase === 'day') {
+    if(p?.kind==='battle'){
+      if(!p.accepted)return p.to===me.id?`<h2>전투 신청이 도착했습니다.</h2><div class="button-row"><button class="primary" data-cmd="battleAnswer" data-accept="true">수락</button><button class="secondary" data-cmd="battleAnswer" data-accept="false">거절</button></div>`:wait('전투 응답을 기다립니다.','거절되면 차례가 끝납니다.');
+      if(p.myDone)return wait('전투 카드를 확정했습니다.','상대의 확정을 기다립니다.');
+      return `<h2>전투 카드를 선택하세요.</h2><p>공격 카드를 비공개 제출합니다. 사용한 비영구 카드는 버리고 남은 손패와 영구 카드는 유지합니다.</p>${submitCards('battleSubmit','전투 카드 확정')}`;
+    }
     if (p?.kind === 'royalSupport') {
       if (p.from === me.id) return wait('왕국지원 응답을 기다립니다.', `${esc(nameOf(p.to))}님이 거절하면 왕의 차례가 바로 끝납니다.`);
       if (!p.accepted) return `<h2>왕이 왕국지원을 요청했습니다.</h2><p class="action-description">수락하면 왕에게 카드 3~5장을 제공합니다. 손패가 3장 미만이면 거절만 가능합니다.</p><div class="button-row"><button class="primary" data-cmd="supportAnswer" data-accept="true" ${me.hand.length < 3 ? 'disabled' : ''}>왕국지원 수락</button><button class="secondary" data-cmd="supportAnswer" data-accept="false">거절 · 왕의 차례 종료</button></div>`;
@@ -352,8 +372,9 @@ function renderAction() {
       return `<h2>${esc(nameOf(other))}님에게 무엇을 주시겠습니까?</h2><p class="action-description">내가 줄 카드만 고르세요. <b>0장도 가능</b>합니다. 상대의 카드와 장수는 교환이 끝나야 알 수 있습니다.</p>${submitCards('tradeSubmit', '비공개 거래 카드 확정')}`;
     }
     if (g.current !== me.id) return wait(`${nameOf(g.current)}님의 차례입니다.`, `${g.round}번째 바퀴를 진행하고 있습니다. 선택한 행동과 카드 변화는 비공개입니다.`);
-    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><p class="action-description">${me.job==='merchant'?'상인은 비밀거래를 할 수 없습니다. 채집 또는 카드받기를 선택하세요.':'거래·채집·카드받기 중 하나를 선택하세요.'}</p><div class="action-choices">${me.job==='merchant'?'':btn('trade', '비밀 거래', '상대 응답 후 서로 비공개로 교환', 'data-target="true"')}${btn('gather', '채집', '자원 카드 6장 확정 획득')}${btn('draw3', '카드받기', '무작위 카드 4장 획득')}</div>${me.job==='merchant'?'':targetSelect('거래 신청 대상', state.players.filter(p => p.id !== me.id && !p.executed))}`;
+    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><div class="action-choices">${me.job==='merchant'?'':btn('trade','비밀 거래','비공개 카드 교환','data-target="true"')}${btn('battle','전투신청','상대 수락 후 전투','data-target="true"')}${btn('draw3','카드받기','무작위 카드 6장 획득')}</div>${targetSelect('거래·전투 대상',state.players.filter(p=>p.id!==me.id&&!p.executed&&!p.surrendered))}`;
     if (g.round === 2) {
+      if(!p?.kind&&actionMode!=='hunt')return `<h2>두 번째 행동을 선택하세요.</h2><div class="button-row"><button class="primary" data-cmd="beginCraft">제작</button><button class="secondary" data-ui="hunt">사냥</button><button class="secondary" data-cmd="gather">자원얻기 · 5~12개</button></div>`;
       if (p?.kind === 'craft') return `<h2>필요한 만큼 제작하세요.</h2><p class="action-description">공통 제작과 자신의 진영 제작만 가능합니다. 영구 카드는 제작 재료로 쓰면 소모됩니다.</p><div class="recipes">${myRecipes().map(r => {
         const i=r.id;
         const available = recipeAvailable(r, me.hand);
@@ -386,6 +407,7 @@ function renderAction() {
   return '';
 }
 function selectionContext() {
+  if(state?.game?.pending?.kind==='battle'&&state.game.pending.accepted&&!state.game.pending.myDone)return {allowed:t=>!religionCard(t)&&!!rules.cards[t].attack,stat:'attack',label:'전투 공격력'};
   if (!state?.game || state.status !== 'playing' || !rules) return null;
   const g = state.game, p = g.pending, id = state.me.id;
   if(g.phase==='market'&&!p.myDone&&state.me.job!=='merchant')return marketSelection();
@@ -581,5 +603,13 @@ function renderRules() {
     <h3>세금 · 한 기기 돌려쓰기</h3><p>세금은 전원이 납부를 확정하면 동시에 왕에게 이전됩니다. 같은 폰·PC 참가자는 대기실에서 이름을 추가하세요. 다른 기기와 함께 참가할 수 있습니다. 다음 사람에게 넘기기 → 이름 확인 → 내 화면 열기로 전환하고 본인 차례에만 손패·직업이 공개됩니다. 재접속 시에도 화면이 가려진 상태로 복구됩니다.</p>
     <h3>카드 도감</h3><div class="guide-card-list">${Object.values(rules.cards).map(c => `<div><span>${c.icon}</span><b>${c.name}</b><small>${c.chance}%</small><p>${cardStats(c).join(' · ') || '제작 재료'}</p></div>`).join('')}</div>
     <h3>나의 공통·특수 제작법</h3><div class="guide-recipes">${myRecipes().map(r => `<p><b>${recipeLabel(r)}</b> · ${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} ${r.amount||1}장</p>`).join('')}</div><p>영구 칼·영구 마법·전쟁병기는 사용할 때 남지만 제작 재료로 사용하면 소모됩니다. 화염대검과 북부의 검은 영구 칼·영구 마법을 재료로 제작합니다. 다른 진영·직업의 특수 제작법은 표시하지 않습니다.</p><p class="small muted">철혈의 검은 화염대검+북부의 검으로 제작하며 즉시 승리. 주교는 혼자 승리합니다.</p>`;
+  $('#rules-content').innerHTML=$('#rules-content').innerHTML
+    .replace('모든 채팅은 메시지 내용만 표시하며 발신 이름·직업·내 메시지 구분이 없습니다.','게임 채팅은 익명이며 본인 메시지는 파란색으로 표시합니다. 신원조사는 현재 1대1 상대의 닉네임만 조사자에게 공개합니다.')
+    .replace('채집은 자원9장.','자원얻기는 낮 두 번째 바퀴에서 자원5~12장을 받습니다.')
+    .replace('① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥','① 거래 / 전투신청 / 카드6장 받기 ② 제작 / 사냥 / 자원5~12개 받기')
+    .replace('일반 반란 성공 시 왕·시민 손패 몰수','일반 반란을 막았을 때 왕·시민 손패 몰수')
+    .replace('사냥은 공격력 10점 이상이면 본인에게 7장.','사냥은 공격력 10점 이상이면 본인에게 8장.')
+    .replace('다음 사람에게 넘기기 → 이름 확인 → 내 화면 열기로 전환','오프라인에서는 다음 사람의 이름 버튼을 눌러 바로 화면을 열어 전환');
+  $('#rules-content').innerHTML+='<h3>전투·기습·신원조사</h3><p>전투는 양측 비공개 확정 후 공격력을 비교합니다. 결과는 당사자에게만 알려주며 사용한 비영구 카드는 버리고 나머지 손패는 유지합니다. 동점은 무승부입니다. 저녁 왕의 정책 전 반란군이 순서대로 기습하거나 건너뜁니다. 기습은 거절할 수 없습니다. 낮 세 번째 바퀴 신원조사는 현재 1대1 상대 닉네임만 공개하며 새 매칭에서 초기화됩니다.</p><h3>AI 난이도</h3><p>매우쉬움·쉬움·보통·어려움·광란·혼돈을 AI 이름 옆에서 선택합니다. 혼돈의 낮 행동 횟수는 1회15%·2회60%·3회25%입니다. 높은 난이도는 손패 제한 증가, 제작 재료 반환, 추가 행동과 지명수배 회피 효과를 적용받습니다.</p>';
 }
 render();

@@ -6,6 +6,12 @@ window.finishLobbyUI=()=>{
  }
  if(state.status!=='lobby')return;
  const isHost=state.host===state.me.id;
+ document.querySelectorAll('.lobby-seat').forEach((seat,i)=>{
+   const p=state.players[i];if(!p?.bot)return;
+   const select=document.createElement('select');select.setAttribute('aria-label',`${p.name} 난이도`);select.disabled=!isHost;
+   for(const [value,label] of Object.entries({veryEasy:'매우쉬움',easy:'쉬움',normal:'보통',hard:'어려움',frenzy:'광란',chaos:'혼돈'})){const option=document.createElement('option');option.value=value;option.textContent=label;option.selected=value===(p.difficulty||'normal');select.append(option);}
+   select.onchange=()=>command({type:'botDifficulty',target:p.id,difficulty:select.value});seat.querySelector('b')?.after(select);
+ });
  if(state.mode==='offline'&&state.device){
   document.querySelectorAll('[data-cmd="removeLocalPlayer"]').forEach(b=>{b.dataset.targetId=b.dataset.botTarget;});
  }
