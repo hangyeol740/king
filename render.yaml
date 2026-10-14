@@ -11,3 +11,5 @@ services:
         value: production
       - key: NODE_VERSION
         value: 20.20.2
+      - key: AI_MODEL_PATH
+        value: models/strategy-v10-candidate.json
