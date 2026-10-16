@@ -53,7 +53,7 @@ test('비밀방 권한을 요청 후 잃으면 응답 폐기',async()=>{
 test('실제 새 반응으로 계획을 수정하고 그 후보가 실행되며 대기는 제한됨',async()=>{
  const {room,bot}=setup(),human=room.players.find(p=>p!==bot);let now=1000,count=0;
  const client={enabled:true,diagnostics:()=>({}),ask:async(system,c)=>{count++;return output({actions:c.legalActions},{choice:count===1?0:1,waitForReply:count===1,planStatus:count===1?'new':'revise',revisionReason:count===1?'':'상대가 제안을 거절했다',text:count===1?'원정 같이 갈까?':'그럼 다른 선택을 할게.'});}};
- const agent=createCognitiveAgent({client,random:()=>0,clock:()=>now});let result=await agent.beforeAction(room,bot);assert.equal(result.wait,true);
+  const agent=createCognitiveAgent({client,random:()=>0,clock:()=>now});let result=await agent.beforeAction(room,bot);assert.equal(result.wait,false);
  chatAct(room,human,{type:'chatSend',channel:'public',text:'나는 못 가'});now+=100;result=await agent.beforeAction(room,bot);assert.equal(result.wait,false);assert.equal(result.action.type,candidates(view(room,bot.id))[1].type);assert.equal(agent.diagnostics().revisions,1);
  act(room,bot.id,result.action);agent.executed(room,bot,result.action);assert.equal(bot.agentMind.scopes['public/'].plan.status,'executed');
 });

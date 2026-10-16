@@ -9,6 +9,7 @@ import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,can
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
 import {ratingEligible} from './lib/game.js';
 import {chatAct,chatView,removeChatMember,botChat,respondToChat,chatEnabled} from './lib/chat.js';
+import {interpretChat} from './lib/chat-intents.js';
 import { makeDevice, deviceView } from './lib/device.js';
 import { createBotRunner } from './lib/ai-runner.js';
 import { compatiblePolicy } from './ai/transfer.js';
@@ -88,7 +89,7 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const agent=createCognitiveAgent({learning,policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||8000)}),changed:async room=>{broadcast(room);void persist();}});
+const agent=createCognitiveAgent({learning,policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||20000)}),changed:async room=>{broadcast(room);void persist();}});
 const bots = createBotRunner({ policy, agent:agent.enabled?agent:null, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
 app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics() }));
@@ -201,7 +202,11 @@ io.on('connection', socket => {
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
-          void (room.status==='playing'&&agent.enabled?agent.respond(room,p,input):conversationAI.respond(room,p,input));
+          // 행동 약속이 담긴 대화는 한 계획에서 발언과 실제 행동을 함께 결정합니다.
+          const intent=interpretChat(input.text)?.intent;
+          const strategic=['mediation','expedition','trade','discount'].includes(intent);
+          if(room.status==='playing'&&agent.enabled)void agent.respond(room,p,{...input,intent,strategic});
+          else void conversationAI.respond(room,p,input);
           if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');

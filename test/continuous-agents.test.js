@@ -10,7 +10,7 @@ function setup(){const r=makeRoom('WATCH','human');joinRoom(r,'bot1');joinRoom(r
 const out=c=>({choice:c.legalActions[0]?.index??null,commitmentChoice:null,socialChoice:null,communication:'silent',text:'',goal:c.objective.goal,desiredBelief:'조건 확인',assessment:'근거 부족',evidenceIds:[],planStatus:c.previousPlan?.status==='pending'?'keep':'new',revisionReason:'',waitForReply:false});
 test('공개 메시지 하나를 모든 AI가 차례 밖에서 독립 판단',async()=>{
  const r=setup(),contexts=[];r.game.phase='day';r.game.round=1;r.game.turn=r.game.order.indexOf(r.host);
- const agent=createCognitiveAgent({reactionDelay:1,maxRepliesPerDay:0,client:{enabled:true,diagnostics:()=>({}),ask:async(_,c)=>{contexts.push(c);return out(c);}},changed:async()=>{}});
+ const agent=createCognitiveAgent({reactionDelay:1,client:{enabled:true,diagnostics:()=>({}),ask:async(_,c)=>{contexts.push(c);return out(c);}},changed:async()=>{}});
  try{chatAct(r,r.players[0],{type:'chatSend',channel:'public',text:'누구랑 거래하는 게 좋을까?'});await agent.respond(r,r.players[0],{type:'chatSend',channel:'public',text:'누구랑 거래하는 게 좋을까?'});
  assert.equal(new Set(contexts.map(c=>c.actorId)).size,2);assert.ok(contexts.every(c=>!c.state.me.canAct));
  assert.ok(r.players.slice(1).every(p=>p.agentMind.inbox['public/'].messages.length===1));
