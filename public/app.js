@@ -163,7 +163,8 @@ function renderHome() {
         ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>복귀하면 원래 자리를 이어받습니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button><button class="quiet full" data-ui="forgetRoom">해당 방 삭제 · 내 기기에서만</button></div>` : ''}
         ${typeof renderAccount==='function'?renderAccount():''}
         <form id="entry-form">
-          <p>참가 이름: ${typeof accountProfile!=='undefined'&&accountProfile?esc(accountProfile.name):'자동 게스트 숫자 닉네임'}</p>
+          ${typeof accountProfile!=='undefined'&&accountProfile?`<p>참가 닉네임: ${esc(accountProfile.name)}</p>`:`<label for="guest-nickname">게스트 닉네임</label><input id="guest-nickname" name="name" maxlength="16" autocomplete="nickname" placeholder="비워두면 자동 이름" value="${esc(localStorage.getItem('kingdom.guestNickname')||'')}">`}
+          <button type="button" class="quiet border" data-ui="guide">게임 설명 · 10페이지</button>
           <div class="mode-controls main-mode-choice"><button type="submit" name="entry" value="create" class="primary full">온라인 왕국 만들기</button><button type="submit" name="entry" value="createOffline" class="secondary full">오프라인 · 한 기기로 만들기</button></div>
           <div class="divider"><span>또는 초대받은 왕국에 입장</span></div>
           <label for="room-code">방 코드</label><input id="room-code" name="code" maxlength="6" placeholder="6자리 코드 입력" class="code-input" value="${esc(params.get('room') || '')}" autocomplete="off">
@@ -469,9 +470,9 @@ app.addEventListener('submit', async event => {
   }
   if (event.target.id !== 'entry-form') return;
   event.preventDefault();
-  const form = new FormData(event.target), type = event.submitter?.value || 'create', name = String(form.get('name')).trim();
+  const form = new FormData(event.target), type = event.submitter?.value || 'create', name = String(form.get('name')||'').trim();
   if (['join','spectate'].includes(type) && !String(form.get('code')).trim()) { toast('초대받은 방 코드를 입력하세요.'); $('#room-code').focus(); return; }
-  localStorage.setItem('kingdom.nickname', name);
+  if(form.has('name')){localStorage.setItem('kingdom.nickname', name);localStorage.setItem('kingdom.guestNickname',name);}
   await command({ type:type==='createOffline'?'create':type,mode:type==='createOffline'?'offline':'online', name, code: String(form.get('code')) });
 });
 app.addEventListener('change', async event => {
@@ -504,7 +505,8 @@ app.addEventListener('click', async event => {
   const ui = button.dataset.ui;
   if (ui) {
     if(ui==='forgetRoom'){localStorage.removeItem(RETURN_STORAGE);render();toast('이 기기의 복귀 정보만 삭제했습니다. 실제 방은 유지됩니다.');return;}
-    if(['login','register'].includes(ui)){await command({type:ui,name:$('#account-name').value,password:$('#account-password').value});return;}
+    if(['login','register'].includes(ui)){await command({type:ui,loginId:$('#account-name').value.trim(),password:$('#account-password').value,nickname:$('#account-nickname').value.trim()});return;}
+    if(ui==='setNickname'){await command({type:'setNickname',nickname:$('#account-nickname').value,token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
     if(ui==='logout'){await command({type:'logout',token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
     if(ui==='chatTab'){if(button.dataset.tab==='pair'&&!state.chat.pair){await command({type:'pairRequest'});return;}chatTab=button.dataset.tab;render();return;}
     if(ui==='secretCreate'){await command({type:'secretCreate',name:$('#secret-name').value});return;}
@@ -593,6 +595,7 @@ $('#rules-open').addEventListener('click', () => $('#rules').showModal());
 $('#rules-close').addEventListener('click', () => $('#rules').close());
 $('#rules').addEventListener('click', event => { if (event.target === $('#rules')) { const r = $('#rules').getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) $('#rules').close(); } });
 function renderRules() {
+  if(window.kingdomGuide){window.kingdomGuide.render(rules);return;}
   $('#rules-content').innerHTML = `
     <div class="guide-banner">왕은 공개, 나머지 진영과 손패는 비밀. 반란군끼리는 서로를 압니다.</div>
     <h3>온라인·오프라인·계정·채팅</h3><p>온라인은 각자 기기로 참가하며 게스트는 자동 숫자 이름, 로그인 계정은 가입 아이디를 사용합니다. 오프라인은 한 기기로만 참가·추가·삭제할 수 있고 관전과 다른 기기 입장은 불가합니다. 모든 채팅은 메시지 내용만 표시하며 발신 이름·직업·내 메시지 구분이 없습니다. 공개·랜덤1대1·반란군·비밀방·관전 채팅을 지원합니다. 비밀방 비밀번호는 서버가 중복 없는3자리 숫자를 발급하며 한 사람 최대3방 개설·개설자 삭제 가능합니다.</p><p>관전자는 공개 상황·공개/관전채팅·개인 손패·직업을 볼 수 있지만 게임 행동·비밀채팅은 불가합니다. 기권은3일차부터 요청자당3일마다, 진영 과반수(2명은 만장일치). 중립 기권은 혼자 빠지고-120점. 무승부는 왕·반란군·중립이 요청하고 전체 과반수로 성립합니다. 온라인 이탈은 AI가 대신하며 도중 복귀-20점, 끝까지 미복귀-300점 추가. 점수는0 미만이 되지 않습니다.</p>

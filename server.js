@@ -6,7 +6,7 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
-import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount} from './lib/accounts.js';
+import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount,renameAccount,validateNickname} from './lib/accounts.js';
 import {ratingEligible} from './lib/game.js';
 import {chatAct,chatView,removeChatMember,botChat,respondToChat,chatEnabled} from './lib/chat.js';
 import {interpretChat} from './lib/chat-intents.js';
@@ -164,10 +164,11 @@ io.on('connection', socket => {
       if (Date.now() - windowStart > 10_000) { windowStart = Date.now(); requests = 0; }
       if (++requests > 80) throw new RuleError('요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.');
       if (!input || typeof input.type !== 'string') throw new RuleError('잘못된 요청입니다.');
-      if(['register','login','accountResume','logout'].includes(input.type)){
+      if(['register','login','accountResume','logout','setNickname'].includes(input.type)){
         if(socket.data.room)throw new RuleError('방을 나간 뒤 계정을 변경하세요.');
         if(input.type==='logout'){const a=accounts.find(a=>a.id===socket.data.account);if(a)a.sessions=a.sessions.filter(s=>s.token!==input.token);delete socket.data.account;await persist();reply({ok:true,account:null});return;}
-        const a=input.type==='register'?await register(accounts,input.name,input.password):input.type==='login'?await login(accounts,input.name,input.password):accountFromToken(accounts,input.token);
+        if(input.type==='setNickname'){const a=accounts.find(a=>a.id===socket.data.account);if(!a)throw new RuleError('먼저 로그인하세요.');renameAccount(a,input.nickname);await persist();reply({ok:true,account:profile(a),accountToken:input.token});return;}
+        const a=input.type==='register'?await register(accounts,input.loginId||input.name,input.password,input.nickname||input.loginId||input.name):input.type==='login'?await login(accounts,input.loginId||input.name,input.password):accountFromToken(accounts,input.token);
         if(!a)throw new RuleError('계정 로그인이 만료되었습니다.');socket.data.account=a.id;const token=input.type==='accountResume'?input.token:newAccountSession(a);await persist();reply({ok:true,account:profile(a),accountToken:token});return;
       }
       let room, p;
@@ -176,13 +177,14 @@ io.on('connection', socket => {
       if (['create', 'join','spectate','resume', 'resumeDevice'].includes(input.type)) {
         if (socket.data.room) throw new RuleError('이미 방에 접속했습니다.');
         if (input.type === 'create') {
-          const a=accounts.find(a=>a.id===socket.data.account);room = makeRoom(code(),a?a.name:guestName());room.mode=input.mode==='offline'?'offline':'online';room.players[0].accountId=a?.id||null; rooms.set(room.code, room); p = room.players[0];
+          const a=accounts.find(a=>a.id===socket.data.account);room = makeRoom(code(),a?a.name:input.name?validateNickname(input.name):guestName());room.mode=input.mode==='offline'?'offline':'online';room.players[0].accountId=a?.id||null; rooms.set(room.code, room); p = room.players[0];
         } else {
           room = rooms.get(typeof input.code === 'string' ? input.code.trim().toUpperCase() : '');
           if (!room) throw new RuleError('방을 찾을 수 없습니다. 방 코드를 확인하세요.');
           if (['join','spectate'].includes(input.type)){
             if(room.mode==='offline')throw new RuleError('오프라인 방에는 다른 기기와 관전자가 참가할 수 없습니다.');
-            const a=accounts.find(a=>a.id===socket.data.account),name=a?a.name:guestName(room);
+            const a=accounts.find(a=>a.id===socket.data.account),name=a?a.name:input.name?validateNickname(input.name):guestName(room);
+            if([...room.players,...(room.spectators||[])].some(p=>p.name===name))throw new RuleError('이 방에 같은 닉네임이 있습니다. 홈에서 닉네임을 바꿔주세요.');
             if(a&&[...room.players,...(room.spectators||[])].some(p=>p.accountId===a.id))throw new RuleError('이미 참가한 계정입니다. 원래 자리로 복귀하세요.');
             if(input.type==='join')p=joinRoom(room,name);else{p=makePlayer(name);room.spectators||=[];room.spectators.push(p);}p.accountId=a?.id||null;
           }

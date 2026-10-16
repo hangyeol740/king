@@ -45,7 +45,8 @@ after(async () => { clients.forEach(c => c.disconnect()); await stop(); await rm
 
 test('실제 WebSocket: 방 생성·코드 입장·권한 검증·게임 시작·개인화 상태', async () => {
   const a = await connect(), b = await connect(), c = await connect();
-  const created = await send(a, { type: 'create', name: '<왕국>' });
+  assert.equal((await send(a,{type:'create',name:'<왕국>'})).ok,false);
+  const created = await send(a, { type: 'create', name: '왕국' });
   assert.ok(created.ok); assert.match(created.session.code, /^[A-Z2-9]{6}$/);
   assert.ok((await send(b, { type: 'join', code: created.session.code.toLowerCase(), name: '시민' })).ok);
   assert.ok((await send(c, { type: 'join', code: created.session.code, name: '반란' })).ok);
@@ -282,7 +283,7 @@ test('한 기기3명은 시작·전환·재접속 시 숨김, 자신의 차례�
   const added=await send(shared,{type:'addLocalPlayer',name:'공유둘'});assert.ok(added.ok);assert.equal(added.session.device,true);
   const last=await send(shared,{type:'addLocalPlayer',name:'공유셋'});assert.ok(last.ok);const session=last.session;
   assert.equal(shared.state.device.players.length,3);assert.equal(shared.state.players.filter(p=>p.online).length,3);
-  assert.ok(shared.state.players.every(p=>/^게스트\d+$/.test(p.name)));
+  assert.ok(shared.state.players.every(p=>p.name.length>0));
   await send(shared,{type:'start'});assert.equal(shared.state.device.active,null);assert.equal(shared.state.me.hand.length,0);assert.equal(shared.state.me.role,null);
   const k=shared.state.players.find(p=>p.role==='king'),nonKing=shared.state.players.find(p=>p.id!==k.id);
   assert.equal((await send(shared,{type:'openSeat',player:nonKing.id})).ok,false);
@@ -358,7 +359,7 @@ test('계정/게스트 이름·관전 손패·익명 채팅·게임 중 전환 �
  for(let i=0;i<3;i++){const r=await send(g[i],{type:'register',name:`계정검증${i}`,password:'abc12345'});assert.ok(r.ok,r.error);accounts.push(r);}
  const created=await send(g[0],{type:'create',name:'위조'});for(let i=1;i<3;i++)assert.ok((await send(g[i],{type:'join',code:created.session.code,name:'위조'})).ok);
  await send(g[0],{type:'start'});await sleep(20);assert.equal(g[0].state.me.name,'계정검증0');
- const s=await connect();assert.ok((await send(s,{type:'spectate',code:created.session.code,name:'위조'})).ok);assert.match(s.state.me.name,/^게스트\d+$/);assert.ok(s.state.players.every(p=>p.role&&p.hand));
+  const s=await connect();assert.ok((await send(s,{type:'spectate',code:created.session.code,name:'위조'})).ok);assert.equal(s.state.me.name,'위조');assert.ok(s.state.players.every(p=>p.role&&p.hand));
  assert.equal((await send(s,{type:'expedition'})).ok,false);assert.ok((await send(s,{type:'chatSend',channel:'spectator',text:'관전'})).ok);
  assert.equal((await send(g[0],{type:'toSpectator',target:g[1].state.me.id})).ok,false);
  await send(g[0],{type:'chatSend',channel:'public',text:'모두'});await sleep(20);assert.equal(s.state.chat.public.at(-1).text,'모두');assert.ok(!g[1].state.chat.spectator);
