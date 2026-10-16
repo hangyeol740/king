@@ -20,6 +20,7 @@ export function newGame(count = 3, random = Math.random) {
 }
 // 학습 및 평가의 상대. 이 전략은 배포용 학습 모델과 구분합니다.
 export const OPPONENT_STYLES = ['balanced','cooperative','aggressive','builder','trader'];
+export const TRAINING_OPPONENTS = ['random', ...OPPONENT_STYLES, 'previous'];
 export function baseline(snapshot, actions, random = Math.random, style = 'balanced') {
   const { me, game: g } = snapshot;
   const royal = ['king', 'citizen'].includes(me.role);
@@ -73,9 +74,20 @@ export function baseline(snapshot, actions, random = Math.random, style = 'balan
   if (g.phase === 'evening') return actions.find(a => a.type === 'aid');
   return actions[Math.floor(random() * actions.length)];
 }
-export function rollout(policy, { count = 3, random = Math.random, opponents = [], collect = true, maxSteps = 1800 } = {}) {
-  const room = newGame(count,random), trajectories = new Map(room.players.map(p => [p.id, []]));
-  const choices = new Map(room.players.map(p => [p.id, opponents.length && random() < .25 ? opponents[Math.floor(random() * opponents.length)] : policy]));
+function shapedReward(before, room, p, action, previousNotes) {
+ const after=room.game, royal=['king','citizen'].includes(p.role), rebel=p.role==='rebel', bishop=p.job==='bishop';
+ let reward=0;
+ if(before.successes!==after.successes){const blocked=after.lastRevolt?.blocked;reward+=royal?(blocked?.06:-.06):rebel?(blocked?-.06:.06):0;}
+ if(before.religiousSuccesses!==after.religiousSuccesses){const blocked=after.lastReligiousRevolt?.blocked;reward+=bishop?(blocked?-.06:.06):royal?(blocked?.04:-.04):0;}
+ if(before.lastExpedition!==after.lastExpedition&&after.lastExpedition){const result=after.lastExpedition.result;reward+=result==='great'?.04:result==='success'?.02:result==='failure'?-0.025:0;}
+ const notes=p.notes.slice(previousNotes);if(notes.some(n=>n.text.startsWith('전투 승리')))reward+=.05;if(notes.some(n=>n.text.startsWith('전투 패배')))reward-=.05;
+ if(action.type==='ambush'&&rebel)reward+=.01;
+ return reward;
+}
+export function rollout(policy, { count = 3, random = Math.random, opponents = [], collect = true, maxSteps = 1800, opponentOffset = 0 } = {}) {
+ const room = newGame(count,random), trajectories = new Map(room.players.map(p => [p.id, []]));
+ const learner=room.players[Math.floor(random()*room.players.length)],mixedTraining=opponents.length>0;
+ const choices = new Map(room.players.map((p,index) => [p.id,!mixedTraining?{kind:'learner'}:p===learner?{kind:'learner'}:opponents[(opponentOffset+index)%opponents.length]]));
   const contexts=new Map(room.players.map(p=>[p.id,createDecisionContext(random)]));
   const styles=new Map(room.players.map(p=>[p.id,OPPONENT_STYLES[Math.floor(random()*OPPONENT_STYLES.length)]]));
   const metrics={actions:{},byRole:{},byPersonality:{},phaseActions:{},candidateEntropy:0,decisions:0};
@@ -86,22 +98,26 @@ export function rollout(policy, { count = 3, random = Math.random, opponents = [
     if (!ready.length) throw new Error(`행동 가능한 참가자 없음: ${room.game.phase}`);
     const p = ready[Math.floor(random()*ready.length)], snapshot = view(room, p.id),context=contexts.get(p.id), {actions,obs,features}=decisionInputs(snapshot,context), controller = choices.get(p.id);
     let index;
-    if (!controller) index = actions.indexOf(baseline(snapshot, actions, random,styles.get(p.id)));
+    if (controller.kind==='random') index=Math.floor(random()*actions.length);
+    else if (controller.kind==='baseline') index = actions.indexOf(baseline(snapshot, actions, random,controller.style));
+    else if (controller.kind==='policy') { const probabilities=distribution(controller.policy,obs,features).probabilities;index=sample(probabilities,random); }
     else {
-      const { probabilities } = distribution(controller, obs, features);
+      const { probabilities } = distribution(policy, obs, features);
       metrics.candidateEntropy-=probabilities.reduce((s,p)=>s+p*Math.log(Math.max(p,1e-12)),0);metrics.decisions++;
       index = sample(probabilities, random);
-      if (collect && controller === policy) trajectories.get(p.id).push({ obs, features, chosen: index, oldLogProbability: Math.log(Math.max(1e-12, probabilities[index])), value: forward(policy.critic, obs).output[0], reward: 0 });
+       if (collect) trajectories.get(p.id).push({ obs, features, chosen: index, oldLogProbability: Math.log(Math.max(1e-12, probabilities[index])), value: forward(policy.critic, obs).output[0], reward: 0 });
     }
     const type=actions[index].type,role=p.job||p.role;
     metrics.actions[type]=(metrics.actions[type]||0)+1;
     for(const [bucket,key] of [[metrics.byRole,role],[metrics.byPersonality,context.name],[metrics.phaseActions,`${room.game.phase}/${room.game.round}`]]){bucket[key]||={};bucket[key][type]=(bucket[key][type]||0)+1;}
     recordDecision(context,actions[index]);
+    const before={successes:room.game.successes,religiousSuccesses:room.game.religiousSuccesses,lastExpedition:room.game.lastExpedition,lastRevolt:room.game.lastRevolt,lastReligiousRevolt:room.game.lastReligiousRevolt},notes=p.notes.length;
     act(room, p.id, actions[index]);
+    if (controller.kind==='learner'&&collect&&mixedTraining) trajectories.get(p.id).at(-1).reward+=shapedReward(before,room,p,actions[index],notes);
   }
   for (const p of room.players) {
     const records = trajectories.get(p.id);
-    if (records.length) records.at(-1).reward = room.game.winner.players.includes(p.id) ? 1 : -1;
+     if (records.length) records.at(-1).reward += room.game.winner.players.includes(p.id) ? 1 : -1;
   }
   return { room, trajectories, steps, metrics };
 }
@@ -135,6 +151,7 @@ export function evaluate(policy, { games = 60, counts = [3, 4, 5], random = Math
     const personality=results.byPersonality[contexts.get(learner.id).name]||={games:0,wins:0};personality.games++;personality.wins+=Number(won);
   }
   results.winRate = results.wins / games; results.averageDecisions /= games;
+  results.roleFloor=Math.min(...Object.values(results.byRole).filter(row=>row.games>=3).map(row=>row.wins/row.games),1);
   results.averageCandidateEntropy=results.candidateEntropy/Math.max(1,results.policyDecisions);
   results.distinctActionTypes=Object.keys(results.actions).length;
   results.phaseDiversity=Object.fromEntries(Object.entries(results.phaseActions).map(([phase,actions])=>{const n=Object.values(actions).reduce((s,n)=>s+n,0),probs=Object.values(actions).map(x=>x/n);return [phase,{decisions:n,types:probs.length,entropy:-probs.reduce((s,p)=>s+p*Math.log(p),0),topShare:Math.max(...probs)}];}));

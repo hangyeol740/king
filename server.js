@@ -31,7 +31,7 @@ let accounts=[];
 const permanentStore=createSupabaseStore();
 let policy = null;
 try {
-  const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/strategy-v10-candidate.json'), 'utf8'));
+  const savedPolicy = JSON.parse(await readFile(process.env.AI_MODEL_PATH || path.join(root, 'models/strategy-v10-robust2.json'), 'utf8'));
   policy = compatiblePolicy(savedPolicy);
   console.log(`강화학습 모델 로드: ${policy.metadata.episodes}판 · ${policy.metadata.algorithm}`);
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
@@ -266,6 +266,7 @@ io.on('connection', socket => {
         const oldNotes = new Set(p.notes.map(n => n.id));
         const oldStage = room.game ? `${room.game.day}/${room.game.phase}/${room.game.round}/${room.game.turn}` : null;
         act(room, p.id, input);
+        learning.recordHumanAction(room,p,input);
         if(input.type==='start')room.game.startedAt=Date.now();
         if(p.surrendered)removeChatMember(room,p.id);
         if (device) {

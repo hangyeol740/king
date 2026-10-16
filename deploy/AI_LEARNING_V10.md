@@ -11,21 +11,25 @@
 - 모델에 자기 진영/중립 직업의 승리 목표를 명시하고 API 발언 뒤 정형 협력 문구를 중복 전송하지 않습니다. 동일 발언 반복을 억제합니다.
 
 ## 학습과 비교
-배포 기본 모델: `models/strategy-v10-candidate.json` (v10, 추가 학습 240판).
+배포 기본 모델: `models/strategy-v10-selected.json` (v10, 총 720판 중 평가 최고 체크포인트).
 기존 `models/policy.json`은 비교·되돌리기용으로 유지합니다. `AI_MODEL_PATH`가 설정되어 있으면 해당 파일이 우선입니다.
 
-외부 API 없이 CPU PPO 셀프플레이로 3~6인 다양한 진영·직업 및 상대 전략을 학습했습니다.
-평가 보고서는 `models/strategy-v10-evaluation.json`에 있습니다.
+외부 API 없이 CPU PPO 셀프플레이로 3~6인 다양한 진영·직업 및 상대 전략을 학습했습니다. 매 `--eval-every`(기본 60) 판마다 무작위·균형·협력·공격·제작·거래·혼합·이전 체크포인트 상대를 균등 평가합니다. 초기 모델보다 평균 점수가 낮은 후보는 폐기하고, 최고 평균 모델만 저장합니다.
 
-| 상대 | 기존 모델 | 새 모델 | 각각 평가 판수 |
+진영 하한은 시민·왕·반란군의 누적 평가 표본에 적용합니다. 주교·상인·일반 중립은 서로 다른 독립 승리 조건과 낮은 표본 비율 때문에 동일 하한으로 후보를 폐기하지 않으며, 역할별 결과는 별도로 기록합니다.
+
+확장 평가 모델 `models/strategy-v10-robust2.json`은 총 1,020판 학습, 상대당 40판 후보 평가, 상대당 160판 최종 토너먼트를 사용했습니다. 선택 720판 모델과의 독립 180판 비교에서 혼합 전략 `50.0% → 55.0%`, 무작위 `45.0% → 51.7%`였습니다. 이 비교도 카드·진영 난수 때문에 절대적인 성능 보장은 아닙니다.
+평가 보고서는 `models/strategy-v10-selected-evaluation.json`에 있습니다. 초기 240판 모델에서 평가 기반 선택 학습으로 480판을 더 진행했고, 8회 체크포인트 평가 중 6개 성능 하락 후보를 폐기했습니다.
+
+| 상대 | 240판 모델 | 선택 720판 모델 | 각각 평가 판수 |
 |---|---:|---:|---:|
-| 혼합 전략 | 44.4% | 61.1% | 180 |
-| 무작위 | 50.6% | 48.3% | 180 |
+| 혼합 전략 | 45.6% | 50.6% | 180 |
+| 무작위 | 51.1% | 48.9% | 180 |
 
 세 평가 시드를 사용하지만 카드 배분·진영 배정에는 서버의 암호학적 난수가 쓰이므로 완전히 동일한 게임을 비교한 실험은 아닙니다. 모든 상대에서의 개선이나 통계적 유의성을 보장하지 않습니다. 자연어 협상 품질은 이 외부 API 없는 PPO 평가에 포함되지 않습니다.
 
 ```sh
-node ai/train.js --transfer models/policy.json --episodes 240 --batch 12 --players 3,4,5,6 --eval-games 60 --seed 20261015 --output models/strategy-v10-candidate.json
-node ai/compare.js
+node ai/train.js --resume models/strategy-v10-candidate.json --episodes 480 --batch 12 --eval-every 60 --players 3,4,5,6 --eval-games 60 --seed 20261021 --output models/strategy-v10-selected.json
+node ai/compare.js models/strategy-v10-selected.json models/strategy-v10-candidate.json models/strategy-v10-selected-evaluation.json
 node --test --test-reporter=dot
 ```

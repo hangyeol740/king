@@ -173,7 +173,7 @@ test('대기실 방 나가기 시 참가자 제거·방장 위임·마지막 참
 });
 test('학습 모델 로드·AI 추가 제거·사람 1명 + AI 2명 실시간 게임 끝까지 완료', { timeout: 45000 }, async () => {
   const info = await (await fetch(`${url}/api/ai`)).json();
-  assert.equal(info.available, true); assert.equal(info.algorithm, 'PPO-self-play'); assert.ok(info.episodes > 0);
+  assert.equal(info.available, true); assert.ok(['PPO-self-play','PPO-game-policy'].includes(info.algorithm)); assert.ok(info.episodes > 0);
   const human = await connect(); await send(human, { type: 'create', name: '혼자플레이' });
   assert.ok((await send(human, { type: 'addBot' })).ok);
   const first = human.state.players.find(p => p.bot);

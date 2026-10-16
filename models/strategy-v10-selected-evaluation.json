@@ -1,0 +1,983 @@
+{
+  "candidate": "models/strategy-v10-selected.json",
+  "previous": "models/strategy-v10-candidate.json",
+  "trainingEpisodes": 720,
+  "externalApi": false,
+  "seeds": [
+    740,
+    1740,
+    2740
+  ],
+  "runs": [
+    {
+      "seed": 740,
+      "mixed": {
+        "before": {
+          "games": 60,
+          "wins": 28,
+          "winRate": 0.4666666666666667,
+          "byRole": {
+            "rebel": {
+              "games": 17,
+              "wins": 17
+            },
+            "merchant": {
+              "games": 3,
+              "wins": 0
+            },
+            "citizen": {
+              "games": 25,
+              "wins": 5
+            },
+            "neutral": {
+              "games": 4,
+              "wins": 0
+            },
+            "king": {
+              "games": 8,
+              "wins": 5
+            },
+            "bishop": {
+              "games": 3,
+              "wins": 1
+            }
+          },
+          "actions": {
+            "voteExpedition": 58,
+            "joinExpedition": 55,
+            "contribute": 204,
+            "redistribute": 247,
+            "draw3": 147,
+            "beginCraft": 144,
+            "craft": 681,
+            "craftDone": 144,
+            "supportAnswer": 10,
+            "supportSubmit": 6,
+            "steal": 125,
+            "ambushSkip": 34,
+            "revolt": 49,
+            "revealHand": 11,
+            "merchantDone": 12,
+            "battle": 61,
+            "battleSubmit": 53,
+            "refresh": 47,
+            "trade": 38,
+            "battleAnswer": 16,
+            "gather": 76,
+            "hunt": 36,
+            "tradeAnswer": 21,
+            "replace": 37,
+            "marketDone": 69,
+            "marketBuy": 56,
+            "tradeSubmit": 13,
+            "execute": 19,
+            "voteExecution": 19,
+            "royalSupport": 26,
+            "tax": 28,
+            "mediate": 33,
+            "wanted": 24,
+            "ambush": 15,
+            "displayGoods": 22,
+            "changePrice": 54,
+            "merchantBuy": 3,
+            "expedition": 3,
+            "reclaimChurch": 1,
+            "reform": 1,
+            "bishopDone": 12,
+            "religiousRevolt": 1,
+            "evangelize": 1
+          },
+          "averageDecisions": 177.25
+        },
+        "after": {
+          "games": 60,
+          "wins": 32,
+          "winRate": 0.5333333333333333,
+          "byRole": {
+            "citizen": {
+              "games": 16,
+              "wins": 6
+            },
+            "king": {
+              "games": 14,
+              "wins": 7
+            },
+            "rebel": {
+              "games": 18,
+              "wins": 18
+            },
+            "neutral": {
+              "games": 5,
+              "wins": 0
+            },
+            "bishop": {
+              "games": 3,
+              "wins": 1
+            },
+            "merchant": {
+              "games": 4,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "voteExpedition": 65,
+            "joinExpedition": 50,
+            "contribute": 189,
+            "redistribute": 262,
+            "draw3": 178,
+            "beginCraft": 176,
+            "craft": 1168,
+            "craftDone": 176,
+            "supportAnswer": 4,
+            "steal": 104,
+            "execute": 42,
+            "voteExecution": 42,
+            "royalSupport": 43,
+            "tax": 31,
+            "expedition": 15,
+            "replace": 45,
+            "wanted": 53,
+            "mediate": 35,
+            "battleAnswer": 27,
+            "battleSubmit": 53,
+            "marketDone": 66,
+            "gather": 69,
+            "battle": 50,
+            "hunt": 36,
+            "marketBuy": 37,
+            "refresh": 53,
+            "trade": 33,
+            "revealHand": 16,
+            "tradeSubmit": 18,
+            "ambush": 8,
+            "revolt": 48,
+            "ambushSkip": 40,
+            "tradeAnswer": 27,
+            "aid": 1,
+            "religiousRevolt": 1,
+            "reclaimChurch": 7,
+            "bishopDone": 8,
+            "displayGoods": 24,
+            "changePrice": 70,
+            "merchantDone": 20,
+            "supportSubmit": 2,
+            "evangelize": 1
+          },
+          "averageDecisions": 195.31666666666666
+        }
+      },
+      "random": {
+        "before": {
+          "games": 60,
+          "wins": 31,
+          "winRate": 0.5166666666666667,
+          "byRole": {
+            "king": {
+              "games": 11,
+              "wins": 6
+            },
+            "citizen": {
+              "games": 19,
+              "wins": 8
+            },
+            "bishop": {
+              "games": 5,
+              "wins": 1
+            },
+            "rebel": {
+              "games": 16,
+              "wins": 15
+            },
+            "neutral": {
+              "games": 8,
+              "wins": 0
+            },
+            "merchant": {
+              "games": 1,
+              "wins": 1
+            }
+          },
+          "actions": {
+            "execute": 46,
+            "voteExecution": 129,
+            "redistribute": 286,
+            "draw3": 173,
+            "battleAnswer": 119,
+            "battleSubmit": 186,
+            "beginCraft": 140,
+            "craftDone": 140,
+            "royalSupport": 35,
+            "tax": 32,
+            "mediate": 23,
+            "contribute": 147,
+            "craft": 602,
+            "battle": 69,
+            "tradeAnswer": 115,
+            "wanted": 52,
+            "tradeSubmit": 68,
+            "gather": 103,
+            "refresh": 58,
+            "expedition": 20,
+            "voteExpedition": 121,
+            "selectExpedition": 6,
+            "hunt": 40,
+            "replace": 44,
+            "joinExpedition": 67,
+            "marketDone": 48,
+            "steal": 124,
+            "marketBuy": 29,
+            "payTax": 42,
+            "supportAnswer": 14,
+            "revealHand": 17,
+            "trade": 36,
+            "supportSubmit": 5,
+            "bishopDone": 26,
+            "ambushSkip": 29,
+            "revolt": 41,
+            "ambush": 12,
+            "merchantDone": 5,
+            "displayGoods": 15,
+            "changePrice": 24,
+            "merchantBuy": 7,
+            "reclaimChurch": 4,
+            "religiousRevolt": 1,
+            "evangelize": 1
+          },
+          "averageDecisions": 233.96666666666667
+        },
+        "after": {
+          "games": 60,
+          "wins": 32,
+          "winRate": 0.5333333333333333,
+          "byRole": {
+            "rebel": {
+              "games": 17,
+              "wins": 16
+            },
+            "merchant": {
+              "games": 7,
+              "wins": 2
+            },
+            "king": {
+              "games": 19,
+              "wins": 12
+            },
+            "bishop": {
+              "games": 5,
+              "wins": 1
+            },
+            "citizen": {
+              "games": 10,
+              "wins": 1
+            },
+            "neutral": {
+              "games": 2,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "voteExpedition": 97,
+            "joinExpedition": 44,
+            "contribute": 126,
+            "redistribute": 290,
+            "tradeAnswer": 100,
+            "tradeSubmit": 50,
+            "draw3": 188,
+            "beginCraft": 213,
+            "craft": 1400,
+            "craftDone": 213,
+            "steal": 99,
+            "ambush": 17,
+            "battleSubmit": 146,
+            "payTax": 30,
+            "revolt": 47,
+            "voteExecution": 140,
+            "ambushSkip": 30,
+            "merchantDone": 28,
+            "displayGoods": 20,
+            "changePrice": 37,
+            "replace": 47,
+            "revealHand": 24,
+            "battle": 69,
+            "battleAnswer": 128,
+            "gather": 72,
+            "execute": 67,
+            "royalSupport": 51,
+            "wanted": 87,
+            "mediate": 39,
+            "hunt": 19,
+            "refresh": 59,
+            "tax": 38,
+            "trade": 23,
+            "expedition": 28,
+            "selectExpedition": 7,
+            "bishopDone": 31,
+            "reform": 5,
+            "evangelize": 7,
+            "religiousRevolt": 2,
+            "marketDone": 66,
+            "marketBuy": 45,
+            "supportAnswer": 10,
+            "aid": 2,
+            "reclaimChurch": 5,
+            "supportSubmit": 5,
+            "merchantBuy": 6
+          },
+          "averageDecisions": 247.65
+        }
+      }
+    },
+    {
+      "seed": 1740,
+      "mixed": {
+        "before": {
+          "games": 60,
+          "wins": 24,
+          "winRate": 0.4,
+          "byRole": {
+            "rebel": {
+              "games": 18,
+              "wins": 16
+            },
+            "neutral": {
+              "games": 3,
+              "wins": 0
+            },
+            "bishop": {
+              "games": 6,
+              "wins": 0
+            },
+            "king": {
+              "games": 10,
+              "wins": 4
+            },
+            "citizen": {
+              "games": 22,
+              "wins": 4
+            },
+            "merchant": {
+              "games": 1,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "voteExpedition": 63,
+            "joinExpedition": 55,
+            "contribute": 208,
+            "redistribute": 271,
+            "draw3": 165,
+            "gather": 72,
+            "supportAnswer": 11,
+            "supportSubmit": 7,
+            "steal": 124,
+            "ambush": 22,
+            "battleSubmit": 73,
+            "revolt": 65,
+            "battleAnswer": 26,
+            "battle": 67,
+            "beginCraft": 171,
+            "craftDone": 171,
+            "craft": 772,
+            "ambushSkip": 44,
+            "trade": 37,
+            "revealHand": 26,
+            "tradeAnswer": 35,
+            "tradeSubmit": 21,
+            "replace": 32,
+            "refresh": 63,
+            "reclaimChurch": 5,
+            "bishopDone": 30,
+            "execute": 28,
+            "voteExecution": 28,
+            "royalSupport": 24,
+            "wanted": 39,
+            "mediate": 26,
+            "tax": 16,
+            "expedition": 8,
+            "marketDone": 67,
+            "marketBuy": 62,
+            "hunt": 32,
+            "aid": 1,
+            "merchantDone": 7,
+            "displayGoods": 11,
+            "changePrice": 25,
+            "evangelize": 4,
+            "reform": 1,
+            "religiousRevolt": 1
+          },
+          "averageDecisions": 188.98333333333332
+        },
+        "after": {
+          "games": 60,
+          "wins": 25,
+          "winRate": 0.4166666666666667,
+          "byRole": {
+            "rebel": {
+              "games": 18,
+              "wins": 17
+            },
+            "king": {
+              "games": 13,
+              "wins": 4
+            },
+            "merchant": {
+              "games": 7,
+              "wins": 0
+            },
+            "citizen": {
+              "games": 19,
+              "wins": 4
+            },
+            "bishop": {
+              "games": 1,
+              "wins": 0
+            },
+            "neutral": {
+              "games": 2,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "voteExpedition": 60,
+            "joinExpedition": 51,
+            "contribute": 206,
+            "redistribute": 262,
+            "battle": 56,
+            "battleSubmit": 52,
+            "beginCraft": 188,
+            "craft": 1535,
+            "craftDone": 188,
+            "steal": 100,
+            "ambush": 19,
+            "revolt": 51,
+            "execute": 26,
+            "voteExecution": 26,
+            "draw3": 175,
+            "replace": 47,
+            "tax": 28,
+            "mediate": 52,
+            "gather": 78,
+            "royalSupport": 41,
+            "wanted": 50,
+            "marketDone": 56,
+            "hunt": 25,
+            "expedition": 9,
+            "marketBuy": 42,
+            "trade": 28,
+            "refresh": 51,
+            "supportAnswer": 8,
+            "supportSubmit": 6,
+            "revealHand": 20,
+            "ambushSkip": 33,
+            "battleAnswer": 17,
+            "merchantDone": 37,
+            "displayGoods": 35,
+            "changePrice": 123,
+            "tradeAnswer": 35,
+            "bishopDone": 8,
+            "tradeSubmit": 15,
+            "merchantBuy": 7
+          },
+          "averageDecisions": 197.45
+        }
+      },
+      "random": {
+        "before": {
+          "games": 60,
+          "wins": 30,
+          "winRate": 0.5,
+          "byRole": {
+            "rebel": {
+              "games": 17,
+              "wins": 15
+            },
+            "neutral": {
+              "games": 5,
+              "wins": 0
+            },
+            "king": {
+              "games": 17,
+              "wins": 11
+            },
+            "citizen": {
+              "games": 14,
+              "wins": 3
+            },
+            "bishop": {
+              "games": 5,
+              "wins": 0
+            },
+            "merchant": {
+              "games": 2,
+              "wins": 1
+            }
+          },
+          "actions": {
+            "voteExpedition": 117,
+            "joinExpedition": 58,
+            "contribute": 141,
+            "redistribute": 287,
+            "battleAnswer": 146,
+            "battleSubmit": 190,
+            "draw3": 177,
+            "beginCraft": 170,
+            "craftDone": 170,
+            "steal": 114,
+            "ambush": 19,
+            "revolt": 45,
+            "voteExecution": 129,
+            "battle": 65,
+            "craft": 684,
+            "supportAnswer": 10,
+            "supportSubmit": 7,
+            "ambushSkip": 26,
+            "payTax": 26,
+            "tradeAnswer": 109,
+            "revealHand": 14,
+            "gather": 88,
+            "replace": 43,
+            "execute": 65,
+            "royalSupport": 56,
+            "wanted": 83,
+            "expedition": 30,
+            "selectExpedition": 17,
+            "tax": 35,
+            "trade": 35,
+            "hunt": 28,
+            "mediate": 30,
+            "tradeSubmit": 53,
+            "refresh": 50,
+            "marketDone": 78,
+            "marketBuy": 41,
+            "bishopDone": 22,
+            "reclaimChurch": 2,
+            "aid": 1,
+            "reform": 1,
+            "evangelize": 1,
+            "religiousRevolt": 2,
+            "merchantDone": 10,
+            "displayGoods": 16,
+            "changePrice": 23,
+            "merchantBuy": 4
+          },
+          "averageDecisions": 238.91666666666666
+        },
+        "after": {
+          "games": 60,
+          "wins": 28,
+          "winRate": 0.4666666666666667,
+          "byRole": {
+            "king": {
+              "games": 16,
+              "wins": 9
+            },
+            "citizen": {
+              "games": 21,
+              "wins": 5
+            },
+            "neutral": {
+              "games": 4,
+              "wins": 0
+            },
+            "merchant": {
+              "games": 3,
+              "wins": 0
+            },
+            "rebel": {
+              "games": 16,
+              "wins": 14
+            }
+          },
+          "actions": {
+            "execute": 54,
+            "voteExecution": 123,
+            "redistribute": 276,
+            "draw3": 179,
+            "beginCraft": 178,
+            "craft": 1035,
+            "craftDone": 178,
+            "royalSupport": 45,
+            "wanted": 64,
+            "expedition": 24,
+            "voteExpedition": 98,
+            "selectExpedition": 12,
+            "contribute": 135,
+            "battle": 53,
+            "battleSubmit": 129,
+            "tradeAnswer": 104,
+            "tradeSubmit": 48,
+            "battleAnswer": 118,
+            "tax": 42,
+            "mediate": 37,
+            "steal": 91,
+            "supportAnswer": 13,
+            "supportSubmit": 7,
+            "revealHand": 19,
+            "marketDone": 79,
+            "marketBuy": 52,
+            "gather": 66,
+            "trade": 34,
+            "refresh": 59,
+            "aid": 2,
+            "replace": 52,
+            "joinExpedition": 47,
+            "hunt": 34,
+            "payTax": 33,
+            "displayGoods": 6,
+            "changePrice": 9,
+            "merchantDone": 12,
+            "merchantBuy": 4,
+            "ambushSkip": 31,
+            "revolt": 38,
+            "ambush": 7
+          },
+          "averageDecisions": 233.4
+        }
+      }
+    },
+    {
+      "seed": 2740,
+      "mixed": {
+        "before": {
+          "games": 60,
+          "wins": 30,
+          "winRate": 0.5,
+          "byRole": {
+            "king": {
+              "games": 24,
+              "wins": 13
+            },
+            "neutral": {
+              "games": 5,
+              "wins": 0
+            },
+            "merchant": {
+              "games": 2,
+              "wins": 0
+            },
+            "rebel": {
+              "games": 16,
+              "wins": 12
+            },
+            "citizen": {
+              "games": 11,
+              "wins": 5
+            },
+            "bishop": {
+              "games": 2,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "execute": 66,
+            "voteExecution": 65,
+            "redistribute": 324,
+            "draw3": 207,
+            "beginCraft": 189,
+            "craftDone": 189,
+            "royalSupport": 70,
+            "tax": 65,
+            "mediate": 80,
+            "contribute": 215,
+            "craft": 827,
+            "wanted": 90,
+            "replace": 46,
+            "aid": 1,
+            "refresh": 101,
+            "battle": 65,
+            "hunt": 50,
+            "trade": 50,
+            "gather": 93,
+            "voteExpedition": 60,
+            "joinExpedition": 39,
+            "battleSubmit": 86,
+            "steal": 98,
+            "displayGoods": 16,
+            "changePrice": 51,
+            "merchantDone": 13,
+            "merchantBuy": 5,
+            "marketDone": 113,
+            "ambush": 27,
+            "revolt": 61,
+            "marketBuy": 105,
+            "ambushSkip": 38,
+            "tradeAnswer": 35,
+            "tradeSubmit": 24,
+            "supportAnswer": 15,
+            "supportSubmit": 7,
+            "battleAnswer": 23,
+            "revealHand": 7,
+            "expedition": 21,
+            "bishopDone": 9,
+            "reclaimChurch": 1,
+            "evangelize": 1
+          },
+          "averageDecisions": 224.91666666666666
+        },
+        "after": {
+          "games": 60,
+          "wins": 34,
+          "winRate": 0.5666666666666667,
+          "byRole": {
+            "king": {
+              "games": 18,
+              "wins": 14
+            },
+            "bishop": {
+              "games": 4,
+              "wins": 2
+            },
+            "citizen": {
+              "games": 13,
+              "wins": 3
+            },
+            "neutral": {
+              "games": 3,
+              "wins": 0
+            },
+            "rebel": {
+              "games": 15,
+              "wins": 15
+            },
+            "merchant": {
+              "games": 7,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "execute": 56,
+            "voteExecution": 56,
+            "redistribute": 311,
+            "draw3": 201,
+            "beginCraft": 232,
+            "craftDone": 232,
+            "royalSupport": 69,
+            "wanted": 93,
+            "expedition": 18,
+            "voteExpedition": 63,
+            "contribute": 223,
+            "battle": 73,
+            "craft": 1564,
+            "tax": 48,
+            "hunt": 30,
+            "replace": 54,
+            "mediate": 72,
+            "refresh": 71,
+            "gather": 77,
+            "joinExpedition": 45,
+            "steal": 97,
+            "bishopDone": 20,
+            "tradeAnswer": 33,
+            "trade": 35,
+            "tradeSubmit": 27,
+            "revealHand": 18,
+            "evangelize": 2,
+            "reform": 3,
+            "religiousRevolt": 4,
+            "battleSubmit": 51,
+            "battleAnswer": 20,
+            "marketDone": 72,
+            "marketBuy": 47,
+            "supportAnswer": 10,
+            "supportSubmit": 3,
+            "reclaimChurch": 2,
+            "ambushSkip": 44,
+            "revolt": 53,
+            "ambush": 9,
+            "displayGoods": 36,
+            "merchantDone": 34,
+            "changePrice": 105,
+            "merchantBuy": 5,
+            "aid": 1
+          },
+          "averageDecisions": 217.26666666666668
+        }
+      },
+      "random": {
+        "before": {
+          "games": 60,
+          "wins": 31,
+          "winRate": 0.5166666666666667,
+          "byRole": {
+            "citizen": {
+              "games": 14,
+              "wins": 5
+            },
+            "rebel": {
+              "games": 20,
+              "wins": 18
+            },
+            "neutral": {
+              "games": 3,
+              "wins": 0
+            },
+            "king": {
+              "games": 13,
+              "wins": 8
+            },
+            "bishop": {
+              "games": 5,
+              "wins": 0
+            },
+            "merchant": {
+              "games": 5,
+              "wins": 0
+            }
+          },
+          "actions": {
+            "voteExecution": 123,
+            "voteExpedition": 115,
+            "redistribute": 267,
+            "battle": 57,
+            "tradeAnswer": 115,
+            "tradeSubmit": 63,
+            "beginCraft": 178,
+            "craft": 1014,
+            "craftDone": 178,
+            "steal": 138,
+            "battleSubmit": 161,
+            "gather": 76,
+            "refresh": 42,
+            "joinExpedition": 58,
+            "draw3": 182,
+            "battleAnswer": 118,
+            "contribute": 124,
+            "ambushSkip": 42,
+            "revolt": 67,
+            "payTax": 30,
+            "supportAnswer": 14,
+            "trade": 25,
+            "execute": 47,
+            "marketDone": 36,
+            "royalSupport": 40,
+            "tax": 30,
+            "mediate": 22,
+            "wanted": 52,
+            "expedition": 18,
+            "replace": 37,
+            "marketBuy": 14,
+            "ambush": 26,
+            "revealHand": 7,
+            "hunt": 31,
+            "evangelize": 7,
+            "reclaimChurch": 7,
+            "bishopDone": 25,
+            "selectExpedition": 5,
+            "reform": 3,
+            "displayGoods": 24,
+            "merchantDone": 27,
+            "merchantBuy": 10,
+            "changePrice": 40,
+            "supportSubmit": 7
+          },
+          "averageDecisions": 225.88333333333333
+        },
+        "after": {
+          "games": 60,
+          "wins": 28,
+          "winRate": 0.4666666666666667,
+          "byRole": {
+            "citizen": {
+              "games": 24,
+              "wins": 7
+            },
+            "rebel": {
+              "games": 15,
+              "wins": 14
+            },
+            "neutral": {
+              "games": 5,
+              "wins": 0
+            },
+            "king": {
+              "games": 10,
+              "wins": 5
+            },
+            "merchant": {
+              "games": 3,
+              "wins": 1
+            },
+            "bishop": {
+              "games": 3,
+              "wins": 1
+            }
+          },
+          "actions": {
+            "voteExecution": 115,
+            "redistribute": 253,
+            "draw3": 161,
+            "gather": 51,
+            "steal": 105,
+            "battleSubmit": 134,
+            "contribute": 119,
+            "battle": 51,
+            "voteExpedition": 113,
+            "joinExpedition": 62,
+            "marketDone": 72,
+            "battleAnswer": 106,
+            "beginCraft": 170,
+            "craft": 1021,
+            "craftDone": 170,
+            "ambushSkip": 30,
+            "revolt": 46,
+            "tradeAnswer": 94,
+            "tradeSubmit": 52,
+            "payTax": 26,
+            "replace": 40,
+            "trade": 30,
+            "hunt": 32,
+            "execute": 35,
+            "royalSupport": 34,
+            "wanted": 39,
+            "refresh": 43,
+            "tax": 19,
+            "mediate": 15,
+            "expedition": 13,
+            "selectExpedition": 7,
+            "revealHand": 20,
+            "marketBuy": 38,
+            "supportAnswer": 12,
+            "supportSubmit": 6,
+            "displayGoods": 20,
+            "changePrice": 28,
+            "merchantDone": 12,
+            "merchantBuy": 5,
+            "ambush": 16,
+            "reform": 2,
+            "bishopDone": 12,
+            "evangelize": 4,
+            "reclaimChurch": 1,
+            "religiousRevolt": 1
+          },
+          "averageDecisions": 225.4
+        }
+      }
+    }
+  ],
+  "summary": {
+    "mixed": {
+      "before": {
+        "games": 180,
+        "wins": 82,
+        "winRate": 0.45555555555555555
+      },
+      "after": {
+        "games": 180,
+        "wins": 91,
+        "winRate": 0.5055555555555555
+      }
+    },
+    "random": {
+      "before": {
+        "games": 180,
+        "wins": 92,
+        "winRate": 0.5111111111111111
+      },
+      "after": {
+        "games": 180,
+        "wins": 88,
+        "winRate": 0.4888888888888889
+      }
+    }
+  }
+}
