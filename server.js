@@ -17,6 +17,7 @@ import {createOpenAIChat} from './lib/openai-chat.js';
 import {createCognitiveAgent} from './lib/cognitive-agent.js';
 import {createAgentClient} from './lib/agent-client.js';
 import {createLiveLearning} from './lib/live-learning.js';
+import {createOnlineExperience} from './lib/online-experience.js';
 import {createSupabaseStore} from './lib/persistent-store.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -41,6 +42,8 @@ const permanentSnapshot=permanentStore?await permanentStore.load():null;
 let savedLearning=permanentSnapshot?.learning;
 if(!savedLearning)try{savedLearning=JSON.parse(await readFile(path.join(dataDir,'ai-learning.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')console.error('AI 학습 기록 읽기 실패:',e.message);}
 const learning=createLiveLearning(savedLearning);
+const experience=createOnlineExperience({directory:path.join(dataDir,'training'),archive:permanentStore?event=>permanentStore.archiveExperience(event):null});
+await experience.restore();
 try{accounts=JSON.parse(await readFile(accountPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 if(permanentSnapshot)accounts=permanentSnapshot.accounts||[];
 try {
@@ -61,6 +64,7 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
 let saveQueue = Promise.resolve();
 function persist() {
+  for(const room of rooms.values())experience.outcome(room);
   for(const room of rooms.values())learning.settle(room);
   for(const room of rooms.values())if(ratingEligible(room))for(const p of room.players.filter(p=>p.surrendered)){
     const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(a)settleAccount(a,`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`,p.role,'surrender');
@@ -89,10 +93,10 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const agent=createCognitiveAgent({learning,policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||20000)}),changed:async room=>{broadcast(room);void persist();}});
+const agent=createCognitiveAgent({learning,speechStyle:()=>experience.style(),policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||20000)}),changed:async room=>{broadcast(room);void persist();}});
 const bots = createBotRunner({ policy, agent:agent.enabled?agent:null, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
 const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
-app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics() }));
+app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics(),experience:experience.diagnostics() }));
 function broadcast(room) {
   autoGameVotes(room);
   agent.observe(room);
@@ -168,6 +172,7 @@ io.on('connection', socket => {
       }
       let room, p;
       let personalResult = null;
+      let trainingEvent=null;
       if (['create', 'join','spectate','resume', 'resumeDevice'].includes(input.type)) {
         if (socket.data.room) throw new RuleError('이미 방에 접속했습니다.');
         if (input.type === 'create') {
@@ -201,7 +206,8 @@ io.on('connection', socket => {
         const device = room?.devices?.find(d => d.id === socket.data.device);
         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
-          if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');chatAct(room,p,input,!!spectator);
+          if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');trainingEvent=experience.capture(room,p,input);chatAct(room,p,input,!!spectator);
+          experience.commit(trainingEvent);trainingEvent=null;
           // 행동 약속이 담긴 대화는 한 계획에서 발언과 실제 행동을 함께 결정합니다.
           const intent=interpretChat(input.text)?.intent;
           const strategic=['mediation','expedition','trade','discount'].includes(intent);
@@ -270,7 +276,9 @@ io.on('connection', socket => {
         if (input.type === 'start' && !policy && room.players.some(p => p.bot)) throw new RuleError('AI 참가자를 사용하려면 학습된 모델을 서버에 포함하거나 AI를 제거하세요.');
         const oldNotes = new Set(p.notes.map(n => n.id));
         const oldStage = room.game ? `${room.game.day}/${room.game.phase}/${room.game.round}/${room.game.turn}` : null;
+        trainingEvent=experience.capture(room,p,input);
         act(room, p.id, input);
+        experience.commit(trainingEvent);trainingEvent=null;
         learning.recordHumanAction(room,p,input);
         if(input.type==='start')room.game.startedAt=Date.now();
         if(p.surrendered)removeChatMember(room,p.id);
@@ -303,5 +311,5 @@ io.on('connection', socket => {
 const port = Number(process.env.PORT) || 3000;
 http.listen(port, '0.0.0.0', () => console.log(`왕국과 반란 서버: http://localhost:${port}`));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, async () => {
-  agent.close();bots.close(); await persist(); io.close(); http.close(() => process.exit(0));
+  agent.close();bots.close(); await persist();await experience.flush(); io.close(); http.close(() => process.exit(0));
 });
