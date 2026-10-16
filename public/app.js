@@ -404,7 +404,7 @@ function renderAction() {
   }
   if (g.phase === 'night') {
     if (me.role !== 'rebel' || p.myDone) return wait('왕국이 잠든 밤.', '밤의 행동은 비공개입니다. 쌓인 반란점수는 다음 날 아침에 공개됩니다.');
-    return `<h2>어둠 속에서 반란을 준비하세요.</h2><p class="action-description">반란력이 있는 카드를 제출하세요. 폭탄은 +5점이며 반란 실패 시 왕·시민의 손패를 전부 버립니다. 설치 여부는 판정 전까지 비공개입니다. 영구 카드는 유지됩니다.</p>${submitCards('revolt', '밤의 반란 카드 확정')}`;
+    return `<h2>어둠 속에서 반란을 준비하세요.</h2><p class="action-description">반란력이 있는 카드를 제출하세요. 폭탄은 +5점이며 왕이 반란을 막지 못하면 왕·시민의 보호 카드 외 손패를 전부 버립니다. 설치 여부는 판정 전까지 비공개입니다. 영구 카드는 제출 후 유지됩니다.</p>${submitCards('revolt', '밤의 반란 카드 확정')}`;
   }
   if (g.phase === 'bishopNight') {
     if (me.job !== 'bishop') return wait('왕국이 잠든 밤.', '밤의 행동은 비공개이며 다음 아침에 반란력이 공개됩니다.');
@@ -432,7 +432,7 @@ function selectionContext() {
   return null;
 }
 function cardStats(def) {
-  return [def.attack ? `공격 ${def.attack}` : '', def.revolt ? `반란 ${def.revolt}` : '', def.mediation ? `중재 ${def.mediation}` : '', def.expedition ? `원정 ${def.expedition}` : '', def.sabotage ? `원정 방해 ${def.sabotage}` : '', def.bomb ? '실패 시 왕·시민 몰수' : '', def.permanent ? '영구 · 재사용' : '', def.instantWin ? '획득 즉시 승리' : ''].filter(Boolean);
+  return [def.attack ? `공격 ${def.attack}` : '', def.revolt ? `반란 ${def.revolt}` : '', def.mediation ? `중재 ${def.mediation}` : '', def.expedition ? `원정 ${def.expedition}` : '', def.sabotage ? `원정 방해 ${def.sabotage}` : '', def.bomb ? '방어 실패 시 왕·시민 몰수' : '', def.permanent ? '영구 · 재사용' : '', def.instantWin ? '획득 즉시 승리' : ''].filter(Boolean);
 }
 function renderHand() {
   if (!state.me.hand.length) return '<div class="empty-hand"><span>◇</span><p>지금은 손패가 없습니다.<br><small>카드받기나 채집으로 다시 준비하세요.</small></p></div>';
@@ -625,7 +625,6 @@ function renderRules() {
     .replace('모든 채팅은 메시지 내용만 표시하며 발신 이름·직업·내 메시지 구분이 없습니다.','게임 채팅은 익명이며 본인 메시지는 파란색으로 표시합니다. 신원조사는 현재 1대1 상대의 닉네임만 조사자에게 공개합니다.')
     .replace('채집은 자원9장.','자원얻기는 낮 두 번째 바퀴에서 자원5~12장을 받습니다.')
     .replace('① 거래 / 채집(자원 6장) / 4장 받기 ② 제작 / 사냥','① 거래 / 전투신청 / 카드6장 받기 ② 제작 / 사냥 / 자원5~12개 받기')
-    .replace('일반 반란 성공 시 왕·시민 손패 몰수','일반 반란을 막았을 때 왕·시민 손패 몰수')
     .replace('사냥은 공격력 10점 이상이면 본인에게 7장.','사냥은 공격력 10점 이상이면 본인에게 8장.')
     .replace('사용한 비영구 카드는 버리고 나머지 손패는 유지합니다.','사용한 비영구 카드는 버리고 패자의 남은 손패 전부를 승자에게 이전합니다. 동점은 이전하지 않습니다.')
     .replace('다음 사람에게 넘기기 → 이름 확인 → 내 화면 열기로 전환','오프라인에서는 다음 사람의 이름 버튼을 눌러 바로 화면을 열어 전환');

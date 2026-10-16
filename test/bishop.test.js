@@ -122,7 +122,7 @@ test('교체·재분배·폭탄은 타인의 종교카드를 보호하고 상급
       act(r, b.id, { type: 'redistribute', accept: true }); assert.equal(b.hand.length, 12);
     } else if (action === 'bomb') {
       r.game.revolt = 5; r.game.bombs = 1;
-      act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});k.hand=[card('officer')];act(r,k.id,{type:'contribute',cards:[k.hand[0].id]});assert.equal(c.hand.length,2);
+      act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});act(r,k.id,{type:'contribute',cards:[]});assert.equal(r.game.lastRevolt.blocked,false);assert.equal(c.hand.length,2);
     } else {
       act(r, k.id, { type: 'expedition' });
       for (const p of r.players) act(r, p.id, { type: 'voteExpedition', difficulty: 'high' });

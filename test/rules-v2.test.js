@@ -129,7 +129,7 @@ test('폭탄 설치는 판정 전 비공개, 실패하면 왕·시민만 손패 
   const before=JSON.stringify(view(r,c.id));assert.ok(!before.includes('"bombs":'));assert.ok(!before.includes('폭탄'));
   act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});
   act(r,k.id,{type:'contribute',cards:[]});
-  assert.equal(k.hand.length,10);assert.equal(c.hand.length,10);assert.equal(n.hand.length,10);assert.equal(b.hand.length,5);
+  assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);assert.equal(n.hand.length,10);assert.equal(b.hand.length,5);
   assert.equal(view(r,c.id).game.lastRevolt.bombs,1);assert.equal(r.game.bombs,0);assert.equal(r.game.revolt,0);
 });
 test('폭탄 반란 방어 성공 시 몰수 없음·전쟁병기 재사용, 중재 미선택도 폭탄 처리',()=>{
@@ -137,8 +137,8 @@ test('폭탄 반란 방어 성공 시 몰수 없음·전쟁병기 재사용, 중
     const r=setup(),k=role(r,'king'),c=role(r,'citizen'),b=role(r,'rebel');
     hand(c,...Array(10).fill('resource'));const war=hand(k,'warWeapon')[0];
     r.game.phase='night';r.game.pending={done:[]};act(r,b.id,{type:'revolt',cards:hand(b,'bomb')});
-    if(blocked){act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});act(r,k.id,{type:'contribute',cards:[war]});assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);}
-    else {act(r,k.id,{type:'expedition'});assert.ok(k.hand.some(c=>c.id===war));assert.equal(c.hand.length,10);}
+    if(blocked){act(r,k.id,{type:'mediate'});for(const p of r.players.filter(p=>p!==k&&p.role!=='rebel'))act(r,p.id,{type:'contribute',cards:[]});act(r,k.id,{type:'contribute',cards:[war]});assert.ok(k.hand.some(c=>c.id===war));assert.equal(c.hand.length,10);}
+    else {act(r,k.id,{type:'expedition'});assert.equal(k.hand.length,0);assert.equal(c.hand.length,0);}
     assert.equal(r.game.lastRevolt.blocked,blocked);assert.equal(r.game.lastRevolt.bombs,1);
   }
 });
