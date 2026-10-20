@@ -41,7 +41,7 @@
   draw('evangelism',r=>{r(4,13,12,16,colors.wood);r(17,13,12,16,colors.wood);r(6,11,10,16,colors.light);r(17,11,10,16,'#c4ae7e');r(16,12,1,18,colors.gold);for(let y=15;y<25;y+=4){r(8,y,6,1,colors.wood);r(19,y,6,1,colors.wood);}r(14,3,5,6,colors.gold);});
   draw('huntingAxe',r=>{r(14,8,3,24,colors.wood);r(8,7,6,12,colors.shade);r(4,10,8,7,colors.metal);r(4,11,2,5,'#e6e6cc');r(17,8,7,9,colors.shade);r(21,10,5,5,colors.metal);});
   window.kingdomPixelArt = {
-    card(type){return `<svg class="pixel-card-art" viewBox="0 0 32 36" aria-hidden="true" focusable="false" shape-rendering="crispEdges">${art[type]||art.resource}</svg>`;},
+    card(type){return `<img class="pixel-card-art full-card-image source-card-icon" src="/assets/source-icons/${Object.hasOwn(art,type)?type:'resource'}.png?v=original1" alt="" width="64" height="64" draggable="false">`;},
     forDefinition(d){const type=Object.keys(rules.cards).find(t=>rules.cards[t]===d);return this.card(type);}
   };
 })();

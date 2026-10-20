@@ -30,7 +30,10 @@
     victory: ['♛', '승패가 결정되었습니다', [262, 330, 392, 523, 659]],
     submit: ['✓', '제출 완료', [440, 554]],
     turn: ['◉', '당신의 차례입니다', [523, 698]],
-    notice: ['◈', '나의 행동 결과', [440, 523]]
+    notice: ['◈', '나의 행동 결과', [440, 523]],
+    cardHover: ['◇', '카드 확인', [660]],
+    cardFlip: ['◇', '카드 넘김', [740, 660, 554]],
+    cardClick: ['◇', '카드 선택', [310, 260]]
   };
   function updateToggle() {
     toggle.textContent = enabled ? '효과음 켜짐 ♪' : '효과음 꺼짐';
@@ -46,6 +49,41 @@
   }
   document.addEventListener('pointerdown', unlock, { passive: true });
   document.addEventListener('keydown', unlock);
+  const interactionTimes = {};
+  const interactionVoices=new Set();
+  let interactionBusyUntil=0;
+  function stopInteractions(){
+    for(const source of interactionVoices){try{source.stop();}catch{}}
+    interactionVoices.clear();
+  }
+  function paperSound(kind) {
+    if(!enabled || document.hidden)return;
+    unlock();
+    if(!audio || audio.state!=='running')return;
+    const now=performance.now(),interval=kind==='flip'?140:kind==='hover'?90:35;
+    if(kind==='hover'&&now<interactionBusyUntil)return;
+    if(now-(interactionTimes[kind]??-Infinity)<interval)return;
+    interactionTimes[kind]=now;
+    stopInteractions();
+    interactionBusyUntil=now+(kind==='flip'?350:kind==='click'?100:60);
+    const pulses=kind==='flip'?5:kind==='click'?2:1;
+    for(let i=0;i<pulses;i++){
+      const duration=kind==='flip'?.055:kind==='click'?.018:.045;
+      const buffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*duration),audio.sampleRate);
+      const data=buffer.getChannelData(0);
+      for(let j=0;j<data.length;j++)data[j]=(Math.random()*2-1)*Math.pow(1-j/data.length,1.6);
+      const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+      source.buffer=buffer;filter.type='bandpass';filter.frequency.value=kind==='click'?2400:kind==='flip'?1400+i*220:1800;
+      filter.Q.value=.65;gain.gain.value=kind==='flip'?.16:kind==='click'?.22:.07;
+      source.connect(filter);filter.connect(gain);gain.connect(audio.destination);voices.add(source);interactionVoices.add(source);
+      source.onended=()=>{voices.delete(source);interactionVoices.delete(source);source.disconnect();filter.disconnect();gain.disconnect();};
+      source.start(audio.currentTime+i*(kind==='flip'?.028:.022));
+    }
+  }
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('button');
+    if(button&&!button.disabled&&button!==toggle)paperSound('click');
+  },true);
   function stopSound() {
     for (const oscillator of voices) { try { oscillator.stop(); } catch {} }
   }
@@ -140,6 +178,9 @@
   }
   window.kingdomEffects = {
     chatSound() { sound('notice'); },
+    cardHover() { paperSound('hover'); },
+    cardFlip() { paperSound('flip'); },
+    cardClick() { paperSound('click'); },
     handle(previous, current) {
       if (!previous || previous.code !== current.code || current.status === 'lobby') {
         clearTimeout(timer); stopSound(); panel.hidden = true; return;

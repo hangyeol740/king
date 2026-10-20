@@ -1,0 +1,133 @@
+/* Crisp pixel lettering without synthetic bold, shadows or filtered text. */
+:root{--paper:rgba(48,50,55,.80);--line:#7b7d8280;--ink:#f0eee7;--muted:#c3c2be}
+body{font-synthesis:none;text-rendering:auto;-webkit-font-smoothing:auto;letter-spacing:0}
+body *{text-shadow:none!important}
+small,.small,.eyebrow,.quiet,.card-top,.card-bottom,.card-stats,.card-stepper,
+.action-choice small,.journal-entry p,.identity-panel p,.hand-hint,.private-label,
+.brand small,.connection,.player-role,.guide-page p{font-weight:400!important;letter-spacing:0}
+.card-top,.card-bottom,.hand-hint,.private-label,.journal-entry p,.action-choice small{font-size:12px}
+.panel,.action-panel,.entry-panel,.identity-panel,dialog,.account-panel,.social-panel,
+.game-vote-panel,.target-picker,.recipe-reference,.phase-track,.lobby-tip,.neutral-job-settings,
+.shop-shelf,.handoff-panel,.major-result,.action-effect{
+  background:var(--paper)!important;
+  border-color:var(--line)!important;
+  filter:none;
+  clip-path:none;
+  box-shadow:0 8px 24px #0003,inset 0 1px 0 #ffffff14;
+}
+.topbar{background:rgba(38,40,44,.82)}
+.lobby-seat,.table-player,.action-choice,.target-option,.secret-tab-tools{
+  background:rgba(66,68,73,.75);border-color:var(--line)
+}
+input,select{background:#22252bcc;border-color:#85858c80}
+.game-layout>*,.hand-section{min-width:0}
+/* Five full card types at most; smaller screens keep cards comfortably large. */
+.hand-grid{
+  --hand-gap:24px;
+  display:flex;
+  gap:var(--hand-gap);
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:64px 12px 60px;
+  scroll-padding-inline:12px;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  align-items:stretch;
+  position:relative;
+}
+.hand-grid .card,.hand-grid .card.selected{
+  flex:0 0 max(160px,calc((100% - 4 * var(--hand-gap)) / 5));
+  min-width:0;
+  min-height:264px;
+  padding:14px 12px 10px;
+  border:2px solid #b4a27e!important;
+  border-radius:8px!important;
+  clip-path:none;
+  filter:none;
+  overflow:visible;
+  scroll-snap-align:start;
+  transition:transform .22s ease,box-shadow .22s ease,border-color .18s;
+  box-shadow:0 5px 0 #151515,0 9px 16px #0005;
+  background:#211e19;
+}
+.hand-grid .card::before{display:none}
+.hand-grid .card.selected{border-color:#efd18d!important;box-shadow:0 0 0 2px #efd18d40,0 6px 18px #0007}
+.hand-grid .card.unusable{opacity:1;border-color:#73716b!important}
+.hand-grid .card.unusable .card-symbol{opacity:.5}
+.hand-grid .card h3{font-size:19px;margin:12px 0 8px;letter-spacing:0}
+.hand-grid .card-symbol{height:126px;border:1px solid #aa997255;background:none;margin-top:12px}
+.hand-grid .pixel-card-art{width:96px;height:108px}
+.hand-grid .card-stats{font-size:13px;line-height:1.7;min-height:38px;color:#ded7c6}
+.hand-grid .card-top{font-size:11px;color:#d5c7ad}
+.hand-grid .card-top b{font-size:15px;color:#f3dec0}
+.hand-grid .card-bottom{font-size:11px;color:#bfb9ac;padding:10px 0 0}
+.hand-grid .card-stepper{border:0;min-height:24px;justify-content:center;color:#eee0c5;font-size:13px}
+.hand-grid .card-stepper button{
+  position:absolute;left:50%;margin-left:-23px;
+  width:46px;height:36px;min-height:36px;
+  background:#34373e!important;color:#fff3ce;
+  border:1px solid #cbb477;border-radius:5px;
+  font-size:25px;font-weight:400;line-height:1;
+  opacity:1;box-shadow:0 3px 6px #0005;z-index:3;
+}
+.hand-grid [data-ui="plusCard"]{top:-46px}
+.hand-grid [data-ui="minusCard"]{bottom:-46px}
+.hand-grid .card-stepper button:disabled{color:#8a8c91;border-color:#62656d;cursor:not-allowed}
+.hand-grid .card-stepper button:hover:not(:disabled){background:#595c64!important}
+.hand-grid .empty-hand{flex:1;min-width:100%}
+@media(hover:hover){
+  .hand-grid .card:hover{transform:translateY(-6px) scale(1.055);z-index:5;box-shadow:0 12px 28px #0009}
+}
+@media(max-width:600px){
+  .hand-grid{--hand-gap:22px;padding-top:58px;padding-bottom:56px}
+  .hand-grid .card,.hand-grid .card.selected{flex-basis:172px;min-height:264px}
+}
+@media(prefers-reduced-motion:reduce){.hand-grid .card{transition:none}.hand-grid .card:hover{transform:none}}
+
+/* The generated artwork IS the card, including its frame and illustration. */
+.hand-grid .card,.hand-grid .card.selected{
+  aspect-ratio:183 / 320;
+  min-height:0;
+  padding:0;
+  border:0!important;
+  border-radius:3px!important;
+  display:block;
+}
+.hand-grid .card .card-symbol{
+  position:absolute;inset:0;
+  width:100%;height:100%;margin:0;border:0;
+  background:none;
+  opacity:1;
+  pointer-events:none;
+}
+.hand-grid .card .full-card-image{
+  display:block;width:100%;height:100%;
+  object-fit:fill;image-rendering:pixelated;
+  border-radius:3px;
+}
+.hand-grid .card-top{
+  position:absolute;top:5%;left:9%;right:9%;z-index:1;
+  color:#fff0cd;font-size:10px;
+}
+.hand-grid .card-top>span{background:#24211de8;padding:2px 4px}
+.hand-grid .card-top b{background:#24211d;padding:2px 5px;color:#fff0cd}
+.hand-grid .card h3{
+  position:absolute;top:76%;left:8%;right:8%;z-index:1;
+  margin:0;background:#302e29;color:#e4d9c3;
+  font-size:clamp(14px,1.2vw,19px);line-height:1.4;text-align:center;
+}
+.hand-grid .card-stats{
+  position:absolute;top:84%;left:9%;right:9%;z-index:1;
+  margin:0;min-height:0;padding:2px;
+  background:#302e29;color:#c8c2b5;font-size:11px;line-height:1.4;
+}
+.hand-grid .card-bottom{display:none}
+.hand-grid .card-stepper{position:absolute;inset:0;pointer-events:none;z-index:2}
+.hand-grid .card-stepper span{
+  position:absolute;bottom:2%;left:30%;right:30%;
+  background:#292723;color:#fff0ce;text-align:center;
+}
+.hand-grid .card-stepper button{pointer-events:auto}
+.hand-grid .card.selected{outline:2px solid #f0ce7c;outline-offset:3px}
+.card-detail-symbol .full-card-image{width:183px;height:320px;margin:auto}

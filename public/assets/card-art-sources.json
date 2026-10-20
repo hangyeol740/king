@@ -1,0 +1,128 @@
+{
+  "resource": {
+    "source": "Free RPG asset Pack/separate files/iron_ore.png",
+    "output": "/assets/source-icons/resource.png",
+    "sha256": "be73d40045dbb5f5dba824cc3224449d814a4f57e2971d29f0f6e8548e2c0630",
+    "exactDepiction": true
+  },
+  "rebellion": {
+    "source": "Free RPG asset Pack/separate files/scroll_leather.png",
+    "output": "/assets/source-icons/rebellion.png",
+    "sha256": "7672ea3408ecf60b5e151a988ed59c487caa0fbabaf961f75060b8f06ef50ad6",
+    "exactDepiction": false
+  },
+  "agitation": {
+    "source": "Free RPG asset Pack/separate files/scroll_leather.png",
+    "output": "/assets/source-icons/agitation.png",
+    "sha256": "7672ea3408ecf60b5e151a988ed59c487caa0fbabaf961f75060b8f06ef50ad6",
+    "exactDepiction": false
+  },
+  "weapon": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Crossbow_001.png",
+    "output": "/assets/source-icons/weapon.png",
+    "sha256": "23f17d451176656b2f348de454d6c51bcdb1494e96eb65aa63502b88230997e7",
+    "exactDepiction": true
+  },
+  "warWeapon": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Crossbow_003.png",
+    "output": "/assets/source-icons/warWeapon.png",
+    "sha256": "2d6e438cf7bfa270822621a3f64219129fe668cd2634ec37ab050886e3688c0d",
+    "exactDepiction": true
+  },
+  "sword": {
+    "source": "Free RPG asset Pack/separate files/sword_01.png",
+    "output": "/assets/source-icons/sword.png",
+    "sha256": "02de7e811773472ad5a27775685611af4c44a33f80cd0d2eb6e23a3d1a21f71b",
+    "exactDepiction": true
+  },
+  "eternalSword": {
+    "source": "Free RPG asset Pack/separate files/sword_02.png",
+    "output": "/assets/source-icons/eternalSword.png",
+    "sha256": "cdcbb68e6f2019223e9d7ceb8c9c19e60f312fa11d42b8d75f6decb3069f5860",
+    "exactDepiction": true
+  },
+  "reinforcedSword": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Longsword_001.png",
+    "output": "/assets/source-icons/reinforcedSword.png",
+    "sha256": "a08d47f076cb61324c56e2cc4ecd2c96d26ad5a06bad73422e4000c15e3dca21",
+    "exactDepiction": true
+  },
+  "ironSword": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Sword_006.png",
+    "output": "/assets/source-icons/ironSword.png",
+    "sha256": "f42a650c4e4dc7c460b8d7b69454eba7987aba1fa24d8b8983b5919fe8faf7f6",
+    "exactDepiction": true
+  },
+  "shiningSword": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Sword_008.png",
+    "output": "/assets/source-icons/shiningSword.png",
+    "sha256": "af4a3c54e90105f0fcf4f3642ba270d3c115f9f673c238a180b516781442b53a",
+    "exactDepiction": true
+  },
+  "northSword": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Longsword_004.png",
+    "output": "/assets/source-icons/northSword.png",
+    "sha256": "e3441e4c0e05865f52c33ac830ff8d6d789bde8a52594f4fc4a1c037b2c2f7ec",
+    "exactDepiction": true
+  },
+  "flameSword": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Sword_010.png",
+    "output": "/assets/source-icons/flameSword.png",
+    "sha256": "55942f378be6f310dcf6a5b2370af594831568f008a3ad101d146e01a0a5ee5c",
+    "exactDepiction": true
+  },
+  "magic": {
+    "source": "Free RPG asset Pack/separate files/book.png",
+    "output": "/assets/source-icons/magic.png",
+    "sha256": "594c440f70e7f8da436ff37dd44b801270a53eb25456eb5242a97f4d7c52e329",
+    "exactDepiction": true
+  },
+  "eternalMagic": {
+    "source": "Free RPG asset Pack/separate files/wand_01.png",
+    "output": "/assets/source-icons/eternalMagic.png",
+    "sha256": "8924408dca436c761debd8717ef902c5da9da15694c7029d23f1d721c5134446",
+    "exactDepiction": true
+  },
+  "highMagic": {
+    "source": "Free RPG asset Pack/separate files/wand_02.png",
+    "output": "/assets/source-icons/highMagic.png",
+    "sha256": "0f9cd442926f6219cb1a9c2468234d78edd926dd03ea564fc6242523beec86ad",
+    "exactDepiction": true
+  },
+  "infantry": {
+    "source": "Free RPG asset Pack/separate files/shield_01.png",
+    "output": "/assets/source-icons/infantry.png",
+    "sha256": "79ee7b3ea31ff87952a51e265a7ec849cc46595416ac6649a017e7987fda2d70",
+    "exactDepiction": true
+  },
+  "officer": {
+    "source": "Free RPG asset Pack/separate files/headgear_02.png",
+    "output": "/assets/source-icons/officer.png",
+    "sha256": "5a9b82d41175811fdb87776799fb33308a6d48d6f4f74ffd1f1a7bf202d9744b",
+    "exactDepiction": true
+  },
+  "church": {
+    "source": "Free RPG asset Pack/separate files/circlet.png",
+    "output": "/assets/source-icons/church.png",
+    "sha256": "f3cc5709d511df60f6f9b8814573508ad56835c87a3e03298b0b5444ee4f08bc",
+    "exactDepiction": false
+  },
+  "evangelism": {
+    "source": "Free RPG asset Pack/separate files/book.png",
+    "output": "/assets/source-icons/evangelism.png",
+    "sha256": "594c440f70e7f8da436ff37dd44b801270a53eb25456eb5242a97f4d7c52e329",
+    "exactDepiction": true
+  },
+  "bomb": {
+    "source": "Free RPG asset Pack/separate files/glowing_dust.png",
+    "output": "/assets/source-icons/bomb.png",
+    "sha256": "8806dc794f3c55cc416624b9550c4efb8a39ec914f5352f2046fd0c84c7b8bf3",
+    "exactDepiction": false
+  },
+  "huntingAxe": {
+    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Axe_001.png",
+    "output": "/assets/source-icons/huntingAxe.png",
+    "sha256": "2872cb12ad30e62bd4c570e2e6da7802b5cc8eebed2ab73032cf7f2576c29faf",
+    "exactDepiction": true
+  }
+}

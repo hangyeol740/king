@@ -1,0 +1,12 @@
+/* Art is copied verbatim from user-supplied packs. No generated card paintings. */
+:root{--parchment-image:url('/assets/parchment-restored.webp?v=1')}
+.hand-grid .card,.hand-grid .card.selected{
+  background:var(--parchment-image) center/100% 100% no-repeat!important;
+  border:0!important;border-radius:3px!important;
+  box-shadow:0 5px 9px #0005;
+}
+.hand-grid .card .card-symbol{inset:12% 15% 32%;width:70%;height:56%;display:flex;align-items:center;justify-content:center}
+.hand-grid .card .source-card-icon{width:64px;height:64px;object-fit:contain;image-rendering:pixelated;border-radius:0}
+.hand-grid .card h3,.hand-grid .card-stats{background:#e4cca0;color:#342a20}
+.hand-grid .card-stack-layer{display:block;object-position:-9999px;background:var(--parchment-image) center/100% 100% no-repeat;border:0;filter:brightness(.9)}
+.card-detail-symbol .source-card-icon{width:96px;height:96px;object-fit:contain;image-rendering:pixelated}

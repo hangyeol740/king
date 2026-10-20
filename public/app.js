@@ -132,6 +132,8 @@ fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Erro
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
 
 function render() {
+  const handScroll = $('.hand-grid')?.scrollLeft || 0;
+  const handOwner = $('.hand-grid')?.dataset.owner;
   if (replaced) return;
   if(rules)renderRules();
   if (!state) { renderHome(); return; }
@@ -145,6 +147,13 @@ function render() {
   if (state.status === 'lobby') renderLobby();
   else renderGame();
   window.finishLobbyUI?.();
+  const hand = $('.hand-grid');
+  if(hand){
+    hand.dataset.owner = `${state.code}/${state.me.id}`;
+    window.kingdomHandCarousel?.init(hand,handOwner === hand.dataset.owner?handScroll:null);
+    hand.setAttribute('tabindex','0');
+    hand.setAttribute('aria-label','손패 카드 · 좌우로 스크롤');
+  }
 }
 function renderHome() {
   const params = new URLSearchParams(location.search);
