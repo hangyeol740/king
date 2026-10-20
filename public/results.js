@@ -18,7 +18,7 @@
   dialog.addEventListener('close', () => { privateOwner = null; });
   window.kingdomResults = {
     close,
-    card(d){show(d.name,`<div class="card-detail-symbol">${d.icon}</div><h3>${esc(d.name)}</h3><p>${cardStats(d).map(esc).join(' · ')||'제작 재료'}</p><p>랜덤 확률 ${d.chance}%</p>`);},
+    card(d){show(d.name,`<div class="card-detail-symbol">${window.kingdomPixelArt.forDefinition(d)}</div><h3>${esc(d.name)}</h3><p>${cardStats(d).map(esc).join(' · ')||'제작 재료'}</p><p>랜덤 확률 ${d.chance}%</p>`);},
     inspection,
     personal(result) { const note = result?.notes?.find(n => n.details?.kind === 'hand'); if (note) inspection(note, result.owner); },
     handle(previous, next) {

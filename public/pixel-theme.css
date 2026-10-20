@@ -1,0 +1,133 @@
+/* ===== 고풍 픽셀아트 테마 ===== */
+
+@font-face{
+  font-family:'PfStardust';
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/PFStardust.woff') format('woff');
+  font-weight:normal;
+  font-style:normal;
+  font-display:swap;
+}
+
+:root{
+  --serif:'PfStardust','Noto Serif KR',Georgia,serif;
+  --sans:'PfStardust','Noto Sans KR',system-ui,sans-serif;
+  --ink:#f0e2bd;
+  --muted:#b7a081;
+  --bg:#0b0806;
+  --line:#5a4726;
+  --paper:rgba(26,18,10,.95);
+  --gold:#dcae5c;
+}
+
+/* 스크롤해도 움직이지 않는 성 내부 픽셀아트 배경(뒤쪽 레이어) */
+html{
+  min-height:100%;
+  background-color:#0b0806;
+}
+body{
+  isolation:isolate;
+  background:transparent;
+  letter-spacing:.2px;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:linear-gradient(#0b080650,#0b0806a0),url('/assets/castle-reference-pixel.png') center/cover no-repeat;
+  image-rendering:pixelated;
+}
+.pixel-card-art{display:block;width:64px;height:76px;image-rendering:pixelated;flex-shrink:0}
+.card-detail-symbol .pixel-card-art{width:128px;height:144px;margin:12px auto}
+.inspection-card>span .pixel-card-art{margin:auto}
+.neutral-job-settings{background:#251c16;border:1px solid var(--line);border-radius:0}
+.card-symbol{background:linear-gradient(#09070680,#09070630);margin-top:4px}
+.card-top{font-size:9px}.card-bottom{font-size:9px;letter-spacing:.6px}
+.card-stats{font-size:11px;color:#d5bf97}
+.card:after{display:none}
+body,button,input,select,h1,h2,h3,p,small,label{font-family:var(--sans)}
+h1,h2{font-family:var(--serif)}
+
+/* PF스타더스트는 픽셀 폰트라 과도한 안티앨리어싱 없이 더 또렷하게 보입니다 */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* 반투명 유리 상단바 대신 고성 느낌의 어두운 목재 바 */
+.topbar{background:rgba(10,7,5,.82);border-bottom:2px solid var(--line)}
+
+/* 모든 패널·카드·다이얼로그를 둥근 모서리 대신 각진 '픽셀 프레임'으로 */
+.panel,.action-panel,.entry-panel,.identity-panel,.lobby-seat,.lobby-tip,.card,dialog,
+.account-panel,.social-panel,.game-vote-panel,.action-effect,.revolt-banner,.revolt-result,
+.target-picker,.target-option,.recipe-reference,input,select,.primary,.secondary,.quiet.border{
+  border-radius:0 !important;
+}
+
+.panel,.action-panel,.entry-panel,.identity-panel,dialog,.account-panel,.social-panel,
+.game-vote-panel,.target-picker,.recipe-reference{
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+  filter:drop-shadow(4px 4px 0 rgba(0,0,0,.55));
+}
+
+dialog::backdrop{background:rgba(5,3,2,.75);backdrop-filter:blur(1px)}
+
+/* ===== 카드 아트: 고풍 픽셀아트 느낌 ===== */
+.card{
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+  filter:drop-shadow(3px 3px 0 rgba(0,0,0,.6));
+  border-width:2px !important;
+  position:relative;
+}
+.card::before{
+  content:'';
+  position:absolute;inset:0;
+  pointer-events:none;
+  background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);
+  mix-blend-mode:overlay;
+}
+.card.selected{clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+.card-symbol{text-shadow:1px 1px 0 rgba(0,0,0,.65),2px 2px 0 rgba(0,0,0,.35)}
+.card h3{letter-spacing:.5px}
+.card.legendary{box-shadow:0 0 0 1px #000,0 3px 0 #000 !important}
+.card.legendary .card-symbol{text-shadow:1px 1px 0 rgba(0,0,0,.7),0 0 8px rgba(220,174,92,.65)}
+
+/* ===== 버튼 ===== */
+.primary,.secondary{
+  position:relative;
+  box-shadow:3px 3px 0 rgba(0,0,0,.55);
+}
+.primary:not(:disabled):active,.secondary:not(:disabled):active{box-shadow:1px 1px 0 rgba(0,0,0,.55)}
+
+/* 활성 탭류: 녹색 변수가 반전되어도 항상 또렷하게 보이도록 고정 색상 지정 */
+.chat-tabs .active,.guide-tabs [aria-current="page"],.merchant-tabs button.active{
+  background:#2a1d0e;
+  color:var(--gold);
+  box-shadow:inset 0 0 0 1px rgba(220,174,92,.5);
+}
+
+/* 반전된 민트그린 대신 황금빛 왕실 톤으로 주요 포인트를 통일 */
+.art-crown{color:var(--gold) !important;text-shadow:5px 6px 0 #241a0c !important}
+.primary{background:var(--gold) !important;color:#241a0c !important}
+.primary:hover:not(:disabled){background:#efc87c !important}
+.secondary{color:var(--gold) !important;border-color:var(--line) !important}
+.secondary:hover:not(:disabled){background:#241a0c !important}
+
+/* ===== 왕의 채팅: 은은한 황금빛 ===== */
+.chat-messages .royal-message{
+  color:#f3cf6e;
+  text-shadow:0 0 6px rgba(243,207,110,.35);
+}
+.chat-messages .royal-message::before{
+  content:'♛ ';
+  color:var(--gold);
+}
+.chat-messages .royal-message.my-chat-message{
+  background:#2c2308;
+}
+
+/* ===== 스크롤바 ===== */
+*{scrollbar-color:var(--gold) #1a130a;scrollbar-width:thin}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:#140d07}
+::-webkit-scrollbar-thumb{background:#5a4726;border:1px solid #0b0806}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}

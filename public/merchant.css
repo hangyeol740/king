@@ -1,16 +1,16 @@
-.shop-shelf { padding: 20px; margin: 18px 0; border: 1px solid #d1b47a; border-radius: 10px; background: #fffcf3; }
+.shop-shelf { padding: 20px; margin: 18px 0; border: 1px solid #ab812f; border-radius: 10px; background: #46360b; }
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin-top: 15px; }
-.shop-item { padding: 16px; border: 2px solid #e2d4b7; border-radius: 8px; display: grid; gap: 6px; text-align: center; }
-.shop-item.chosen { border-color: var(--gold); background: #fff3d4; }
+.shop-item { padding: 16px; border: 2px solid #745a27; border-radius: 8px; display: grid; gap: 6px; text-align: center; }
+.shop-item.chosen { border-color: var(--gold); background: #5c450f; }
 .shop-icon { font-size: 35px; }
 .shop-item strong { font-size: 13px; }
 .shop-checkout, .merchant-prices, .merchant-buy { padding: 18px 0; }
 .merchant-prices>div, .merchant-buy>div { display: grid; grid-template-columns: minmax(0,1fr) 90px auto; align-items: center; gap: 10px; margin: 10px 0; }
 .merchant-prices label { margin: 0; }
-.money-counter { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: #98712c; }
+.money-counter { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: #deb46b; }
 .money-counter span { display: block; font-size: 11px; }
 .money-counter strong { font-size: 32px; }
-.merchant-wallet {padding:14px;background:#fff3d4;border-radius:8px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}.merchant-wallet strong{font-size:26px}.merchant-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:18px 0}.merchant-tabs button{padding:14px 8px;border-radius:7px;background:#ece7dc;color:var(--ink);font-weight:700}.merchant-tabs button.active{background:var(--green);color:white}.merchant-tab-content{min-height:180px;padding:16px 0}.merchant-finish{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}.merchant-finish p{margin-bottom:10px;color:var(--muted)}.checkout-header{display:flex;align-items:center;gap:15px}.checkout-header>span{font-size:45px}.checkout-total{font-size:18px;padding:14px;background:#fff3d4;border-radius:7px;margin:12px 0}.payment-picker{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px}.payment-picker>p{font-size:12px;color:var(--muted);margin:8px 0}.payment-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 30px 44px;align-items:center;gap:6px;margin:8px 0}.payment-row button{min-height:44px;border-radius:5px;background:#e9ece2;font-size:22px}.payment-row small{display:block}.payment-row b{text-align:center}.merchant-buy b small{display:block;font-weight:400;color:var(--muted)}
+.merchant-wallet {padding:14px;background:#5c450f;border-radius:8px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}.merchant-wallet strong{font-size:26px}.merchant-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:18px 0}.merchant-tabs button{padding:14px 8px;border-radius:7px;background:#4f4125;color:var(--ink);font-weight:700}.merchant-tabs button.active{background:var(--green);color:white}.merchant-tab-content{min-height:180px;padding:16px 0}.merchant-finish{border-top:1px solid var(--line);padding-top:18px;margin-top:20px}.merchant-finish p{margin-bottom:10px;color:var(--muted)}.checkout-header{display:flex;align-items:center;gap:15px}.checkout-header>span{font-size:45px}.checkout-total{font-size:18px;padding:14px;background:#5c450f;border-radius:7px;margin:12px 0}.payment-picker{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px}.payment-picker>p{font-size:12px;color:var(--muted);margin:8px 0}.payment-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 30px 44px;align-items:center;gap:6px;margin:8px 0}.payment-row button{min-height:44px;border-radius:5px;background:#404629;font-size:22px}.payment-row small{display:block}.payment-row b{text-align:center}.merchant-buy b small{display:block;font-weight:400;color:var(--muted)}
 @media(max-width:800px) {
   .shop-shelf { padding: 15px; }
   .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }

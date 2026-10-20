@@ -1,15 +1,15 @@
 .score-tracks { margin-left: auto; display: grid; gap: 5px; padding: 6px 0; }
 .score-tracks .rebellion-track { margin-left: 0; justify-content: flex-end; }
-.religion-track { color: #705391; }
-.religion-track i.filled { background: #705391; border-color: #705391; }
-.neutral-job-settings { margin: 16px 0; padding: 14px; background: #f0edf5; border-radius: 5px; }
+.religion-track { color: #7575ba; }
+.religion-track i.filled { background: #7575ba; border-color: #7575ba; }
+.neutral-job-settings { margin: 16px 0; padding: 14px; background: #1f2140; border-radius: 5px; }
 .neutral-job-settings h3 { font-size: 14px; }
 .neutral-job-settings label { margin: 10px 0 0; display: flex; gap: 8px; align-items: center; }
-.neutral-job-settings input { accent-color: #705391; }
-.influence-counter { display: grid; gap: 4px; border-top: 1px solid #d9cee4; margin-top: 14px; padding-top: 12px; color: #705391; }
+.neutral-job-settings input { accent-color: #7575ba; }
+.influence-counter { display: grid; gap: 4px; border-top: 1px solid #2d2b5a; margin-top: 14px; padding-top: 12px; color: #7575ba; }
 .influence-counter span { font-size: 10px; }
 .influence-counter strong { font-size: 26px; }
-.religion-report { background: #f0edf5; border-color: #d9cee4; color: #705391; }
-.card.religion { background: #f2eef8; border-color: #b9a5cb; }
-.card.religion .card-symbol { color: #705391; }
+.religion-report { background: #1f2140; border-color: #2d2b5a; color: #7575ba; }
+.card.religion { background: #171a44; border-color: #433f7d; }
+.card.religion .card-symbol { color: #7575ba; }
 @media (max-width: 800px) { .score-tracks { width: 100%; } .score-tracks .rebellion-track { padding-top: 0; justify-content: center; } }
