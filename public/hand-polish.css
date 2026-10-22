@@ -1,7 +1,8 @@
 /* Compact cards with a thin paper stack and a 1.4x hover preview. */
 .hand-grid{--hand-gap:22px;padding:76px 38px 80px;align-items:center;scroll-padding-inline:38px}
 .hand-grid .card,.hand-grid .card.selected{flex:0 0 118px;min-height:0;border:0!important;box-shadow:0 3px 7px #0004;transform-origin:center;transition:transform .2s ease,box-shadow .2s ease}
-.hand-grid .card-stack-layer{border:0!important;box-shadow:none!important;filter:none;background:var(--parchment-image) center/100% 100% no-repeat;transform:translate(calc(var(--layer)*1px),calc(var(--layer)*-5px))!important}
+.hand-grid .card-stack-layer{border:0!important;box-shadow:none!important;filter:none;background:var(--parchment-image) center/100% 100% no-repeat;transform:translateY(calc(var(--layer)*-18px))!important}
+.hand-grid .card .card-selected-count{position:absolute;top:calc(100% + 12px);left:0;right:0;text-align:center;font-size:20px;font-weight:700;line-height:1.2;color:var(--ink);background:transparent;pointer-events:none;z-index:3}
 .hand-grid .card-stepper{display:none!important}
 .hand-grid .card:has(~ .card){cursor:pointer}
 .hand-submit-controls{display:flex;justify-content:flex-start;padding:12px 0 18px;min-height:0}

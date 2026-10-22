@@ -20,7 +20,7 @@
       card.dataset.stackCount=String(layers);
       const stack=document.createElement('span');stack.className='card-stack';stack.setAttribute('aria-hidden','true');
       for(let i=layers-1;i>=1;i--){
-        const layer=document.createElement('span');layer.className='card-stack-layer';layer.style.setProperty('--layer',i);stack.append(layer);
+        const layer=document.createElement('span');layer.className='card-stack-layer';layer.style.setProperty('--layer',i);layer.style.zIndex=String(-i);stack.append(layer);
       }
       card.prepend(stack);
     }

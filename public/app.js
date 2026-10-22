@@ -143,6 +143,8 @@ fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Erro
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
 
 function render() {
+  if(state?.status==='lobby')window.kingdomRoleReveal?.show(state);
+  if(!state||state.status!=='playing'||state.me.spectator||state.device&&!state.device.active)window.kingdomRoleReveal?.hide();
   window.kingdomMusic?.update(state?.status);
   window.kingdomBackground?.update(state?.game);
   const handScroll = $('.hand-grid')?.scrollLeft || 0;
@@ -159,10 +161,15 @@ function render() {
   }
   if (state.status === 'lobby') renderLobby();
   else renderGame();
+  if(state.status==='playing'&&!state.me.spectator)window.kingdomRoleReveal?.show(state);
   window.finishLobbyUI?.();
   const hand = $('.hand-grid');
   if(hand){
     hand.querySelectorAll('.card-stepper').forEach(el=>el.remove());
+    hand.querySelectorAll('.card').forEach(el=>{
+      const count=state.me.hand.filter(card=>card.type===el.dataset.cardType&&selected.has(card.id)).length;
+      if(count>1){const label=document.createElement('span');label.className='card-selected-count';label.textContent=`X${count}`;label.setAttribute('aria-label',`${count}장 선택`);el.append(label);}
+    });
     const section=hand.closest('.hand-section');
     let controls=section.querySelector('.hand-submit-controls');
     if(!controls){controls=document.createElement('div');controls.className='hand-submit-controls';section.append(controls);}
@@ -252,10 +259,9 @@ function renderGame() {
         ${g.turnDisplay ? `<div class="current-turn ${g.turnDisplay.kind}" role="status">${g.turnDisplay.kind==='king'?'<span aria-label="왕">♛</span> ':''}${esc(g.turnDisplay.text)}</div>` : ''}
         <section class="action-panel ${acting ? 'your-turn' : ''}"><div class="action-kicker"><span class="eyebrow">${ended ? 'THE FINAL CHAPTER' : acting ? 'YOUR MOVE' : 'THE KINGDOM MOVES'}</span>${g.revolt !== null && g.revolt > 0 ? `<span class="revolt-alert">⚑ 반란력 ${g.revolt}</span>` : ''}</div>${renderAssistance()}${renderAction()}</section>
         <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > (me.handLimit||30) && !ended ? `<div class="hand-warning">다음 아침에 ${me.handLimit||30}장까지 줄어듭니다. 자원 → 나머지 일반 카드 → 보호되는 교단·전도 순서로 버립니다.</div>` : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
-        <section class="recipe-reference"><h2>나의 제작법 <span>${myRecipes().length}종</span></h2><p class="small muted">공통 제작과 본인 진영·직업의 특수 제작만 표시합니다.</p><div class="guide-recipes">${myRecipes().map(r => `<p><b>${recipeLabel(r)}</b> · ${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} ${r.amount || 1}장</p>`).join('')}</div><p class="small muted">화염대검 + 북부의 검 → 철혈의 검 · 두 검의 재료는 영구 칼·영구 마법이며 제작 시 소모됩니다.</p></section>
       </div>
       <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'merchant' ? '◆' : me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'merchant' ? '돈 100점을 모으면 승리합니다.<br>비밀거래 불가 · 원정 자동 0장 · 돈으로 중재.' : me.job === 'bishop' ? `종교반란을 ${g.religiousGoal}일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.` : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일${state.neutralJobs.includes('bishop') ? `,<br>종교반란 ${g.religiousGoal}일` : ''} 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : me.job==='merchant'?`<div class="money-counter"><span>나에게만 공개 · 보유 돈</span><strong>${me.money} / 100점</strong></div>`:''}</section>
-         ${typeof renderSocial==='function'?renderSocial():''}<section class="panel journal"><div class="panel-heading"><h2>왕국의 기록</h2><span class="live-label">PUBLIC</span></div><div class="journal-scroll">${[...g.logs].reverse().map(l => `<div class="journal-entry"><span>DAY ${l.day}</span><p>${esc(l.text)}</p></div>`).join('')}</div></section>
+         ${typeof renderSocial==='function'?renderSocial():''}
         <section class="panel personal-notes"><div class="panel-heading"><h2>나의 비밀 기록</h2><span class="live-label">PRIVATE</span></div><div class="notes-scroll">${[...me.notes].reverse().map(renderNote).join('') || '<p class="muted">아직 기록이 없습니다.</p>'}</div></section>
         <div class="sidebar-foot">방 코드 <button class="quiet" data-ui="copyCode">${state.code} ⧉</button><span>대화는 디스코드에서</span></div>
       </aside>
