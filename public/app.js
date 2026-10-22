@@ -162,6 +162,12 @@ function render() {
   window.finishLobbyUI?.();
   const hand = $('.hand-grid');
   if(hand){
+    hand.querySelectorAll('.card-stepper').forEach(el=>el.remove());
+    const section=hand.closest('.hand-section');
+    let controls=section.querySelector('.hand-submit-controls');
+    if(!controls){controls=document.createElement('div');controls.className='hand-submit-controls';section.append(controls);}
+    document.querySelectorAll('.action-panel .card-submit-row').forEach(row=>controls.append(row));
+    document.querySelectorAll('.hand-tools [data-ui="selectAll"],.hand-tools [data-ui="clearSelection"]').forEach(el=>el.remove());
     hand.dataset.owner = `${state.code}/${state.me.id}`;
     window.kingdomHandCarousel?.init(hand,handOwner === hand.dataset.owner?handScroll:null);
     hand.setAttribute('tabindex','0');
@@ -491,7 +497,7 @@ function renderSelectionSummary() {
 }
 function submitCards(type, text) {
   const c = selectionContext(), disabled = c?.exact !== undefined && selected.size !== c.exact || c?.min !== undefined && selected.size < c.min;
-  return `<div class="card-submit-row"><div class="selected-preview">${selected.size}장 선택${c?.stat ? ` · ${c.label} ${selectionScore()}점` : ''}</div><button class="primary" data-cmd="${type}" data-cards="true" ${disabled ? 'disabled' : ''}>${text} →</button></div><p class="small muted">아래 손패의 ＋ / −로 카드를 고르세요. 확정한 제출은 취소할 수 없습니다.</p>`;
+  return `<div class="card-submit-row"><button class="primary" data-cmd="${type}" data-cards="true" ${disabled ? 'disabled' : ''}>${text} →</button></div><p class="small muted">손패 카드를 클릭하면 한 장씩 선택됩니다. 선택한 카드는 취소할 수 없습니다.</p>`;
 }
 
 app.addEventListener('submit', async event => {
@@ -534,6 +540,17 @@ app.addEventListener('change', async event => {
   await command({ type: 'config', roles });
 });
 app.addEventListener('click', async event => {
+   const picked=event.target.closest('.hand-grid .card');
+   if(picked&&!event.target.closest('button')){
+    if(busy)return;
+    const context=selectionContext(),type=picked.dataset.cardType;
+    if(!context?.allowed(type))return;
+    const limit=context.exact??context.max;
+    if(limit!==undefined&&selected.size>=limit){toast(`최대 ${limit}장만 선택할 수 있습니다.`);return;}
+    const card=state.me.hand.find(c=>c.type===type&&!selected.has(c.id));
+    if(!card){toast('이 종류는 모두 선택했습니다.');return;}
+    selected.add(card.id);window.kingdomEffects?.cardClick();render();return;
+   }
   const button = event.target.closest('button');
   if (!button || button.disabled || (busy&&button.dataset.cmd!=='craft')) return;
   const ui = button.dataset.ui;
@@ -569,20 +586,13 @@ app.addEventListener('click', async event => {
     } else if (ui === 'guide') $('#rules').showModal();
     else if (ui === 'hunt') { actionMode = 'hunt'; selected.clear(); render(); }
     else if (ui === 'refresh') { actionMode = 'refresh'; selected.clear(); render(); }
-    else if (ui === 'cancelMode') { actionMode = null; selected.clear(); render(); }
-    else if (ui === 'clearSelection') { selected.clear(); render(); }
+     else if (ui === 'cancelMode') { if(selected.size){toast('선택한 카드가 있어 취소할 수 없습니다.');return;}actionMode = null; render(); }
+    else if (ui === 'clearSelection') { return; }
     else if (ui === 'selectAll') {
       const c = selectionContext();
       if (c) { const candidates = state.me.hand.filter(card => c.allowed(card.type)); selected = new Set(candidates.slice(0, c.exact ?? c.max ?? candidates.length).map(c => c.id)); render(); }
-    } else if (ui === 'plusCard' || ui === 'minusCard') {
-      const c = selectionContext(), type = button.dataset.card;
-      if (!c?.allowed(type)) return;
-      if (ui === 'plusCard') {
-        const limit=c.exact ?? c.max;
-        if (limit !== undefined && selected.size >= limit) { toast(`최대 ${limit}장만 선택할 수 있습니다.`); return; }
-        const card = state.me.hand.find(card => card.type === type && !selected.has(card.id)); if (card) selected.add(card.id);
-      } else { const card = state.me.hand.find(card => card.type === type && selected.has(card.id)); if (card) selected.delete(card.id); }
-      render();
+     } else if (ui === 'plusCard' || ui === 'minusCard') {
+       return;
     }
     return;
   }

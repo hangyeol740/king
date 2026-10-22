@@ -1,7 +1,13 @@
 /* Compact cards with a thin paper stack and a 1.4x hover preview. */
 .hand-grid{--hand-gap:22px;padding:76px 38px 80px;align-items:center;scroll-padding-inline:38px}
 .hand-grid .card,.hand-grid .card.selected{flex:0 0 118px;min-height:0;border:0!important;box-shadow:0 3px 7px #0004;transform-origin:center;transition:transform .2s ease,box-shadow .2s ease}
-.hand-grid .card-stack-layer{border:0!important;box-shadow:none!important;filter:none;background:var(--parchment-image) center/100% 100% no-repeat;transform:translate(calc(var(--layer)*2px),calc(var(--layer)*2px))!important}
+.hand-grid .card-stack-layer{border:0!important;box-shadow:none!important;filter:none;background:var(--parchment-image) center/100% 100% no-repeat;transform:translate(calc(var(--layer)*1px),calc(var(--layer)*-5px))!important}
+.hand-grid .card-stepper{display:none!important}
+.hand-grid .card:has(~ .card){cursor:pointer}
+.hand-submit-controls{display:flex;justify-content:flex-start;padding:12px 0 18px;min-height:0}
+.hand-submit-controls:empty{display:none}
+.hand-submit-controls .card-submit-row{margin:0;justify-content:flex-start}
+@media(hover:hover){.hand-grid .card:hover .card-stack{visibility:hidden}}
 .hand-grid .card-top{display:none}
 .hand-grid .card h3{background:transparent!important;font-size:22px;line-height:1.15;top:74%;left:5%;right:5%;color:#302719}
 .hand-grid .card-stats,.hand-grid .card-stats span{background:transparent!important;color:#493b28}
