@@ -16,12 +16,11 @@
     initialized.add(hand);
     for(const card of cards){
       const count=Number(card.dataset.cardCount)||1;
-      const layers=Math.min(7,count);
+      const layers=Math.min(3,count);
       card.dataset.stackCount=String(layers);
       const stack=document.createElement('span');stack.className='card-stack';stack.setAttribute('aria-hidden','true');
-      const image=card.querySelector('.full-card-image');
       for(let i=layers-1;i>=1;i--){
-        const layer=image.cloneNode();layer.className='card-stack-layer';layer.style.setProperty('--layer',i);stack.append(layer);
+        const layer=document.createElement('span');layer.className='card-stack-layer';layer.style.setProperty('--layer',i);stack.append(layer);
       }
       card.prepend(stack);
     }

@@ -109,7 +109,7 @@
   }
   toggle.addEventListener('click', () => {
     enabled = !enabled; localStorage.setItem('kingdom.sound', enabled ? 'on' : 'off');
-    if (!enabled) stopSound();
+    if (!enabled) {stopSound();window.kingdomCardAudio?.stop();}
     updateToggle(); unlock(); if (enabled) sound('submit');
   });
   const alarmTogglePublic = document.querySelector('#alarm-toggle-public');
@@ -178,14 +178,14 @@
   }
   window.kingdomEffects = {
     chatSound() { sound('notice'); },
-    cardHover() { paperSound('hover'); },
-    cardFlip() { paperSound('flip'); },
+    cardHover() { window.kingdomCardAudio?.play('hover'); },
+    cardFlip() { window.kingdomCardAudio?.play('scroll'); },
     cardClick() { paperSound('click'); },
     handle(previous, current) {
       if(current.status==='playing'&&current.me?.hand?.length){
         const sameSeat=previous?.code===current.code&&previous?.me?.id===current.me.id;
         const knownCards=new Set(sameSeat?(previous.me.hand||[]).map(c=>c.id):[]);
-        if(current.me.hand.some(c=>!knownCards.has(c.id)))paperSound('flip');
+        if(current.me.hand.some(c=>!knownCards.has(c.id)))window.kingdomCardAudio?.play('receive');
       }
       if (!previous || previous.code !== current.code || current.status === 'lobby') {
         clearTimeout(timer); if(current.status!=='playing')stopSound(); panel.hidden = true; return;

@@ -1,10 +1,11 @@
-/* Smaller cards, unboxed labels, room for the full 1.8x hover preview. */
-.hand-grid{--hand-gap:24px;padding:125px 72px 130px;align-items:center;scroll-padding-inline:72px}
-.hand-grid .card,.hand-grid .card.selected{flex:0 0 138px;min-height:0;transform-origin:center;transition:transform .2s ease,box-shadow .2s ease}
+/* Compact cards with a thin paper stack and a 1.4x hover preview. */
+.hand-grid{--hand-gap:22px;padding:76px 38px 80px;align-items:center;scroll-padding-inline:38px}
+.hand-grid .card,.hand-grid .card.selected{flex:0 0 118px;min-height:0;border:0!important;box-shadow:0 3px 7px #0004;transform-origin:center;transition:transform .2s ease,box-shadow .2s ease}
+.hand-grid .card-stack-layer{border:0!important;box-shadow:none!important;filter:none;background:var(--parchment-image) center/100% 100% no-repeat;transform:translate(calc(var(--layer)*2px),calc(var(--layer)*2px))!important}
 .hand-grid .card-top{display:none}
 .hand-grid .card h3{background:transparent!important;font-size:22px;line-height:1.15;top:74%;left:5%;right:5%;color:#302719}
 .hand-grid .card-stats,.hand-grid .card-stats span{background:transparent!important;color:#493b28}
 .hand-grid .card-stats{top:85%;font-size:11px;line-height:1.3}
-@media(hover:hover){.hand-grid .card:hover{transform:scale(1.8);z-index:20;box-shadow:0 12px 28px #0007}}
-@media(max-width:600px){.hand-grid{padding:72px 32px 76px}.hand-grid .card,.hand-grid .card.selected{flex-basis:124px}.hand-grid .card h3{font-size:20px}}
+@media(hover:hover){.hand-grid .card:hover{transform:scale(1.4);z-index:20;box-shadow:0 8px 18px #0005}}
+@media(max-width:600px){.hand-grid{padding:64px 28px 68px}.hand-grid .card,.hand-grid .card.selected{flex-basis:108px}.hand-grid .card h3{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.hand-grid .card{transition:none}}
