@@ -1,0 +1,24 @@
+/* Coup wordmark and lighter, translucent game surfaces. */
+:root{--paper:rgba(62,49,34,.70);--line:#89734e;--muted:#d0bb9b}
+.home-layout{grid-template-columns:minmax(260px,.8fr) minmax(0,1.35fr);gap:clamp(32px,5vw,90px);align-items:center;padding-top:48px}
+.home-layout .hero{display:flex;align-items:center;justify-content:center;align-self:start;min-height:560px;padding:16px 0}
+.hero .game-title{display:flex;align-items:center;gap:20px;margin:0;font-family:Georgia,'Times New Roman',serif;letter-spacing:0;line-height:1}
+.game-title-coup{writing-mode:vertical-rl;text-orientation:upright;font-size:clamp(80px,7vw,116px);font-weight:800;line-height:1;letter-spacing:-.12em;color:#40845a;text-shadow:0 2px 0 #071e13,0 0 28px #e6dfbb55}
+.game-title-subtitle{font-family:Georgia,'Times New Roman',serif;font-size:clamp(18px,1.8vw,27px);font-weight:700;white-space:nowrap;color:#191b17;text-shadow:0 1px 2px #fff7d7b3,0 0 18px #f5e8c299!important}
+.game-title-dash{margin-right:5px}
+.home-layout .entry-panel{width:100%;max-width:none;background:transparent!important;border:0;box-shadow:none;filter:none;clip-path:none;padding:12px 0;backdrop-filter:none}
+.entry-panel #entry-form,.entry-panel .account-panel,.entry-panel .return-room{width:100%;max-width:none}
+.entry-panel .main-mode-choice{display:grid;grid-template-columns:1fr;gap:12px}
+.entry-panel input{width:100%}
+.coup-brand{color:#82b58b}.coup-brand small{color:#e0d1b5;letter-spacing:1px}
+.panel,.action-panel,.identity-panel,dialog,.account-panel,.social-panel,.game-vote-panel,.target-picker,.recipe-reference,.handoff-panel{background:rgba(63,51,37,.70);border-color:rgba(190,164,118,.55);filter:drop-shadow(2px 3px 0 #0004);backdrop-filter:blur(3px)}
+.lobby-seat,.lobby-tip,.neutral-job-settings,.seat-choice,.inspection-card{background:rgba(83,67,44,.58);border-color:rgba(190,164,118,.42)}
+.action-choice,.target-option,.chat-messages,.device-toolbar{background:rgba(79,65,45,.57);border-color:rgba(190,164,118,.4)}
+input,select{background:rgba(87,71,46,.68);border-color:rgba(199,176,129,.55)}
+.major-result,.revolt-result,.revolt-banner{background:rgba(78,59,32,.74)}
+.major-result.failure{background:rgba(99,47,29,.73)}
+.major-result.great{background:rgba(111,86,32,.73)}
+.home-footer{justify-content:flex-end}
+@media(min-width:681px) and (max-width:1100px){.home-layout{grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr);gap:26px}.hero .game-title{gap:12px}.game-title-coup{font-size:84px}.game-title-subtitle{font-size:18px}}
+@media(min-width:681px) and (max-width:800px){.home-layout{grid-template-columns:1fr}.home-layout .hero{min-height:350px}}
+@media(max-width:680px){.home-layout{grid-template-columns:1fr;padding-top:24px;gap:24px}.home-layout .hero{min-height:320px;padding:0}.game-title-coup{font-size:76px}.game-title-subtitle{font-size:21px}.home-layout .entry-panel{padding:0 0 24px}.coup-brand{font-size:21px}.coup-brand small{font-size:8px;letter-spacing:.2px}}

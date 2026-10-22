@@ -15,7 +15,7 @@
     if(!cards.length||!cards[0].matches('.card'))return;
     initialized.add(hand);
     for(const card of cards){
-      const count=Number(card.querySelector('.card-top b')?.textContent.replace(/\D/g,''))||1;
+      const count=Number(card.dataset.cardCount)||1;
       const layers=Math.min(7,count);
       card.dataset.stackCount=String(layers);
       const stack=document.createElement('span');stack.className='card-stack';stack.setAttribute('aria-hidden','true');

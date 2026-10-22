@@ -115,7 +115,6 @@ function applyServerState(next) {
         freshCards.clear();
         document.querySelectorAll('.card.new-card').forEach(el => {
           el.classList.remove('new-card');
-          el.querySelector('.card-top>span').textContent = el.classList.contains('eternal') ? 'PERMANENT' : 'KINGDOM';
         });
       }, 6000);
     }
@@ -144,6 +143,7 @@ fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Erro
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
 
 function render() {
+  window.kingdomMusic?.update(state?.status);
   window.kingdomBackground?.update(state?.game);
   const handScroll = $('.hand-grid')?.scrollLeft || 0;
   const handOwner = $('.hand-grid')?.dataset.owner;
@@ -174,11 +174,7 @@ function renderHome() {
   app.innerHTML = `
     <section class="home-layout">
       <div class="hero">
-        <div class="eyebrow"><span class="line"></span> A GAME OF CROWNS & CONSPIRACY</div>
-        <h1>왕관을 지킬 것인가,<br><em>왕국을 뒤집을 것인가.</em></h1>
-        <p class="hero-description">충성은 보이지 않고, 반란은 밤에 시작된다.<br>친구들과 함께하는 비밀 카드 전략 게임.</p>
-        <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="art-star s1">✦</span><span class="art-star s2">✧</span><div class="art-crown">♛</div><div class="art-land"></div><span class="art-caption">ONE CROWN. MANY INTENTIONS.</span></div>
-        <div class="home-facts"><span><b>2명 이상</b> 함께 플레이</span><span><b>6–10일</b> 운명의 라운드</span><span><b>자유 구성</b> 하나의 왕국</span></div>
+        <h1 class="game-title" aria-label="Coup - Regnum and Treason"><span class="game-title-coup" aria-hidden="true">Coup</span><span class="game-title-subtitle" aria-hidden="true"><span class="game-title-dash">-</span> Regnum and Treason</span></h1>
       </div>
       <div class="entry-panel">
         <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
@@ -196,7 +192,7 @@ function renderHome() {
         <div class="entry-note"><span>◉</span><p>폰·PC 모두 플레이 가능 · 대화는 자유롭게<br>한 기기로 여러 명: 방 참가 → 이 기기의 플레이어 추가<br>혼자 플레이: 방 만들기 → AI 추가 2명 → 시작</p></div>
       </div>
     </section>
-    <footer class="home-footer"><span>왕국과 반란 <span class="dot">·</span> ONLINE TABLETOP</span><span>누구의 편에 설 것인가?</span></footer>`;
+    <footer class="home-footer"><span>Coup - Regnum and Treason</span></footer>`;
 }
 function renderLobby() {
   const isHost = state.host === state.me.id;
@@ -479,7 +475,7 @@ function renderHand() {
     const cards = state.me.hand.filter(c => c.type === type), count = cards.filter(c => selected.has(c.id)).length;
     const allowed = context?.allowed(type);
     const newCount = cards.filter(c => freshCards.has(c.id)).length;
-    return `<div class="card ${def.category} ${newCount ? 'new-card' : ''} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-top"><span>${newCount ? `NEW +${newCount}` : def.permanent ? 'PERMANENT' : 'KINGDOM'}</span><b>×${cards.length}</b></div><div class="card-symbol">${window.kingdomPixelArt.card(type)}</div><h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : `<div class="card-bottom">${def.chance ? `DRAW RATE ${def.chance}%` : def.instantWin ? 'LEGENDARY' : 'CRAFT ONLY'}</div>`}</div>`;
+    return `<div data-card-type="${type}" data-card-count="${cards.length}" class="card ${def.category} ${newCount ? 'new-card' : ''} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-symbol">${window.kingdomPixelArt.card(type)}</div><h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : ''}</div>`;
   }).join('');
 }
 function selectionScore() {

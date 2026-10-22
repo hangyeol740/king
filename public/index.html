@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111b18">
-  <title>왕국과 반란 · KINGDOM</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E♛%3C/text%3E%3C/svg%3E">
+  <title>Coup - Regnum and Treason</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='18' y='78' font-size='85' font-family='Georgia' fill='%232e6b48'%3EC%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/effects.css">
   <link rel="stylesheet" href="/bishop.css">
@@ -19,10 +19,12 @@
   <link rel="stylesheet" href="/turn-display.css?v=1">
   <link rel="stylesheet" href="/stage-backgrounds.css?v=1">
   <link rel="stylesheet" href="/chat-polish.css?v=1">
+  <link rel="stylesheet" href="/coup-lobby.css?v=1">
+  <link rel="stylesheet" href="/hand-polish.css?v=1">
   <script src="/stage-backgrounds.js?v=1" defer></script>
-  <script src="/hand-carousel.js?v=exclusive-audio10" defer></script>
+  <script src="/hand-carousel.js?v=hover-once11" defer></script>
   <script src="/socket.io/socket.io.js" defer></script>
-  <script src="/effects.js?v=exclusive-audio10" defer></script>
+  <script src="/effects.js?v=receive-audio11" defer></script>
   <script src="/chat-alerts.js" defer></script>
   <script src="/pass-device.js?v=7" defer></script>
   <script src="/pixel-art.js?v=original1" defer></script>
@@ -31,13 +33,13 @@
   <script src="/social.js?v=turnprivacy1" defer></script>
   <script src="/lobby-fixes.js?v=1" defer></script>
   <script src="/guide.js" defer></script>
-  <script src="/app.js?v=turnprivacy1" defer></script>
+  <script src="/app.js?v=hand-polish1" defer></script>
   <script src="/google-login.js?v=1" defer></script>
-  <script src="/background-music.js?v=1" defer></script>
+  <script src="/background-music.js?v=game-gap2" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/" aria-label="왕국과 반란 홈"><span class="brand-mark">♛</span><span>왕국과 반란<small>KINGDOM & REBELLION</small></span></a>
+    <a class="brand coup-brand" href="/" aria-label="Coup - Regnum and Treason 홈"><span>Coup<small>Regnum and Treason</small></span></a>
     <div class="top-actions"><span id="connection" class="connection"><i></i> 연결 중</span><button class="quiet" id="sound-toggle" aria-pressed="true">효과음 켜짐 ♪</button><button class="quiet" id="rules-open">플레이 가이드 <span>↗</span></button></div>
   </header>
   <main id="app"><div class="loading">왕국으로 가는 길을 열고 있습니다…</div></main>

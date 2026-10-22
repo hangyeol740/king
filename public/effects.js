@@ -182,8 +182,13 @@
     cardFlip() { paperSound('flip'); },
     cardClick() { paperSound('click'); },
     handle(previous, current) {
+      if(current.status==='playing'&&current.me?.hand?.length){
+        const sameSeat=previous?.code===current.code&&previous?.me?.id===current.me.id;
+        const knownCards=new Set(sameSeat?(previous.me.hand||[]).map(c=>c.id):[]);
+        if(current.me.hand.some(c=>!knownCards.has(c.id)))paperSound('flip');
+      }
       if (!previous || previous.code !== current.code || current.status === 'lobby') {
-        clearTimeout(timer); stopSound(); panel.hidden = true; return;
+        clearTimeout(timer); if(current.status!=='playing')stopSound(); panel.hidden = true; return;
       }
       const known = new Set([...(previous.game?.logs || []), ...previous.me.notes].map(e => e.id));
       const publicEvents = (current.game?.logs || []).filter(e => e.effect && !known.has(e.id));
