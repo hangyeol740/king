@@ -43,7 +43,7 @@ test('자기플레이 시뮬레이터가 3·4·5인 모든 단계를 적법한 �
     for (const p of result.room.players) {
       const rows = result.trajectories.get(p.id);
       assert.ok(rows.length); assert.ok(rows.every(r => r.obs.length === OBS_SIZE && r.features.every(f => f.length === ACTION_SIZE)));
-       assert.equal(Math.sign(rows.at(-1).reward), result.room.game.winner.players.includes(p.id) ? 1 : -1);
+        if(result.room.game.winner.side!=='draw')assert.equal(Math.sign(rows.at(-1).reward), result.room.game.winner.players.includes(p.id) ? 1 : -1);
     }
   }
 });

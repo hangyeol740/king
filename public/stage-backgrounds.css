@@ -1,0 +1,3 @@
+body[data-stage-background="cave"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/cave-pixel.png')}
+body[data-stage-background="forest"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/forest-pixel.png')}
+body[data-stage-background="village"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/village-pixel.png')}

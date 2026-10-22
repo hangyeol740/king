@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {validateActionFields} from '../lib/action-fields.js';
+test('서버가 무시하는 불필요 필드를 확정행동으로 오인하지 못하게 거부',()=>{assert.throws(()=>validateActionFields({type:'mediate',revoltType:'rebel',cards:['x']}),/unexpected_action_field/);assert.deepEqual(validateActionFields({type:'contribute',cards:['x']}),{type:'contribute',cards:['x']});});

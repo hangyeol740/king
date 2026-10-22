@@ -8,8 +8,10 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test",
-    "ai:train": "node ai/train.js",
-    "ai:evaluate": "node ai/evaluate.js"
+    "ai:train": "node ai/train-complete.js",
+    "ai:evaluate": "node ai/evaluate-complete.js",
+    "ai:verify": "node ai/verify-complete.js",
+    "ai:sweep": "node ai/sweep-construction.js"
   },
   "engines": { "node": ">=20" },
   "dependencies": {

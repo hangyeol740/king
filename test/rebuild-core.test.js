@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {makeRoom,joinRoom,act,view,card} from '../lib/game.js';
+import {aiObservation,relationships,alliedHarm,harmExceptionValid} from '../lib/ai-observation.js';
+import {chatAct} from '../lib/chat.js';
+import {candidates} from '../lib/ai-policy.js';
+import {createLiveLearning} from '../lib/live-learning.js';
+function setup(){const r=makeRoom('FIX','king');for(const n of ['r1','r2','citizen'])joinRoom(r,n);act(r,r.host,{type:'start'});r.players.forEach((p,i)=>{p.role=['king','rebel','rebel','citizen'][i];p.online=true;});r.game.king=r.host;r.game.order=r.players.map(p=>p.id);return r;}
+test('기습 순서 ID는 시민이나 다른 반란군에게 공개하지 않음',()=>{const r=setup();r.game.phase='ambush';r.game.pending={queue:[r.players[1].id,r.players[2].id],index:0};assert.equal(view(r,r.players[3].id).game.pending.current,null);assert.equal(view(r,r.players[2].id).game.pending.current,null);assert.equal(view(r,r.players[1].id).game.pending.current,r.players[1].id);});
+test('반란군 동료 관계와 신원조사 가능성은 개인 관찰에서 제공',()=>{const r=setup(),p=r.players[1];chatAct(r,p,{type:'pairRequest'});const request=r.chat.requests[0],target=r.players.find(p=>p.id===request.to);chatAct(r,target,{type:'pairAnswer',request:request.id,accept:true});r.game.phase='day';r.game.round=3;r.game.turn=1;const s=aiObservation(r,p);assert.equal(relationships(s).find(q=>q.id===r.players[2].id).relation,'confirmed-ally');assert.ok(candidates(s).some(a=>a.type==='investigateIdentity'));assert.equal(s.chat.pair.partnerName,null);assert.ok(alliedHarm(s,{type:'steal',target:r.players[2].id}));assert.equal(harmExceptionValid(s,{type:'steal',target:r.players[2].id},{reason:'좋음'}),false);});
+test('개인 기권은 진행 중 전투와 자산을 AI에게 승계',()=>{const r=setup(),p=r.players[3];p.role='neutral';p.hand=[card('sword')];r.game.phase='day';r.game.round=1;r.game.turn=1;act(r,r.players[1].id,{type:'battle',target:p.id});const ids=p.hand.map(c=>c.id);act(r,p.id,{type:'personalSurrender'});assert.deepEqual(p.hand.map(c=>c.id),ids);assert.equal(p.personalSurrender,true);assert.equal(p.surrendered,false);assert.equal(view(r,p.id).me.canAct,true);act(r,p.id,{type:'battleAnswer',accept:true});assert.equal(r.game.pending.accepted,true);});
+test('사람 통계는 재시작 복원',()=>{assert.deepEqual(createLiveLearning({humanActions:{'day/1':{draw3:8}}}).snapshot().humanActions,{'day/1':{draw3:8}});});
+test('쉬움 AI도 투표를 기본 강제 제작보다 먼저 응답',()=>{const r=setup(),bot=r.players[1];bot.bot=true;bot.difficulty='easy';r.game.phase='day';r.game.round=2;r.game.turn=1;act(r,r.host,{type:'requestDraw'});const options=candidates(aiObservation(r,bot));assert.ok(options.some(a=>a.type==='gameVote'&&a.accept));assert.ok(options.some(a=>a.type==='gameVote'&&!a.accept));});

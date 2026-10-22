@@ -15,16 +15,16 @@ test('새 모델은 전투와 기습을 서로 다른 학습 출력으로 구분
 });
 test('v9 성향 가중치를 전투 상태 뒤의 입력으로 이전',()=>{
  const current=createPolicy(),source=structuredClone(current);
- source.version=9;source.metadata.episodes=10;source.observationSize-=4;source.actionSize-=6;
+  source.version=9;source.metadata.episodes=10;source.observationSize-=4;source.actionSize-=24;
  for(const [kind,net] of Object.entries({actor:source.actor,critic:source.critic})){
   const oldInput=net.input;net.input=source.observationSize;net.w1=Array(net.input*net.hidden).fill(0);net.w1[net.input-1]=.123;
   if(kind==='actor'){net.output=source.actionSize;net.w2=Array(net.hidden*net.output).fill(0);net.b2=Array(net.output).fill(0);}
  }
- const adapted=transferPolicy(source);assert.equal(adapted.actor.w1[adapted.actor.input-1],.123);assert.equal(adapted.version,10);
+  const adapted=transferPolicy(source);assert.equal(adapted.actor.w1[adapted.actor.input-1],.123);assert.equal(adapted.version,11);
 });
 test('학습 후보와 기존 배포 모델 모두 서버에서 로드 가능',async()=>{
  const saved=JSON.parse(await readFile(new URL('../models/policy.json',import.meta.url),'utf8'));
- assert.equal(compatiblePolicy(saved).version,10);
+  assert.equal(compatiblePolicy(saved).version,11);
  const candidate=JSON.parse(await readFile(new URL('../models/strategy-v10-candidate.json',import.meta.url),'utf8'));
- assert.equal(validatePolicy(candidate).version,10);assert.ok(candidate.metadata.episodes>=240);
+  assert.equal(compatiblePolicy(candidate).version,11);assert.ok(candidate.metadata.episodes>=240);
 });

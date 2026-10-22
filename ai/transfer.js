@@ -2,6 +2,7 @@ import { createPolicy, validatePolicy, CARD_TYPES, PHASES, ACTION_TYPES } from '
 import { RECIPES } from '../lib/game.js';
 
 export function compatiblePolicy(savedPolicy) {
+  if(savedPolicy?.version===10)return transferV10(savedPolicy);
   if (![2, 3, 4, 5, 6, 7, 8, 9].includes(savedPolicy?.version)) return validatePolicy(savedPolicy);
   const policy = transferPolicy(savedPolicy);
   policy.metadata = { ...savedPolicy.metadata, ...policy.metadata, episodes: savedPolicy.metadata.episodes, adaptedRules: true };
@@ -10,6 +11,7 @@ export function compatiblePolicy(savedPolicy) {
 
 // 의미가 같은 입력/출력끼리 연결하여 이전 규칙의 학습 가중치를 보존합니다.
 export function transferPolicy(source, seed = 42) {
+  if(source?.version===10)return transferV10(source,seed);
   if (![2, 3, 4, 5, 6, 7, 8, 9].includes(source?.version) || !(source.metadata?.episodes > 0)) throw new Error('v2~v9 학습 모델의 이전만 지원합니다.');
   const roles = ['king', 'citizen', 'rebel', 'neutral'];
   const bishopRules = source.version >= 4, voteRules = source.version >= 5;
@@ -32,7 +34,8 @@ export function transferPolicy(source, seed = 42) {
       if (!Array.isArray(net[key]) || net[key].length !== size || !net[key].every(Number.isFinite)) throw new Error('이전 모델의 가중치 오류');
     }
   }
-  const policy = createPolicy(seed, source.actor.hidden);
+   const policy = createPolicy(seed, source.actor.hidden);
+   policy.actor.w2.fill(0);policy.actor.b2.fill(0);for(const type of ['requestDraw','requestSurrender','personalSurrender'])policy.actor.b2[ACTION_TYPES.indexOf(type)]=-5;
   for (const kind of ['actor', 'critic']) {
     const old = source[kind], next = policy[kind];
     next.hidden = old.hidden;
@@ -48,4 +51,17 @@ export function transferPolicy(source, seed = 42) {
   }
   policy.metadata.transferredFrom = { version: source.version, ruleset: source.ruleset, episodes: source.metadata.episodes };
   return policy;
+}
+function transferV10(source,seed=42){
+  const p=createPolicy(seed,source.actor.hidden);
+  p.actor.w2.fill(0);p.actor.b2.fill(0);
+  for(const type of ['requestDraw','requestSurrender','personalSurrender'])p.actor.b2[ACTION_TYPES.indexOf(type)]=-5;
+ const oldActions=ACTION_TYPES.slice(0,-4),oldSize=oldActions.length+RECIPES.length+CARD_TYPES.length+25+CARD_TYPES.length;
+ if(source.observationSize!==p.observationSize||source.actionSize!==oldSize||source.actor.input!==p.observationSize)throw Error('v10 모델 차원 오류');
+ for(const kind of ['actor','critic']){
+  for(const key of ['w1','b1'])p[kind][key]=[...source[kind][key]];
+  if(kind==='critic'){p[kind].w2=[...source[kind].w2];p[kind].b2=[...source[kind].b2];}
+  else{for(let oldOutput=0;oldOutput<source.actor.output;oldOutput++){const nextOutput=oldOutput<oldActions.length?oldOutput:oldOutput+4;p.actor.b2[nextOutput]=source.actor.b2[oldOutput];for(let h=0;h<p.actor.hidden;h++)p.actor.w2[nextOutput*p.actor.hidden+h]=source.actor.w2[oldOutput*source.actor.hidden+h];}}
+ }
+ p.metadata={...source.metadata,adaptedRules:true,transferredFrom:{version:10,episodes:source.metadata.episodes},evaluationValidForCurrentRules:false};return validatePolicy(p);
 }

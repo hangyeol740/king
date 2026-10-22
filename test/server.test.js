@@ -153,7 +153,8 @@ test('게임 중 방 나가기로 연결 해제, 다른 사람에게 오프라�
   assert.equal((await send(a, { type: 'aid' })).ok, false);
   assert.ok((await send(a, { type: 'resume', ...result.resumeSession })).ok);
   assert.deepEqual(a.state.me.hand, before.me.hand); assert.equal(a.state.me.role, before.me.role);
-  assert.equal(a.state.game.phase, before.game.phase); assert.equal(a.state.host, before.host);
+  // 이탈한 왕의 임시 AI가 아침 정책을 이미 실행했을 수 있습니다.
+  assert.ok([before.game.phase,'expeditionVote','executionVote','mediationSupport','mediationKing'].includes(a.state.game.phase));assert.equal(a.state.game.day,before.game.day);assert.equal(a.state.host, before.host);
   await sleep(20); assert.equal(b.state.players.find(p => p.id === before.me.id).online, true);
   await send(a, { type: 'leave' });
   const newRoom = await send(a, { type: 'create', name: '새로운방' });
@@ -182,6 +183,8 @@ test('학습 모델 로드·AI 추가 제거·사람 1명 + AI 2명 실시간 �
   assert.equal(human.state.players.length, 1);
   await send(human, { type: 'addBot' }); await send(human, { type: 'addBot' });
   assert.equal(human.state.players.filter(p => p.bot && p.online).length, 2);
+  const chatStatus=await (await fetch(`${url}/api/ai-chat/status`)).json();
+  if(!chatStatus.planning.configured){const rejected=await send(human,{type:'start'});assert.equal(rejected.ok,false);assert.match(rejected.error,/API/);return;}
   assert.ok((await send(human, { type: 'start' })).ok);
   const started = Date.now();
   let humanActions = 0;
@@ -196,6 +199,12 @@ test('학습 모델 로드·AI 추가 제거·사람 1명 + AI 2명 실시간 �
   }
   assert.equal(human.state.status, 'finished', JSON.stringify(human.state.game));
   assert.ok(humanActions > 0); assert.ok(human.state.game.winner);
+});
+test('실제 소켓 개인 기권은 행동을 차단하고 마지막 사람 진영을 자동 승리시킴',async()=>{
+ const seats=[await connect(),await connect(),await connect()];const made=await send(seats[0],{type:'create',name:'기권검사'});for(let i=1;i<3;i++)await send(seats[i],{type:'join',code:made.session.code,name:`기권검사${i}`});await send(seats[0],{type:'start'});await sleep(30);
+ const rebel=seats.find(s=>s.state.me.role==='rebel'),royals=seats.filter(s=>s.state.me.role!=='rebel');assert.ok((await send(rebel,{type:'personalSurrender'})).ok);
+ await sleep(30);assert.equal(royals[0].state.status,'finished');assert.equal(royals[0].state.game.winner.side,'royal');assert.ok(royals[0].state.game.winner.humanWinners.length===2);
+ assert.equal((await send(rebel,{type:'draw3'})).ok,false);
 });
 test('AI 다음에 입장한 사람에게 방장 권한 위임, 사람이 모두 떠나면 AI만 있는 대기실 삭제', async () => {
   const a = await connect(), b = await connect();
@@ -336,13 +345,14 @@ test('실제 익명 상점 동시 구매는 재고를 중복 판매하지 않으
   await morning();for(const p of group.filter(p=>p!==m))await command(p,{type:'marketDone'});
   const actor=()=>group.find(p=>p.state.me.id===k.state.game.current);
   for(let i=0;i<5;i++){const p=actor();await command(p,{type:'draw3'});}
-  for(let i=0;i<5;i++){const p=actor();await command(p,{type:'beginCraft'});if(p===m)await command(p,{type:'craft',recipe:0,count:1});await command(p,{type:'craftDone'});}
+   for(let i=0;i<5;i++){const p=actor();if(p===m&&p.state.me.hand.filter(c=>c.type==='resource').length<3)await command(p,{type:'gather'});else{await command(p,{type:'beginCraft'});if(p===m)await command(p,{type:'craft',recipe:0,count:1});await command(p,{type:'craftDone'});}}
   for(let i=0;i<5;i++)await command(actor(),{type:'refresh',cards:[]});await command(reb,{type:'ambushSkip'});await command(k,{type:'aid'});assert.equal(k.state.game.phase,'merchantEvening');
-  const goods=[m.state.me.hand.find(c=>c.type==='resource'),m.state.me.hand.find(c=>c.type==='sword')];
+   await command(m,{type:'beginCraft'});if(!m.state.me.hand.some(c=>c.type==='sword'))await command(m,{type:'craft',recipe:0,count:1});await command(m,{type:'craftDone'});
+   const goods=[m.state.me.hand.find(c=>c.type==='resource'),m.state.me.hand.find(c=>c.type==='sword')];
   await command(m,{type:'displayGoods',cards:goods.map(c=>c.id),price:1});const [first,second]=m.state.game.shop;
   await command(m,{type:'changePrice',stock:second.id,price:3});
   for(const p of group.filter(p=>p!==m)){assert.equal(p.state.me.money,undefined);assert.equal(p.state.players.find(p=>p.id===m.state.me.id).job,null);assert.equal(p.state.game.pending,null);assert.ok(goods.every(c=>!JSON.stringify(p.state).includes(c.id)));}
-  await command(m,{type:'beginCraft'});await command(m,{type:'craftDone'});assert.equal((await send(m,{type:'beginCraft'})).ok,false);await command(m,{type:'merchantDone'});
+   assert.equal((await send(m,{type:'beginCraft'})).ok,false);await command(m,{type:'merchantDone'});
   await command(reb,{type:'revolt',cards:[]});await command(bishop,{type:'bishopDone'});await morning();
   const before=new Map([k,cit].map(p=>[p.state.me.id,p.state.me.hand.map(c=>c.id)]));
   const requests=[k,cit].map(p=>send(p,{type:'marketBuy',stock:first.id,quantity:1,cards:[p.state.me.hand[0].id]}));
@@ -363,7 +373,7 @@ test('계정/게스트 이름·관전 손패·익명 채팅·게임 중 전환 �
  assert.equal((await send(s,{type:'expedition'})).ok,false);assert.ok((await send(s,{type:'chatSend',channel:'spectator',text:'관전'})).ok);
  assert.equal((await send(g[0],{type:'toSpectator',target:g[1].state.me.id})).ok,false);
  await send(g[0],{type:'chatSend',channel:'public',text:'모두'});await sleep(20);assert.equal(s.state.chat.public.at(-1).text,'모두');assert.ok(!g[1].state.chat.spectator);
- const requester=g.find(p=>p.state.me.role==='king');await send(requester,{type:'requestDraw'});const voter=g.find(p=>p!==requester);await send(voter,{type:'gameVote',vote:voter.state.game.vote.id,accept:true});await sleep(20);assert.equal(requester.state.game.winner.side,'draw');
+  const requester=g.find(p=>p.state.me.role==='king');assert.ok((await send(requester,{type:'requestDraw'})).ok);const voter=g.find(p=>p!==requester);for(let i=0;i<30&&!voter.state.game.vote;i++)await sleep(5);assert.ok(voter.state.game.vote);assert.ok((await send(voter,{type:'gameVote',vote:voter.state.game.vote.id,accept:true})).ok);await sleep(20);assert.equal(requester.state.game.winner.side,'draw');
  for(let i=0;i<3;i++){await send(g[i],{type:'leave'});const r=await send(g[i],{type:'accountResume',token:accounts[i].accountToken});assert.ok(r.ok);assert.equal(r.account.points,30);assert.equal(r.account.draws,1);}
 });
 

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { act, makeRoom,makePlayer,joinRoom, view,spectatorView,autoGameVotes,canAct, defaultRoles, gameDays, religiousGoal, CARDS, visibleRecipes, ROLES, NEUTRAL_JOBS, CITIZEN_JOBS, MERCHANT_BUYS, RuleError } from './lib/game.js';
 import {register,login,newAccountSession,accountFromToken,profile,changePoints,settleAccount,renameAccount,validateNickname} from './lib/accounts.js';
-import {ratingEligible} from './lib/game.js';
+import {ratingEligible,checkHumanDeparture} from './lib/game.js';
 import {chatAct,chatView,removeChatMember,botChat,respondToChat,chatEnabled} from './lib/chat.js';
 import {interpretChat} from './lib/chat-intents.js';
 import { makeDevice, deviceView } from './lib/device.js';
@@ -19,9 +19,12 @@ import {createAgentClient} from './lib/agent-client.js';
 import {createLiveLearning} from './lib/live-learning.js';
 import {createOnlineExperience} from './lib/online-experience.js';
 import {createSupabaseStore} from './lib/persistent-store.js';
+import {assets} from './ai/reward-ledger.js';
+import {verifyGoogleCredential,googleAccount} from './lib/google-auth.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.get('/api/auth/google/config',(_req,res)=>res.json({clientId:process.env.GOOGLE_CLIENT_ID||null}));
 const http = createServer(app);
 const io = new Server(http, { maxHttpBufferSize: 32_768 });
 const rooms = new Map();
@@ -39,17 +42,19 @@ try {
 } catch (error) { console.warn(`AI 모델 사용 불가: ${error.message}. npm run ai:train으로 학습할 수 있습니다.`); }
 await mkdir(dataDir, { recursive: true });
 const permanentSnapshot=permanentStore?await permanentStore.load():null;
-let savedLearning=permanentSnapshot?.learning;
-if(!savedLearning)try{savedLearning=JSON.parse(await readFile(path.join(dataDir,'ai-learning.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')console.error('AI 학습 기록 읽기 실패:',e.message);}
+let savedLearning=permanentSnapshot?.learningV2;
+if(!savedLearning)try{savedLearning=JSON.parse(await readFile(path.join(dataDir,'ai-learning-v2.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')console.error('AI 학습 기록 읽기 실패:',e.message);}
 const learning=createLiveLearning(savedLearning);
-const experience=createOnlineExperience({directory:path.join(dataDir,'training'),archive:permanentStore?event=>permanentStore.archiveExperience(event):null});
+let savedSpeech=permanentSnapshot?.humanSpeechV2;
+if(!savedSpeech)try{savedSpeech=JSON.parse(await readFile(path.join(dataDir,'human-speech-v2.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+const experience=createOnlineExperience({directory:path.join(dataDir,'training-v2'),archive:permanentStore?event=>permanentStore.archiveExperience(event):null,loadRemote:permanentStore?(offset,limit)=>permanentStore.loadExperiences(offset,limit):null,speechModel:savedSpeech});
 await experience.restore();
 try{accounts=JSON.parse(await readFile(accountPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 if(permanentSnapshot)accounts=permanentSnapshot.accounts||[];
 try {
   const saved = permanentSnapshot?permanentSnapshot.rooms||[]:JSON.parse(await readFile(savePath, 'utf8'));
   for (const room of saved) {
-    room.players.forEach(p => { p.online = !!p.bot;if(room.status==='playing'&&!p.bot&&(room.mode||'online')==='online'){p.takeover=true;p.absent=true;} });
+    room.players.forEach(p => {p.aiStatus={state:'ready'};delete p.pendingDialogue;delete p.pendingDialogueText;if(p.agentMind){delete p.agentMind.executionObservation;for(const scope of Object.values(p.agentMind.scopes||{}))if(scope.plan?.status==='pending'){scope.plan.status='restart-review';scope.plan.outcome='서버 재시작 후 최신 상태로 재판단 필요';}}p.online = !!p.bot;if(room.status==='playing'&&!p.bot&&(room.mode||'online')==='online'){p.takeover=true;p.absent=true;} });
     (room.spectators||[]).forEach(p=>p.online=false);
     if (room.status === 'playing' && (room.game.rulesVersion || 0) < 5) {
       room.game.maxDays = gameDays(room.players.length);
@@ -64,26 +69,31 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') console.error('저장 데이터 읽기 실패:', error.message); }
 let saveQueue = Promise.resolve();
 function persist() {
+  for(const room of rooms.values())learning.observe(room);
+  for(const room of rooms.values())checkHumanDeparture(room);
+  for(const room of rooms.values())experience.archiveMessages(room);
   for(const room of rooms.values())experience.outcome(room);
   for(const room of rooms.values())learning.settle(room);
-  for(const room of rooms.values())if(ratingEligible(room))for(const p of room.players.filter(p=>p.surrendered)){
-    const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(a)settleAccount(a,`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`,p.role,'surrender');
+  for(const room of rooms.values())if(ratingEligible(room))for(const p of room.players.filter(p=>p.surrendered||p.personalSurrender)){
+    const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(a)settleAccount(a,`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`,p.role,p.humanExitOutcome||'surrender');
   }
   for(const room of rooms.values())if(room.status==='finished'&&ratingEligible(room)){
     for(const p of room.players){const a=accounts.find(a=>a.id===(p.gameAccountId||p.accountId));if(!a||p.bot&&!p.gameAccountId)continue;
       const key=`${room.code}/${room.createdAt}/${room.game.startedAt||'legacy'}`;
-      settleAccount(a,key,p.role,p.surrendered?'surrender':room.game.winner.side==='draw'?'draw':room.game.winner.players.includes(p.id)?'win':'loss',p.absent?300:0);
+      settleAccount(a,key,p.role,p.surrendered||p.personalSurrender?p.humanExitOutcome||'surrender':room.game.winner.side==='draw'?'draw':room.game.winner.players.includes(p.id)?'win':'loss',p.personalSurrender?0:p.absent?300:0);
     }
   }
   const snapshot = JSON.stringify([...rooms.values()]);
   const accountSnapshot=JSON.stringify(accounts);
   const learningSnapshot=JSON.stringify(learning.snapshot());
+  const speechSnapshot=JSON.stringify(experience.speechSnapshot());
   saveQueue = saveQueue.catch(() => {}).then(async () => {
     await writeFile(`${savePath}.tmp`, snapshot, { mode: 0o600 });
     await rename(`${savePath}.tmp`, savePath);
     await writeFile(`${accountPath}.tmp`,accountSnapshot,{mode:0o600});await rename(`${accountPath}.tmp`,accountPath);
-    await writeFile(path.join(dataDir,'ai-learning.json.tmp'),learningSnapshot,{mode:0o600});await rename(path.join(dataDir,'ai-learning.json.tmp'),path.join(dataDir,'ai-learning.json'));
-    if(permanentStore)await permanentStore.save({rooms:JSON.parse(snapshot),accounts:JSON.parse(accountSnapshot),learning:JSON.parse(learningSnapshot)});
+    await writeFile(path.join(dataDir,'ai-learning-v2.json.tmp'),learningSnapshot,{mode:0o600});await rename(path.join(dataDir,'ai-learning-v2.json.tmp'),path.join(dataDir,'ai-learning-v2.json'));
+    await writeFile(path.join(dataDir,'human-speech-v2.json.tmp'),speechSnapshot,{mode:0o600});await rename(path.join(dataDir,'human-speech-v2.json.tmp'),path.join(dataDir,'human-speech-v2.json'));
+    if(permanentStore)await permanentStore.save({...permanentSnapshot,rooms:JSON.parse(snapshot),accounts:JSON.parse(accountSnapshot),learningV2:JSON.parse(learningSnapshot),humanSpeechV2:JSON.parse(speechSnapshot)});
   }).catch(error => console.error('게임 저장 실패:', error.message));
   return saveQueue;
 }
@@ -93,10 +103,13 @@ app.get('/api/rules', (_req, res) => res.set('Cache-Control', 'no-store').json({
 app.get('/api/ai', (_req, res) => res.json({ available: !!policy, algorithm: policy?.metadata.algorithm || null, episodes: policy?.metadata.episodes || 0, adaptedRules: !!policy?.metadata.adaptedRules, previousTrainingEpisodes: policy?.metadata.transferredFrom?.episodes || 0, trainedAt: policy?.metadata.trainedAt || null, playerCounts: policy?.metadata.playerCounts || [], maxBots: 8 }));
 app.use(express.static(path.join(root, 'public')));
 
-const agent=createCognitiveAgent({learning,speechStyle:()=>experience.style(),policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:Math.max(100,Number(process.env.AI_PLAN_TIMEOUT_MS)||20000)}),changed:async room=>{broadcast(room);void persist();}});
+function sendAIStatus(room,bot){for(const p of [...room.players,...(room.spectators||[])]){const sid=sessions.get(p.token);if(sid)io.sockets.sockets.get(sid)?.emit('aiStatus',{id:bot.id,state:bot.aiStatus?.state||'ready'});}}
+// Temporary default: run the trained policy without external language APIs.
+const reinforcementOnly = process.env.AI_MODE !== 'hybrid';
+const agent=createCognitiveAgent({learning,statusChanged:sendAIStatus,speechStyle:()=>experience.style(),policy:s=>learning.policy({...s,me:{...s.me,dialogueIntent:rooms.get(s.code)?.players.find(p=>p.id===s.me.id)?.liveExperience?.intent}}),client:createAgentClient({timeout:60000,...(reinforcementOnly?{apiKey:''}:{})}),changed:async room=>{broadcast(room);void persist();}});
 const bots = createBotRunner({ policy, agent:agent.enabled?agent:null, changed: async room => { broadcast(room); await persist(); }, delay: Math.max(50, Number(process.env.AI_DELAY_MS) || 750) });
-const conversationAI=createOpenAIChat({changed:async room=>{await persist();broadcast(room);}});
-app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ ...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics(),experience:experience.diagnostics() }));
+const conversationAI=createOpenAIChat({...(reinforcementOnly?{apiKey:''}:{}),speechStyle:()=>experience.style(),changed:async room=>{await persist();broadcast(room);}});
+app.get('/api/ai-chat/status',(_req,res)=>res.set('Cache-Control','no-store').json({ mode:reinforcementOnly?'reinforcement-only':'hybrid',...conversationAI.diagnostics(),planning:agent.diagnostics(),learning:learning.diagnostics(),experience:experience.diagnostics() }));
 function broadcast(room) {
   autoGameVotes(room);
   agent.observe(room);
@@ -128,6 +141,7 @@ function code() {
   return value;
 }
 function attach(socket, room, p) {
+  if(p.personalSurrender&&room.status!=='lobby')throw new RuleError('기권한 게임에는 복귀할 수 없습니다. 새 게임에 참가하세요.');
   if(p.accountId&&socket.data.account!==p.accountId)throw new RuleError('원래 참가한 계정으로 로그인한 뒤 복귀하세요.');
   const previous = sessions.get(p.token);
   if (previous && previous !== socket.id) {
@@ -152,6 +166,7 @@ function ownedPlayers(socket, room) {
   return room.players.filter(p => device ? device.players.includes(p.id) : p.id === socket.data.player);
 }
 function deviceMayOpen(room, id) {
+  if(room.players.find(p=>p.id===id)?.personalSurrender&&room.status==='playing')return false;
   if (canAct(room, id)) return true;
   const g = room.game;
   return room.status === 'playing' && (['night', 'bishopNight', 'mediationSupport', 'expeditionCards', 'market', 'merchantEvening'].includes(g.phase) || g.phase === 'day' && ['trade', 'royalSupport'].includes(g.pending?.kind));
@@ -164,11 +179,11 @@ io.on('connection', socket => {
       if (Date.now() - windowStart > 10_000) { windowStart = Date.now(); requests = 0; }
       if (++requests > 80) throw new RuleError('요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.');
       if (!input || typeof input.type !== 'string') throw new RuleError('잘못된 요청입니다.');
-      if(['register','login','accountResume','logout','setNickname'].includes(input.type)){
+      if(['register','login','googleLogin','accountResume','logout','setNickname'].includes(input.type)){
         if(socket.data.room)throw new RuleError('방을 나간 뒤 계정을 변경하세요.');
         if(input.type==='logout'){const a=accounts.find(a=>a.id===socket.data.account);if(a)a.sessions=a.sessions.filter(s=>s.token!==input.token);delete socket.data.account;await persist();reply({ok:true,account:null});return;}
         if(input.type==='setNickname'){const a=accounts.find(a=>a.id===socket.data.account);if(!a)throw new RuleError('먼저 로그인하세요.');renameAccount(a,input.nickname);await persist();reply({ok:true,account:profile(a),accountToken:input.token});return;}
-        const a=input.type==='register'?await register(accounts,input.loginId||input.name,input.password,input.nickname||input.loginId||input.name):input.type==='login'?await login(accounts,input.loginId||input.name,input.password):accountFromToken(accounts,input.token);
+        const a=input.type==='googleLogin'?googleAccount(accounts,await verifyGoogleCredential(input.credential,process.env.GOOGLE_CLIENT_ID)):input.type==='register'?await register(accounts,input.loginId||input.name,input.password,input.nickname||input.loginId||input.name):input.type==='login'?await login(accounts,input.loginId||input.name,input.password):accountFromToken(accounts,input.token);
         if(!a)throw new RuleError('계정 로그인이 만료되었습니다.');socket.data.account=a.id;const token=input.type==='accountResume'?input.token:newAccountSession(a);await persist();reply({ok:true,account:profile(a),accountToken:token});return;
       }
       let room, p;
@@ -206,16 +221,16 @@ io.on('connection', socket => {
         p = room?.players.find(p => p.id === socket.data.player);
         const spectator=room?.spectators?.find(p=>p.id===socket.data.player);if(spectator)p=spectator;
         const device = room?.devices?.find(d => d.id === socket.data.device);
-        if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
+         if (!room || (!device && (!p || sessions.get(p.token) !== socket.id)) || (device && !ownedPlayers(socket, room).every(p => sessions.get(p.token) === socket.id))) throw new RuleError('방에 먼저 접속하세요.');
+          if(p?.personalSurrender&&room.status!=='lobby'&&!['leave','hideSeat'].includes(input.type))throw new RuleError('기권 결과가 확정된 자리는 AI만 조종할 수 있습니다.');
         if(['chatSend','pairRequest','pairAnswer','pairLeave','secretCreate','secretJoin','secretLeave','secretDelete'].includes(input.type)){
           if(!p||p.surrendered)throw new RuleError('채팅에 참가할 수 없습니다.');trainingEvent=experience.capture(room,p,input);chatAct(room,p,input,!!spectator);
           experience.commit(trainingEvent);trainingEvent=null;
-          // 행동 약속이 담긴 대화는 한 계획에서 발언과 실제 행동을 함께 결정합니다.
+          // 플레이 중 발언과 행동은 각 AI의 단일 결정에서 처리합니다.
           const intent=interpretChat(input.text)?.intent;
           const strategic=['mediation','expedition','trade','discount'].includes(intent);
-          if(room.status==='playing'&&agent.enabled)void agent.respond(room,p,{...input,intent,strategic});
-          else void conversationAI.respond(room,p,input);
-          if(input.type==='pairRequest')for(const q of room.players.filter(q=>q.bot))botChat(room,q,{type:'chat'});
+          if(room.status==='playing')void agent.respond(room,p,{...input,intent,strategic});
+          // 로비에서는 AI 대화 응답을 생성하지 않습니다.
         }else if(input.type==='mode'){
           if(room.host!==p?.id||room.status!=='lobby'||!['online','offline'].includes(input.mode))throw new RuleError('방장만 로비에서 모드를 선택할 수 있습니다.');
           if(input.mode==='offline'&&(room.spectators?.length||room.players.some(q=>q.id!==p.id&&!q.bot&&!device?.players.includes(q.id))))throw new RuleError('다른 기기 참가자와 관전자를 먼저 내보내세요.');
@@ -275,13 +290,17 @@ io.on('connection', socket => {
           else throw new RuleError('이름을 확인하고 자신의 화면을 먼저 열어주세요.');
         }
         if (input.type === 'addBot' && !policy) throw new RuleError('학습된 AI 모델이 없습니다. 서버에 models/policy.json을 포함하고 다시 배포하세요.');
-        if (input.type === 'start' && !policy && room.players.some(p => p.bot)) throw new RuleError('AI 참가자를 사용하려면 학습된 모델을 서버에 포함하거나 AI를 제거하세요.');
+         if (input.type === 'start' && !policy && room.players.some(p => p.bot)) throw new RuleError('AI 참가자를 사용하려면 학습된 모델을 서버에 포함하거나 AI를 제거하세요.');
+         if(input.type==='start'&&room.players.some(p=>p.bot)&&!policy&&!agent.enabled)throw new RuleError('AI 게임을 시작하려면 학습된 정책 모델이 필요합니다.');
         const oldNotes = new Set(p.notes.map(n => n.id));
         const oldStage = room.game ? `${room.game.day}/${room.game.phase}/${room.game.round}/${room.game.turn}` : null;
         trainingEvent=experience.capture(room,p,input);
-        act(room, p.id, input);
-        experience.commit(trainingEvent);trainingEvent=null;
-        learning.recordHumanAction(room,p,input);
+        const actionContext=room.game?{phase:room.game.phase,round:room.game.round}:null;
+        const before=room.game?assets(room):null,eventId=room.game?.pending?.eventId;act(room, p.id, input);
+        if(before)learning.observe(room,{before,actor:p.id,action:input,eventId:eventId||room.game?.pending?.eventId});
+         experience.commit(trainingEvent);trainingEvent=null;
+         learning.recordHumanAction(room,p,input,actionContext);
+         if(p.personalSurrender){sessions.delete(p.token);const account=socket.data.account;socket.data={account};broadcast(room);await persist();reply({ok:true,left:true});return;}
         if(input.type==='start')room.game.startedAt=Date.now();
         if(p.surrendered)removeChatMember(room,p.id);
         if (device) {
@@ -313,5 +332,5 @@ io.on('connection', socket => {
 const port = Number(process.env.PORT) || 3000;
 http.listen(port, '0.0.0.0', () => console.log(`왕국과 반란 서버: http://localhost:${port}`));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, async () => {
-  agent.close();bots.close(); await persist();await experience.flush(); io.close(); http.close(() => process.exit(0));
+   agent.close();bots.close(); await persist();await experience.flush();experience.close(); io.close(); http.close(() => process.exit(0));
 });

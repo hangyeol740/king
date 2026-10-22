@@ -1,0 +1,11 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHumanSpeech,parseHumanEvents,humanDialogueRecords} from '../lib/human-speech.js';
+const [input='.data/training/events.jsonl',output='models/human-speech-style.json',dialogue='/tmp/opencode/human-dialogue-training.jsonl']=process.argv.slice(2);
+const events=parseHumanEvents(await readFile(input,'utf8')),speech=createHumanSpeech();
+for(const event of events)speech.learn(event);
+const model=speech.snapshot();if(!model.samples)throw Error('No human chat records');
+await writeFile(output,JSON.stringify(model,null,2)+'\n',{mode:0o600});
+const unique=[...new Map(events.filter(e=>e.kind==='chat').map(e=>[e.id||JSON.stringify(e),e])).values()];
+const records=humanDialogueRecords(unique);
+await writeFile(dialogue,records.map(r=>JSON.stringify(r)).join('\n')+'\n',{mode:0o600});
+console.log(JSON.stringify({profile:speech.profile(),output,dialogue,examples:records.length,baseLanguageModelWeightsUpdated:false}));

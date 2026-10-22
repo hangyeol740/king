@@ -83,11 +83,21 @@ socket.on('disconnect', () => {
   $('#connection').innerHTML = '<i></i> 재연결 중'; $('#connection').classList.add('offline');
 });
 socket.on('account',a=>{if(typeof accountProfile!=='undefined')accountProfile=a;});
+socket.on('aiStatus',event=>{
+ if(!state)return;const player=state.players.find(p=>p.id===event.id);if(!player)return;player.aiStatus=event.state;
+ let panel=document.querySelector('.ai-runtime-status');if(!panel){panel=document.createElement('section');panel.className='ai-runtime-status';panel.setAttribute('role','status');app.prepend(panel);}
+ const labels={thinking:'생각 중',silent:'정상 침묵',error:'응답 오류·재판단 대기','configuration-error':'모델·인증 설정 확인 필요','candidate-error':'행동 구성 오류'};
+ panel.textContent=state.players.filter(p=>p.aiStatus&&p.aiStatus!=='ready').map(p=>`${p.name}: ${labels[p.aiStatus]||p.aiStatus}`).join(' · ');
+});
 socket.on('replaced', () => {
   replaced = true; state = null;
   app.innerHTML = '<section class="empty-screen"><span class="big-symbol">♛</span><h1>다른 창에서 접속했어요</h1><p>같은 플레이어의 자리는 가장 최근에 연결한 창에서 이어집니다.</p><button class="primary" onclick="location.reload()">이 창에서 다시 접속</button></section>';
 });
-socket.on('state', next => {
+let composingChat=false,queuedChatState=null;
+document.addEventListener('compositionstart',event=>{if(event.target.id==='chat-message')composingChat=true;});
+document.addEventListener('compositionend',event=>{if(event.target.id!=='chat-message')return;composingChat=false;const pending=queuedChatState;queuedChatState=null;if(pending)setTimeout(()=>applyServerState(pending),0);});
+function applyServerState(next) {
+  if(composingChat){queuedChatState=next;return;}
   const draft=$('#chat-message')?.value;
   const focusedChat=document.activeElement?.id==='chat-message';
   const pageScroll={x:window.scrollX,y:window.scrollY};
@@ -119,6 +129,7 @@ socket.on('state', next => {
   const available = new Set(state.me.hand.map(c => c.id));
   selected = new Set([...selected].filter(id => available.has(id)));
   render();
+  if(next.status==='playing'&&(!previous||changedIdentity||previous.code!==next.code||previous.game?.day!==next.game?.day))toast(`${next.game.day}일 차 · 당신은 ${next.game.myTurnOrder}번째 차례입니다.`);
   const newChatScroll=$('.chat-messages');
   if(newChatScroll)newChatScroll.scrollTop=newChatScroll.scrollHeight;
   if(draft&&$('#chat-message'))$('#chat-message').value=draft;
@@ -127,11 +138,13 @@ socket.on('state', next => {
   window.kingdomEffects.handle(next.device && changedIdentity ? null : previous, next);
   window.kingdomResults?.handle(previous, next);
   window.kingdomChatAlerts?.handle(previous, next);
-});
+}
+socket.on('state',applyServerState);
 fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = { ...data, neutralJobs: data.neutralJobs || {} }; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
 fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
 
 function render() {
+  window.kingdomBackground?.update(state?.game);
   const handScroll = $('.hand-grid')?.scrollLeft || 0;
   const handOwner = $('.hand-grid')?.dataset.owner;
   if (replaced) return;
@@ -218,14 +231,14 @@ function roleIcon(role) { return { king: '♛', citizen: '♟', rebel: '⚑', ne
 function roleDescription(role) { return { king: '왕국을 다스리는 단 한 사람', citizen: '왕과 함께 왕국을 지킨다', rebel: '인원별 반란 목표를 달성한다', neutral: '어느 편에도 속하지 않는다' }[role]; }
 function phaseLabel(phase) {
   if (['morning', 'executionVote', 'mediationSupport', 'mediationKing', 'expeditionVote', 'expeditionSelect', 'expeditionJoin', 'expeditionCards', 'redistribute'].includes(phase)) return '아침';
-   if (['day','market'].includes(phase)) return '낮'; if (['evening', 'tax','merchantEvening'].includes(phase)) return '저녁'; if (['night', 'bishopNight'].includes(phase)) return '밤'; return '종료';
+   if (['day','market'].includes(phase)) return '낮'; if (['evening', 'tax','merchantEvening','eveningDuel','ambush'].includes(phase)) return '저녁'; if (['night', 'bishopNight'].includes(phase)) return '밤'; return '종료';
 }
 function renderGame() {
   const g = state.game, me = state.me, phase = phaseLabel(g.phase), ended = state.status === 'finished';
   const acting = g.current === me.id || (g.phase === 'morning' && g.king === me.id) || (g.phase === 'executionVote' && !g.pending.myDone);
   app.innerHTML = `
     ${typeof deviceToolbar === 'function' ? deviceToolbar() : ''}
-    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions">${state.host===me.id&&state.mode!=='offline'?'<button class="quiet border compact-spectator" data-cmd="addSpectator">관전 초대</button>':''}<button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
+    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions">${state.host===me.id&&state.mode!=='offline'?'<button class="quiet border compact-spectator" data-cmd="addSpectator">관전 초대</button>':''}${typeof renderVoteRequests==='function'?renderVoteRequests():''}<button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
     <div class="game-layout">
       <div class="game-main">
         <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="score-tracks">${state.neutralJobs.includes('bishop') ? `<div class="rebellion-track religion-track"><span>✝ 종교반란 성공</span>${Array.from({length:g.religiousGoal},(_,i)=>i+1).map(n => `<i class="${g.religiousSuccesses >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.religiousSuccesses}/${g.religiousGoal}</b></div>` : ''}<div class="rebellion-track"><span>반란 성공</span>${Array.from({length:g.revoltGoal},(_,i)=>i+1).map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/${g.revoltGoal}</b></div></div></div>
@@ -234,7 +247,7 @@ function renderGame() {
         ${renderTheftAlert()}
         ${renderMajorResults()}
         ${typeof renderGameVotes==='function'?renderGameVotes():''}
-        <div class="table-players">${state.players.map(p => `<div class="table-player ${p.id === g.current && !ended ? 'active' : ''} ${p.id === me.id ? 'self' : ''}"><div class="player-top"><span class="avatar small-avatar ${p.role || 'hidden'}">${p.job === 'bishop' ? '✝' : p.role ? roleIcon(p.role) : '?'}</span><span class="status-dot ${p.online ? '' : 'offline'}" title="${p.online ? '연결됨' : '재접속 대기'}"></span></div><strong>${esc(p.name)} ${p.id === me.id ? '<small>나</small>' : ''}</strong><span class="player-role ${p.role || ''}">${p.role ? playerLabel(p) : '비공개 진영'}</span>${g.current === p.id && !ended ? '<span class="turn-indicator">현재 차례</span>' : ''}</div>`).join('')}</div>
+        ${g.turnDisplay ? `<div class="current-turn ${g.turnDisplay.kind}" role="status">${g.turnDisplay.kind==='king'?'<span aria-label="왕">♛</span> ':''}${esc(g.turnDisplay.text)}</div>` : ''}
         <section class="action-panel ${acting ? 'your-turn' : ''}"><div class="action-kicker"><span class="eyebrow">${ended ? 'THE FINAL CHAPTER' : acting ? 'YOUR MOVE' : 'THE KINGDOM MOVES'}</span>${g.revolt !== null && g.revolt > 0 ? `<span class="revolt-alert">⚑ 반란력 ${g.revolt}</span>` : ''}</div>${renderAssistance()}${renderAction()}</section>
         <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > (me.handLimit||30) && !ended ? `<div class="hand-warning">다음 아침에 ${me.handLimit||30}장까지 줄어듭니다. 자원 → 나머지 일반 카드 → 보호되는 교단·전도 순서로 버립니다.</div>` : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
         <section class="recipe-reference"><h2>나의 제작법 <span>${myRecipes().length}종</span></h2><p class="small muted">공통 제작과 본인 진영·직업의 특수 제작만 표시합니다.</p><div class="guide-recipes">${myRecipes().map(r => `<p><b>${recipeLabel(r)}</b> · ${recipeMaterials(r)} <span>→</span> ${rules.cards[r.output].name} ${r.amount || 1}장</p>`).join('')}</div><p class="small muted">화염대검 + 북부의 검 → 철혈의 검 · 두 검의 재료는 영구 칼·영구 마법이며 제작 시 소모됩니다.</p></section>
@@ -316,9 +329,16 @@ function targetSelect(label = '대상 선택', candidates = null) {
 function wait(title, description) { return `<h2>${esc(title)}</h2><p class="action-description">${description}</p><div class="wait-indicator"><i></i><i></i><i></i><span>다른 플레이어의 선택을 기다리고 있습니다.</span></div>`; }
 function renderAction() {
   const g = state.game, p = g.pending, me = state.me, isKing = g.king === me.id;
+  if(g.phase==='eveningDuel'){
+    if(p?.kind==='battle'){
+      if(!p.accepted)return p.to===me.id?`<h2>결투 신청을 받았습니다.</h2><p>거절 시 칼 1장을 소모합니다.</p><button class="primary" data-cmd="battleAnswer" data-accept="true">수락</button><button class="secondary" data-cmd="battleAnswer" data-accept="false" ${me.hand.some(c=>c.type==='sword')?'':'disabled'}>거절 · 칼 1장</button>`:wait('결투 응답 대기','상대가 선택하고 있습니다.');
+      return p.myDone?wait('제출 완료','상대의 제출을 기다립니다.'):`<h2>결투 카드 선택</h2>${submitCards('battleSubmit','결투 확정')}`;
+    }
+    return p?.current===me.id?`<h2>저녁 결투 신청</h2><p>신청 시 칼 2장을 소모합니다.</p>${targetSelect('결투 대상')}<button class="primary" data-cmd="battle" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=2?'':'disabled'}>결투 신청 · 칼 2장</button><button class="secondary" data-cmd="duelSkip">건너뛰기</button>`:wait('저녁 결투 신청 단계','다른 참가자의 선택을 기다립니다.');
+  }
   if(g.phase==='ambush'){
     if(p?.kind==='battle')return p.myDone?wait('기습 전투 카드를 확정했습니다.','상대의 제출을 기다립니다.'):`<h2>기습 전투</h2><p>기습은 거절할 수 없습니다. 전투 카드를 선택하세요.</p>${submitCards('battleSubmit','전투 확정')}`;
-    return p?.current===me.id?`<h2>기습하시겠습니까?</h2>${targetSelect('기습 대상')}<div class="button-row"><button class="primary" data-cmd="ambush" data-target="true">기습</button><button class="secondary" data-cmd="ambushSkip">건너뛰기</button></div>`:wait('반란군의 저녁 준비를 기다립니다.','기습 단계가 끝나면 왕이 정책을 선택합니다.');
+    return p?.current===me.id?`<h2>기습하시겠습니까?</h2>${targetSelect('기습 대상')}<div class="button-row"><button class="primary" data-cmd="ambush" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=2?'':'disabled'}>습격 · 칼 2장</button><button class="secondary" data-cmd="ambushSkip">건너뛰기</button></div>`:wait('반란군의 저녁 준비를 기다립니다.','습격 단계가 끝나면 상인 준비와 밤으로 진행합니다.');
   }
   if (state.status === 'finished') {
     const won = g.winner.players.includes(me.id);
@@ -389,7 +409,7 @@ function renderAction() {
       return `<h2>${esc(nameOf(other))}님에게 무엇을 주시겠습니까?</h2><p class="action-description">내가 줄 카드만 고르세요. <b>0장도 가능</b>합니다. 상대의 카드와 장수는 교환이 끝나야 알 수 있습니다.</p>${submitCards('tradeSubmit', '비공개 거래 카드 확정')}`;
     }
     if (g.current !== me.id) return wait(`${nameOf(g.current)}님의 차례입니다.`, `${g.round}번째 바퀴를 진행하고 있습니다. 선택한 행동과 카드 변화는 비공개입니다.`);
-    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><div class="action-choices">${me.job==='merchant'?'':btn('trade','비밀 거래','비공개 카드 교환','data-target="true"')}${btn('battle','전투신청','상대 수락 후 전투','data-target="true"')}${btn('draw3','카드받기','무작위 카드 6장 획득')}</div>${targetSelect('거래·전투 대상',state.players.filter(p=>p.id!==me.id&&!p.executed&&!p.surrendered))}`;
+    if (g.round === 1) return `<h2>첫 번째 선택, 오늘의 준비.</h2><div class="action-choices">${me.job==='merchant'?'':btn('trade','비밀 거래','비공개 카드 교환','data-target="true"')}${btn('draw3','카드받기','무작위 카드 6장 획득')}</div>${targetSelect('거래·전투 대상',state.players.filter(p=>p.id!==me.id&&!p.executed&&!p.surrendered))}`;
     if (g.round === 2) {
       if(!p?.kind&&actionMode!=='hunt')return `<h2>두 번째 행동을 선택하세요.</h2><div class="action-choices">${btn('beginCraft','제작','재료를 조합해 필요한 카드 제작')}<button class="action-choice" data-ui="hunt"><strong>사냥<span>↗</span></strong><small>공격력 ${me.huntGoal||10}점 이상 · 카드 8장</small></button>${btn('gather','자원얻기','자원 5~12개 획득')}</div>`;
       if (p?.kind === 'craft') return `<h2>필요한 만큼 제작하세요.</h2><p class="action-description">공통 제작과 자신의 진영 제작만 가능합니다. 영구 카드는 제작 재료로 쓰면 소모됩니다.</p><div class="recipes">${myRecipes().map(r => {
@@ -423,6 +443,15 @@ function renderAction() {
   }
   return '';
 }
+function clientMediationPower(type) {
+  const religion=state.game?.pending?.revoltType==='religion';
+  if(religion&&religionCard(type))return 0;
+  if(religion&&state.me.role==='rebel'){
+    if(['infantry','officer'].includes(type))return 0;
+    if(['rebellion','agitation'].includes(type))return rules.cards[type].revolt;
+  }
+  return rules.cards[type].mediation||0;
+}
 function selectionContext() {
   if(state?.game?.pending?.kind==='battle'&&state.game.pending.accepted&&!state.game.pending.myDone)return {allowed:t=>!religionCard(t)&&!!rules.cards[t].attack,stat:'attack',label:'전투 공격력'};
   if (!state?.game || state.status !== 'playing' || !rules) return null;
@@ -430,7 +459,7 @@ function selectionContext() {
   if(g.phase==='market'&&!p.myDone&&state.me.job!=='merchant')return marketSelection();
   if(g.phase==='merchantEvening'&&state.me.job==='merchant'&&actionMode==='display'&&p.kind!=='craft')return {allowed:()=>true,min:1,label:'진열할 카드'};
   if(state.me.job==='merchant'&&['mediationSupport','mediationKing','expeditionCards'].includes(g.phase))return null;
-  if ((state.me.role!=='rebel' || p?.revoltType === 'religion') && (g.phase === 'mediationSupport' && id !== g.king || g.phase === 'mediationKing' && id === g.king) && !p.myDone) return { allowed: t => !!rules.cards[t].mediation && (p.revoltType !== 'religion' || !religionCard(t)), stat: 'mediation', label: '내 중재력' };
+  if ((state.me.role!=='rebel' || p?.revoltType === 'religion') && (g.phase === 'mediationSupport' && id !== g.king || g.phase === 'mediationKing' && id === g.king) && !p.myDone) return { allowed: t => clientMediationPower(t)>0, value:clientMediationPower, stat: 'mediation', label: '내 중재력' };
   if (g.phase === 'expeditionCards' && p.isParticipant && !p.myDone) return { allowed: t => expeditionValue(t)!==null, stat: 'expedition', label: '내 원정 기여점수' };
   if (g.phase === 'day' && p?.kind === 'trade' && p.accepted && !p.myDone) return { allowed: () => true, label: '줄 카드' };
   if (g.phase === 'day' && g.current === id && g.round === 2 && actionMode === 'hunt') return { allowed: t => !!rules.cards[t].attack, stat: 'attack', label: '사냥 공격력' };
@@ -457,7 +486,7 @@ function selectionScore() {
   const c = selectionContext();
   if (!c?.stat) return selected.size;
   return state.me.hand.filter(card => selected.has(card.id)).reduce((s, card) => {
-    const d = rules.cards[card.type]; return s + (c.stat === 'expedition' ? expeditionValue(card.type) || 0 : d[c.stat] || 0);
+    const d = rules.cards[card.type]; return s + (c.value ? c.value(card.type) : c.stat === 'expedition' ? expeditionValue(card.type) || 0 : d[c.stat] || 0);
   }, 0);
 }
 function renderSelectionSummary() {

@@ -10,7 +10,7 @@ test('OpenAI에는 본인 상태와 해당 채널만 전송·의도 저장·합�
  chatAct(r,r.players[0],{type:'chatSend',channel:'public',text:'중재 도와줘'});
  personaFor(bot,r.game);bot.socialStrategy={key:`${r.game.day}/${r.game.phase}`,mode:'honest'};
  const api=createOpenAIChat({apiKey:'test',fetcher:async(url,init)=>{body=JSON.parse(init.body);return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({reply:'지원 요청 확인했어요.',intent:'mediation'})}}]})};},changed:async()=>{}});
- await api.respond(r,r.players[0],{type:'chatSend',channel:'public',text:'중재 도와줘'});assert.equal(bot.chatIntent.type,'mediation');assert.equal(chatView(r,r.players[0]).public.length,2);assert.ok(!JSON.stringify(body).includes(other.hand[0].id));
+  await api.respond(r,r.players[0],{type:'chatSend',channel:'public',text:'중재 도와줘'});assert.equal(bot.chatIntent.type,'mediation');assert.equal(chatView(r,r.players[0]).public.length,2);assert.ok(!JSON.stringify(body).includes(other.hand[0].id));assert.match(body.messages[0].content,/대화 전용/);
  const p=applyChatPreference([{type:'contribute'},{type:'hunt'}],[.5,.5],bot.chatIntent,{game:{day:r.game.day}});assert.ok(p[0]>.5);assert.equal(p.reduce((s,x)=>s+x,0),1);
 });
 test('키 없으면 API 호출 없음·Supabase 키는 서버 요청에만 사용',async()=>{

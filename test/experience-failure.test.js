@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,writeFile,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import {createOnlineExperience} from '../lib/online-experience.js';
+test('로컬 기록 실패는 호출자를 멈추지 않고 유실ID·오류를 표시',async()=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'exp-fail-'));try{const blocked=path.join(dir,'file');await writeFile(blocked,'not-directory');const failures=[];const recorder=createOnlineExperience({directory:blocked,failed:e=>failures.push(e)});assert.doesNotThrow(()=>recorder.commit({version:2,id:'lost-event',kind:'action'}));assert.equal(recorder.diagnostics().events,0);assert.equal(recorder.diagnostics().failures,1);assert.equal(recorder.diagnostics().lastLostEvent,'lost-event');assert.equal(failures.length,1);await recorder.flush();recorder.close();}finally{await rm(dir,{recursive:true,force:true});}
+});

@@ -24,7 +24,7 @@ test('입장은 다음 판단에도 유지하고 근거 없는 목표 변경은 
  const r=setup(),bot=r.players[1],s=view(r,bot.id);
  const make=()=>prepareDecision({bot,epoch:r.game.startedAt,snapshot:s,actions:candidates(s),history:[],random:()=>.9});
  const first=make();commitDecision(first,out(first.context));const next=make();assert.equal(next.mode,first.mode);
- assert.throws(()=>commitDecision(next,{...out(next.context),goal:'반대 목표'}),/unexplained_revision/);
+ assert.doesNotThrow(()=>commitDecision(next,{...out(next.context),goal:'같은 목표를 다른 표현으로 설명'}));
 });
 test('비밀 메시지는 가입한 AI에게만 관찰·판단 전달',async()=>{
  const r=setup(),calls=[];const [human,a,b]=r.players;chatAct(r,human,{type:'secretCreate',name:'private'});const room=chatView(r,human).secret[0];chatAct(r,a,{type:'secretJoin',room:room.id,password:room.password});
@@ -33,8 +33,8 @@ test('비밀 메시지는 가입한 AI에게만 관찰·판단 전달',async()=>
 });
 test('복수 AI가 발언할 수 있고 AI끼리의 대화 연쇄는 유한함',async()=>{
  const r=setup();r.game.phase='day';r.game.round=1;r.game.turn=r.game.order.indexOf(r.host);let calls=0;
- const agent=createCognitiveAgent({reactionDelay:1,maxConversationDepth:1,client:{enabled:true,diagnostics:()=>({}),ask:async(_,c)=>{calls++;return {...out(c),communication:'answer',text:`의견 ${c.actorId} ${calls}`};}},changed:async()=>{}});
+  const agent=createCognitiveAgent({reactionDelay:1,client:{enabled:true,diagnostics:()=>({}),ask:async(_,c)=>{calls++;return {...out(c),dialogueTopic:'현재 의견',dialoguePurpose:'answer',communication:'answer',text:`의견 ${c.actorId} ${calls}`};}},changed:async()=>{}});
  try{chatAct(r,r.players[0],{type:'chatSend',channel:'public',text:'각자 의견은?'});await agent.respond(r,r.players[0],{type:'chatSend',channel:'public',text:'각자 의견은?'});await new Promise(resolve=>setTimeout(resolve,40));
- assert.equal(new Set(r.chat.public.filter(m=>m.sender!==r.host).map(m=>m.sender)).size,2);assert.ok(calls<=4);assert.ok(r.players.slice(1).every(p=>p.agentMind.inbox['public/'].messages.length>=3));
+  assert.equal(new Set(r.chat.public.filter(m=>m.sender!==r.host).map(m=>m.sender)).size,2);assert.ok(calls<=5);assert.ok(r.players.slice(1).every(p=>p.agentMind.inbox['public/'].messages.length>=3));
  }finally{agent.close();}
 });

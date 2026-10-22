@@ -1,0 +1,38 @@
+{
+  "cave": {
+    "source": "동굴 이미지.webp",
+    "original": [
+      640,
+      427
+    ],
+    "pixel": [
+      256,
+      171
+    ],
+    "colors": 48
+  },
+  "forest": {
+    "source": "숲 이미지.webp",
+    "original": [
+      384,
+      256
+    ],
+    "pixel": [
+      256,
+      171
+    ],
+    "colors": 48
+  },
+  "village": {
+    "source": "마을 이미지.webp",
+    "original": [
+      576,
+      768
+    ],
+    "pixel": [
+      256,
+      341
+    ],
+    "colors": 48
+  }
+}

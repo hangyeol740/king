@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {actionComparison} from '../lib/action-comparison.js';
+test('사냥 비교는 공격력만 사용하며 확정실패와 합법대안을 판단 입력으로 분리',()=>{const s={me:{job:'hunter',huntGoal:8,hand:[{id:'o',type:'officer'},{id:'m',type:'magic'}]}};const bad=actionComparison(s,{type:'hunt',cards:['o']});assert.equal(bad.hunt.submitted,0);assert.equal(bad.reconsider,true);assert.equal(bad.alternatives[0].type,'gather');assert.equal(actionComparison(s,{type:'hunt',cards:['m']}).hunt.submitted,4);});

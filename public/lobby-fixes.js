@@ -1,5 +1,8 @@
 window.finishLobbyUI=()=>{
  if(!state)return;
+ const existing=document.querySelector('.ai-runtime-status');existing?.remove();
+ const statuses=state.players.filter(p=>p.aiStatus&&p.aiStatus!=='ready');
+ if(statuses.length){const labels={thinking:'생각 중',silent:'정상 침묵','configuration-error':'모델/인증 설정 확인 필요','candidate-error':'행동 구성 오류',error:'응답 오류·다시 판단 중'};const panel=document.createElement('section');panel.className='ai-runtime-status';panel.setAttribute('role','status');panel.textContent=statuses.map(p=>`${p.name}: ${labels[p.aiStatus]||p.aiStatus}`).join(' · ');document.querySelector('#app').prepend(panel);}
  if(state.mode==='offline'){
   document.querySelectorAll('.sidebar-foot,.invite-box').forEach(e=>e.remove());
   const heading=document.querySelector('.game-heading .eyebrow');if(heading)heading.textContent='오프라인 게임';

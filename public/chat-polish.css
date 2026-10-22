@@ -1,0 +1,6 @@
+.hand-grid{--hand-gap:40px}
+.hand-grid .card,.hand-grid .card.selected{flex-basis:max(140px,calc((100% - 4 * var(--hand-gap)) / 5));}
+.game-sidebar .social-panel{display:flex;flex-direction:column;min-height:0}
+.social-panel #chat-form{order:8;margin-top:auto}
+.social-panel details{order:9}
+@media(max-width:600px){.hand-grid{--hand-gap:32px}.hand-grid .card,.hand-grid .card.selected{flex-basis:150px}}
