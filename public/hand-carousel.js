@@ -3,6 +3,9 @@
   const initialized=new WeakSet();
   const userScrollUntil=new WeakMap();
   const scrollSamples=new WeakMap();
+  const motions=new WeakMap();
+  const maxScroll=hand=>{const last=hand.lastElementChild;if(!last)return 0;return Math.max(0,last.offsetLeft+last.offsetWidth+(parseFloat(getComputedStyle(hand).paddingRight)||0)-hand.clientWidth);};
+  const stopMotion=hand=>{const motion=motions.get(hand);if(motion?.frame)cancelAnimationFrame(motion.frame);if(motion){motion.frame=null;motion.target=hand.scrollLeft;}};
   let hoverMutedUntil=0;
   const markScroll=hand=>{
     const until=performance.now()+700;
@@ -13,29 +16,13 @@
     if(initialized.has(hand))return;
     const cards=[...hand.children];
     if(!cards.length||!cards[0].matches('.card'))return;
-    initialized.add(hand);
-    for(const card of cards){
-      const count=Number(card.dataset.cardCount)||1;
-      const layers=Math.min(3,count);
-      card.dataset.stackCount=String(layers);
-      const stack=document.createElement('span');stack.className='card-stack';stack.setAttribute('aria-hidden','true');
-      for(let i=layers-1;i>=1;i--){
-        const layer=document.createElement('span');layer.className='card-stack-layer';layer.style.setProperty('--layer',i);layer.style.zIndex=String(-i);stack.append(layer);
-      }
-      card.prepend(stack);
-    }
-    const copies=()=>cards.map(card=>{const clone=card.cloneNode(true);clone.dataset.loopCopy='true';return clone;});
-    hand.prepend(...copies());hand.append(...copies());
-    const cycle=cards.length*cardStep(hand);
-    hand.scrollLeft=previous===null?cycle:previous;
+     initialized.add(hand);
+      // Native :hover follows the pointer. Do not persist synthetic hover
+      // classes across rerenders or after wheel-scrolling to another card.
+     hand.scrollLeft=previous===null?0:previous;
     scrollSamples.set(hand,hand.scrollLeft);
-    const normalize=()=>{
-      const width=cards.length*cardStep(hand);
-      if(hand.scrollLeft<width*.5){hand.scrollLeft+=width;scrollSamples.set(hand,hand.scrollLeft);}
-      else if(hand.scrollLeft>width*1.5){hand.scrollLeft-=width;scrollSamples.set(hand,hand.scrollLeft);}
-    };
-    hand.addEventListener('scroll',normalize,{passive:true});
-    hand.addEventListener('keydown',e=>{if(e.key==='Tab')normalize();});
+     // Do not teleport scrollLeft across repeated sets: it reverses visible
+     // direction and interrupts wheel/touch momentum.
   }};
   let scrolling = false, lastFlipAt = 0;
   const cardStep = hand => (hand.querySelector('.card')?.offsetWidth || 180) + (parseFloat(getComputedStyle(hand).gap)||24);
@@ -52,14 +39,18 @@
     const hand = event.target.closest('.hand-grid');
     if(hand&&!event.ctrlKey)markScroll(hand);
     if(!hand || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || hand.scrollWidth <= hand.clientWidth)return;
-    const delta=event.deltaY*(event.deltaMode===1?20:event.deltaMode===2?hand.clientWidth:1);
-    if(delta<0&&hand.scrollLeft<=0 || delta>0&&hand.scrollLeft>=hand.scrollWidth-hand.clientWidth-1)return;
+    const rawDelta=event.deltaY*(event.deltaMode===1?20:event.deltaMode===2?hand.clientWidth:1);
+    const delta=Math.sign(rawDelta)*Math.min(Math.abs(rawDelta)*.35,52);
+    if(delta<0&&hand.scrollLeft<=0 || delta>0&&hand.scrollLeft>=maxScroll(hand)-1){stopMotion(hand);return;}
     event.preventDefault();
-    hand.scrollBy({left:delta,behavior:'smooth'});
+     let motion=motions.get(hand);if(!motion){motion={target:hand.scrollLeft,frame:null,last:0};motions.set(hand,motion);}else if(!motion.frame)motion.target=hand.scrollLeft;
+     if(motion.frame&&Math.sign(delta)!==Math.sign(motion.target-hand.scrollLeft))motion.target=hand.scrollLeft;
+      motion.target=Math.max(0,Math.min(maxScroll(hand),motion.target+delta));motion.until=performance.now()+320;
+      if(!motion.frame){motion.last=performance.now();const step=now=>{if(!hand.isConnected){stopMotion(hand);return;}const dt=Math.min(40,now-motion.last);motion.last=now;motion.target=Math.max(0,Math.min(maxScroll(hand),motion.target));const before=hand.scrollLeft,distance=motion.target-before;if(Math.abs(distance)<=1||now>=motion.until){hand.scrollLeft=motion.target;motion.frame=null;return;}hand.scrollLeft=before+distance*(1-Math.exp(-dt/65));if(Math.abs(hand.scrollLeft-before)<.1){hand.scrollLeft=motion.target;motion.frame=null;return;}motion.frame=requestAnimationFrame(step);};motion.frame=requestAnimationFrame(step);}
   },{passive:false});
   document.addEventListener('pointerdown',event=>{
     const hand=event.target.closest('.hand-grid');
-    if(hand&&event.pointerType==='touch')markScroll(hand);
+    if(hand){stopMotion(hand);if(event.pointerType==='touch')markScroll(hand);}
   },{passive:true});
   document.addEventListener('touchmove',event=>{
     const hand=event.target.closest('.hand-grid');

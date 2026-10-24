@@ -31,6 +31,8 @@ export function baseline(snapshot, actions, random = Math.random, style = 'balan
   const royal = ['king', 'citizen'].includes(me.role);
   const score = (action, key) => me.hand.filter(c => action.cards?.includes(c.id)).reduce((s, c) => s + (CARDS[c.type][key] || 0), 0);
   const pick=type=>{const list=actions.filter(a=>a.type===type);return list[Math.floor(random()*list.length)];};
+  if(actions.length===1)return actions[0];
+  if(g.pending?.kind==='battleLoot')return actions[0];
   if(g.vote?.eligible&&g.vote.myVote===null)return actions.find(a=>a.type==='gameVote'&&a.accept===(style==='cooperative'))||actions[0];
   if(g.pending?.kind==='battle')return actions.find(a=>a.type==='battleAnswer'&&a.accept===(style==='aggressive'))||[...actions].sort((a,b)=>score(b,'attack')-score(a,'attack'))[0];
   if(g.phase==='ambush')return style==='aggressive'?(pick('ambush')||actions[0]):pick('ambushSkip');
@@ -146,7 +148,9 @@ export function evaluate(policy, { games = 60, counts = [3, 4, 5], random = Math
     let steps = 0;
     while (room.status === 'playing') {
       if (++steps > 1800) throw new Error('평가 게임 단계 제한 초과');
-      const ready=readyPlayers(room),p=ready[Math.floor(random()*ready.length)], s = aiObservation(room,p),context=contexts.get(p.id),{actions,obs,features}=decisionInputs(s,context);
+      const ready=readyPlayers(room);
+      if(!ready.length)throw Error(`평가 진행 정지:${JSON.stringify({day:room.game.day,phase:room.game.phase,pending:room.game.pending,players:room.players.map(p=>({id:p.id,role:p.role,job:p.job,surrendered:p.surrendered,executedDay:p.executedDay,restDay:p.restDay}))})}`);
+      const p=ready[Math.floor(random()*ready.length)], s = aiObservation(room,p),context=contexts.get(p.id),{actions,obs,features}=decisionInputs(s,context);
        let index;
        const activePolicy=p.id===learner.id?policy:opponent&&typeof opponent==='object'?opponent:null;
        if(activePolicy?.metadata?.actionConstruction){const built=constructAction(activePolicy,s,{random,traits:context.traits,context});index=actions.push(built.action)-1;}

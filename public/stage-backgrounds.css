@@ -1,3 +1,7 @@
 body[data-stage-background="cave"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/cave-pixel.png')}
 body[data-stage-background="forest"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/forest-pixel.png')}
 body[data-stage-background="village"]::before{background-image:linear-gradient(#0b080650,#0b0806a0),url('/assets/village-pixel.png')}
+body[data-stage-background="full-moon"]::before,body.full-moon-night::before{content:'';position:fixed;inset:0;z-index:-1;background:linear-gradient(#080d1910,#080d1930),var(--full-moon-pixel,url('/assets/full-moon.webp')) center/cover no-repeat!important;image-rendering:pixelated!important;opacity:1;visibility:visible}
+.full-moon-banner{display:flex;align-items:center;gap:16px;margin:14px 0;padding:18px 22px;border:2px solid #dce7ff;border-radius:10px;background:rgba(15,24,49,.9);color:#fff0bc;font-size:20px;font-weight:700;box-shadow:0 0 24px #c6dcff40}
+.full-moon-banner span{font-size:44px;line-height:1}.full-moon-banner small{display:block;color:#e5ecff;font-size:14px}
+.full-moon-banner{grid-column:1 / -1}

@@ -1,0 +1,60 @@
+.confirmed-home{align-items:center;min-height:calc(100dvh - 110px)}
+.confirmed-home .entry-panel{width:100%;max-width:480px;justify-self:end;margin:0}
+.confirmed-home .entry-panel form{display:flex;flex-direction:column;gap:14px;margin:0}
+.confirmed-home .entry-panel input{margin:0}
+.confirmed-home .entry-panel label{margin:0}
+.confirmed-home .online-options{display:flex;flex-direction:column;gap:12px}.confirmed-home .online-options[hidden]{display:none}
+.confirmed-home .hero{flex-direction:column;width:100%;gap:0}
+.confirmed-home .return-room{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;margin-top:28px;padding:8px 16px;background:rgba(48,50,55,.8)}
+.confirmed-home .return-room>div{flex:1}.confirmed-home .return-room p{margin:2px 0;font-size:12px}
+.studio-logo{position:fixed;left:18px;bottom:12px;color:#d0cbc1;font-size:13px;letter-spacing:1px;pointer-events:none}
+.account-panel .full{margin-top:10px}.account-panel h2{margin-bottom:16px}
+.hand-grid{align-items:flex-start!important}.card-stack,.card-stack-layer{display:none!important}
+.hand-grid .card{flex-grow:0!important;align-self:flex-start;aspect-ratio:183 / 260!important;height:auto!important;min-height:0!important}
+.hand-heading h2{display:flex!important;align-items:center;gap:12px;font-size:21px}.hand-heading h2 span{font-size:30px;color:var(--ink);padding:0 8px}
+.hand-heading .eyebrow{display:none}.hand-heading{justify-content:space-between;margin-bottom:8px}
+.card-selected-count{position:absolute;bottom:-29px;left:0;right:0;text-align:center;font-size:20px;color:#f3deaa}
+.hand-grid .card-owned-count{position:absolute;top:auto;bottom:calc(100% + 10px);left:0;right:0;z-index:3;display:block;padding:0;border:0;border-radius:0;outline:0;background:transparent;box-shadow:none;color:#e5dbc7;font-size:20px;font-weight:600;line-height:1.2;text-align:center;pointer-events:none;opacity:0;visibility:hidden}
+@media(hover:hover){.hand-grid .card:hover .card-owned-count{opacity:1;visibility:visible}}
+.hand-grid .card.hand-cycle-end{margin-right:var(--hand-gap)}
+.hand-grid .card-top,.hand-grid .card-bottom{display:none!important}
+/* New journal entries must not trigger the browser's document scroll anchoring. */
+#app{overflow-anchor:none}
+.personal-notes .notes-scroll{height:200px;min-height:200px;max-height:200px;overflow-y:auto;overflow-anchor:none;overscroll-behavior-y:contain}
+/* Keep multi-line stats (including expedition sabotage) inside the short card. */
+.hand-grid .card h3{top:61%;left:7%;right:7%;font-size:18px;line-height:1.15;margin:0}
+.hand-grid .card-stats{top:76%;bottom:4%;left:7%;right:7%;display:flex;flex-wrap:wrap;align-content:center;align-items:center;justify-content:center;gap:1px 4px;min-height:0;margin:0;padding:0;font-size:10px;line-height:1.15;overflow-wrap:anywhere}
+.hand-grid .card-stats span{max-width:100%;min-width:0;white-space:normal}
+.hand-grid .card-stats span+span:before{content:none}
+@media(max-width:600px){.hand-grid .card h3{top:54%;font-size:14px}.hand-grid .card-stats{font-size:9px}}
+.identity-panel.king,.role-reveal.role-king h1{color:#f4d35e}
+.identity-panel.citizen,.role-reveal.role-citizen h1{color:#fff}
+.identity-panel.hunter,.identity-panel.blacksmith,.role-reveal.role-hunter h1,.role-reveal.role-blacksmith h1{color:#77baff}
+.identity-panel.rebel,.role-reveal.role-rebel h1{color:#f07171}
+.identity-panel.assassin,.role-reveal.role-assassin h1{color:#f07171}
+.identity-panel.bomber,.role-reveal.role-bomber h1{color:#f07171}
+.bomb-markers{display:flex;flex-direction:column;gap:5px;color:#d34a4a;font-size:19px}.bomb-markers .giant-bomb-marker{color:#bb77ef}
+.identity-panel.neutral,.role-reveal.role-neutral h1,.role-reveal.role-bishop h1,.role-reveal.role-merchant h1{color:#c69aff}
+.king-order{font-size:14px;color:#e8cb83;margin-bottom:6px}
+.hand-grid{scroll-snap-type:none;scroll-behavior:auto;overflow-anchor:none;padding-top:96px!important;padding-bottom:96px!important}
+.hand-grid .card,.hand-grid .card:hover{transform:none!important;box-shadow:none;transition:none}
+.hand-grid .card-face{position:absolute;inset:0;background:var(--parchment-image) center/100% 100% no-repeat;transform-origin:center;transition:transform .2s ease-out;box-shadow:0 3px 7px #0004;border-radius:3px}
+.hand-grid .card,.hand-grid .card.selected{background:transparent!important}
+.hand-grid .card-owned-count{opacity:1;visibility:visible;bottom:calc(100% + 54px);line-height:28px}
+.hand-grid .card .card-selected-count{top:calc(100% + 48px);bottom:auto;line-height:28px}
+@media(hover:hover){.hand-grid .card:hover,.hand-grid .card.hover-held{z-index:20}.hand-grid .card:hover .card-face,.hand-grid .card.hover-held .card-face{transform:scale(1.4)}}
+.hand-submit-controls .card-submit-row{display:flex;align-items:center;gap:16px}
+.tax-selection-count{font-size:22px;font-variant-numeric:tabular-nums}
+@media(max-width:700px){#toast{top:calc(env(safe-area-inset-top,0px) + 16px)!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;max-width:calc(100vw - 24px);width:max-content;z-index:2000}.pair-request-alert{top:calc(env(safe-area-inset-top,0px) + 76px)!important;bottom:auto!important}}
+@media(max-width:700px){.confirmed-home{grid-template-columns:1fr;min-height:0;padding-bottom:44px}.confirmed-home .entry-panel{justify-self:center;max-width:none}.confirmed-home .return-room{flex-wrap:wrap}}
+.role-reveal.role-rebel h1,.role-reveal.role-rebel p{color:#f07171}
+.card-cost{display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-variant-numeric:tabular-nums;font-size:18px;white-space:nowrap;color:var(--ink)}
+.full-moon-banner .pixel-moon{width:44px;height:44px;image-rendering:pixelated;flex-shrink:0}
+.card-quick-tools{position:absolute;top:calc(100% + 80px);left:-8px;right:-8px;display:flex;justify-content:center;gap:4px;z-index:25}
+.card-quick-tools button{font-size:11px;padding:5px 6px;border:1px solid #9b9484;border-radius:4px;background:#272b32;color:#fff;white-space:nowrap}
+.hand-grid{padding-bottom:130px!important}
+.pixel-loot{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin:18px 0}
+.loot-card{padding:12px;background:#292c34;border:3px solid #b5a17a;box-shadow:3px 3px 0 #111;text-align:center}
+.loot-art{height:84px;display:flex;align-items:center;justify-content:center}.loot-art img,.loot-art svg{max-height:80px;max-width:80px;image-rendering:pixelated}
+.loot-card h3{font-size:16px}.loot-card p{font-size:12px;color:#d3c5aa}
+.loot-stepper{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:10px}.loot-stepper button{background:#4c514d;color:#fff0c3;border:2px solid #b5a17a;border-radius:0;width:32px;height:34px;font-size:21px;box-shadow:2px 2px 0 #111}.loot-stepper strong{font-size:15px;white-space:nowrap}

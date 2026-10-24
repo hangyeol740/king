@@ -5,3 +5,7 @@ coverage/
 .playwright-mcp/
 models/*.checkpoint.json
 models/*.tmp
+.vercel/
+public/socket.io/
+.vercel
+.env*

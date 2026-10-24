@@ -1,3 +1,5 @@
 .current-turn{display:flex;align-items:center;gap:12px;padding:16px 20px;margin:0 0 20px;background:rgba(48,50,55,.8);border:1px solid #ffffff20;color:var(--ink);font-size:17px}
 .current-turn.king{color:#f0cd78}.current-turn.king>span{font-size:28px}.current-turn.self{border-color:#c3ad73;color:#f4db9a}
 .chat-messages .rebel-ally-message{background:#792f36!important;color:#ffe0dd;border-left:3px solid #dc6970}
+.turn-display.rebel,.turn-status.rebel,[data-turn-kind="rebel"]{color:#f07171!important}
+.current-turn.rebel{color:#f07171!important}

@@ -1,19 +1,43 @@
 /* 서버가 보내는 본인용 상태만 렌더링합니다. 비밀 정보는 클라이언트에 없습니다. */
 const $ = selector => document.querySelector(selector);
 const app = $('#app');
-const socket = io({ reconnection: true });
+const socket = location.hostname.endsWith('.vercel.app')?window.createHTTPGameSocket():io({ reconnection: true, transports: ['websocket'] });
 const STORAGE = 'kingdom.session.v1';
 const RETURN_STORAGE = 'kingdom.returnSession.v1';
 let state = null, rules = null, busy = false, replaced = false, actionMode = null, selected = new Set(), turnKey = '';
 let freshCards = new Set(), freshTimer;
-const craftQueue=[];let crafting=false;
-async function enqueueCraft(data){
-  craftQueue.push({data,code:state.code,id:state.me.id});
-  if(crafting)return;crafting=true;
-  try{while(craftQueue.length){const job=craftQueue.shift();if(state?.code!==job.code||state?.me.id!==job.id||state?.game?.pending?.kind!=='craft'){craftQueue.length=0;break;}
-    if(!socket.connected){toast('재연결 후 다시 제작하세요.');craftQueue.length=0;break;}
-    try{const result=await socket.timeout(15000).emitWithAck('command',job.data);if(!result.ok){toast(result.error);craftQueue.length=0;break;}}catch{toast('제작 응답을 확인하지 못했습니다.');craftQueue.length=0;break;}
-  }}finally{crafting=false;}
+const receivedCardUntil=new Map();
+let lootSelected=new Set(),lootKey='';
+const pendingCrafts=new Map();let craftAuthoritative=null,craftPreviewId=0,craftRequestSerial=0;
+function previewCraft(snapshot,data){
+ const recipe=(snapshot.me.recipes||rules.recipes).find(r=>r.id===data.recipe);
+ if(!recipe||!Number.isInteger(data.count)||data.count<1)return false;
+ const materials=recipe.ingredients||[recipe],hand=snapshot.me.hand;
+ if(materials.some(m=>hand.filter(c=>c.type===m.input).length<m.count*data.count))return false;
+ for(const m of materials){let remaining=m.count*data.count;snapshot.me.hand=snapshot.me.hand.filter(c=>c.type!==m.input||remaining--<=0);}
+ for(let i=0;i<(recipe.amount||1)*data.count;i++)snapshot.me.hand.push({id:`preview-${++craftPreviewId}`,type:recipe.output});
+ return true;
+}
+function showPendingCrafts(){
+ if(!craftAuthoritative)return;
+ state=structuredClone(craftAuthoritative);
+ for(const data of pendingCrafts.values())previewCraft(state,data);
+ render();
+}
+function instantCraft(data){
+ if(!socket.connected){toast('연결이 끊겼습니다. 재연결 후 제작하세요.');return;}
+ if(!pendingCrafts.size)craftAuthoritative=structuredClone(state);
+ if(!previewCraft(state,data)){toast('제작 재료가 부족합니다.');return;}
+ const requestId=`craft-${Date.now()}-${++craftRequestSerial}`;
+ const request={...data,requestId};pendingCrafts.set(requestId,request);
+ render();
+ // 클릭 즉시 반영하고 즉시 전송합니다. 이전 응답을 기다리거나 제작 타이머를 두지 않습니다.
+ void socket.timeout(15000).emitWithAck('command',request).then(result=>{
+   if(!result.ok&&pendingCrafts.delete(requestId)){toast(result.error);showPendingCrafts();}
+ }).catch(()=>{
+   pendingCrafts.clear();craftAuthoritative=null;
+   toast('서버 연결을 확인합니다.');socket.disconnect();socket.connect();
+ });
 }
 let aiInfo = null;
 let expeditionTargets = new Set();
@@ -23,7 +47,7 @@ try { acknowledgedThefts = new Set(JSON.parse(localStorage.getItem('kingdom.thef
 const labels = { king: '왕', citizen: '시민', rebel: '반란군', neutral: '중립' };
 const religionCard = type => ['church', 'evangelism'].includes(type);
 const protectedCard = type => state.me.job !== 'bishop' && religionCard(type);
-const playerLabel = p => p.job ? `${labels[p.role]} · ${rules.neutralJobs?.[p.job] || rules.citizenJobs?.[p.job] || p.job}` : labels[p.role];
+const playerLabel = p => p.job ? `${labels[p.role]} · ${rules.neutralJobs?.[p.job] || rules.citizenJobs?.[p.job] || rules.rebelJobs?.[p.job] || p.job}` : labels[p.role];
 const recipeLabel = r => r.job ? (rules.neutralJobs?.[r.job] || rules.citizenJobs?.[r.job] || r.job) + ' 전용' : r.role ? labels[r.role] + ' 전용' : '공통';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nameOf = id => state.players.find(p => p.id === id)?.name || '플레이어';
@@ -65,6 +89,7 @@ async function command(data) {
   } finally { busy = false; document.body.classList.remove('busy'); }
 }
 socket.on('connect', async () => {
+  void refreshAIInfo();
   $('#connection').innerHTML = '<i></i> 서버 연결됨'; $('#connection').classList.remove('offline');
   if (replaced) return;
   const accountToken=localStorage.getItem('kingdom.account.v1');if(accountToken){const r=await socket.timeout(15000).emitWithAck('command',{type:'accountResume',token:accountToken});if(r.ok)accountProfile=r.account;else localStorage.removeItem('kingdom.account.v1');}
@@ -97,28 +122,47 @@ let composingChat=false,queuedChatState=null;
 document.addEventListener('compositionstart',event=>{if(event.target.id==='chat-message')composingChat=true;});
 document.addEventListener('compositionend',event=>{if(event.target.id!=='chat-message')return;composingChat=false;const pending=queuedChatState;queuedChatState=null;if(pending)setTimeout(()=>applyServerState(pending),0);});
 function applyServerState(next) {
+  if(pendingCrafts.size&&craftAuthoritative&&next.code===craftAuthoritative.code&&next.me.id===craftAuthoritative.me.id){
+   for(const note of next.me.notes)if(note.details?.craftRequestId)pendingCrafts.delete(note.details.craftRequestId);
+   craftAuthoritative=structuredClone(next);
+   next=structuredClone(next);
+   if(next.game?.pending?.kind==='craft'){for(const data of pendingCrafts.values())previewCraft(next,data);}
+   else pendingCrafts.clear();
+  }else if(craftAuthoritative&&(next.code!==craftAuthoritative.code||next.me.id!==craftAuthoritative.me.id)){
+   pendingCrafts.clear();craftAuthoritative=null;
+  }
   if(composingChat){queuedChatState=next;return;}
+  if(state&&JSON.stringify(state)===JSON.stringify(next))return;
+  const oldChat=$('.chat-messages');
+  const chatWasAtBottom=!oldChat||oldChat.scrollHeight-oldChat.scrollTop-oldChat.clientHeight<40;
+  const chatPreviousTop=oldChat?.scrollTop||0;
   const draft=$('#chat-message')?.value;
   const focusedChat=document.activeElement?.id==='chat-message';
   const pageScroll={x:window.scrollX,y:window.scrollY};
   next = { ...next, neutralJobs: next.neutralJobs || [], game: next.game ? { shop: null, religiousRevolt: null, religiousSuccesses: 0, religiousGoal: next.players.length === 4 ? 1 : next.players.length === 5 ? 2 : 3, ...next.game } : null };
   const previous = state;
+  if(next.status==='playing'&&next.game.fullMoon&&(!previous||previous.code!==next.code||previous.game?.day!==next.game.day))toast('오늘 밤에는 보름달이 뜹니다.');
+    if(previous?.code===next.code){const known=new Set(previous.me.notes.map(n=>n.id));for(const n of next.me.notes)if((n.effect==='rebelNotice'||n.details?.kind==='bomberSupply')&&!known.has(n.id))toast(n.text);}
   const changedIdentity = previous?.me.id !== next.me.id;
   if (next.device && changedIdentity) { $('#rules').close?.(); if (typeof deviceSeatChoice !== 'undefined') deviceSeatChoice = null; }
   if (previous?.code === next.code && !changedIdentity) {
     const oldCards = new Set(previous.me.hand.map(c => c.id));
     const added = next.me.hand.filter(c => !oldCards.has(c.id));
     if (added.length) {
-      freshCards = new Set(added.map(c => c.id));
+      const expires=Date.now()+1000;
+      for(const card of added)receivedCardUntil.set(card.id,expires);
+      freshCards = new Set([...receivedCardUntil].filter(([,until])=>until>Date.now()).map(([id])=>id));
       clearTimeout(freshTimer);
       freshTimer = setTimeout(() => {
         freshCards.clear();
-        document.querySelectorAll('.card.new-card').forEach(el => {
+        document.querySelectorAll('.card.new-card,.card.just-received').forEach(el => {
           el.classList.remove('new-card');
+          el.classList.remove('just-received');
         });
-      }, 6000);
+        for(const [id,until] of receivedCardUntil)if(until<=Date.now())receivedCardUntil.delete(id);
+      }, 1050);
     }
-  } else freshCards.clear();
+  } else {freshCards.clear();receivedCardUntil.clear();}
   const key = `${next.me.id}/${next.status}/${next.game?.day}/${next.game?.phase}/${next.game?.round}/${next.game?.current}/${next.game?.pending?.kind}/${next.game?.pending?.accepted}`;
   if(typeof merchantTab !== 'undefined' && (changedIdentity || previous?.game?.day !== next.game?.day))merchantTab='display';
   if (key !== turnKey) { selected.clear(); expeditionTargets.clear(); targetPlayer = null; actionMode = null; turnKey = key; }
@@ -130,29 +174,61 @@ function applyServerState(next) {
   render();
   if(next.status==='playing'&&(!previous||changedIdentity||previous.code!==next.code||previous.game?.day!==next.game?.day))toast(`${next.game.day}일 차 · 당신은 ${next.game.myTurnOrder}번째 차례입니다.`);
   const newChatScroll=$('.chat-messages');
-  if(newChatScroll)newChatScroll.scrollTop=newChatScroll.scrollHeight;
+  if(newChatScroll)newChatScroll.scrollTop=chatWasAtBottom?newChatScroll.scrollHeight:chatPreviousTop;
   if(draft&&$('#chat-message'))$('#chat-message').value=draft;
   if(focusedChat)$('#chat-message')?.focus({preventScroll:true});
-  if(previous?.code===next.code&&!changedIdentity)window.scrollTo?.(pageScroll.x,pageScroll.y);
+  if(previous?.code===next.code&&!changedIdentity)window.scrollTo?.({left:pageScroll.x,top:pageScroll.y,behavior:'instant'});
   window.kingdomEffects.handle(next.device && changedIdentity ? null : previous, next);
   window.kingdomResults?.handle(previous, next);
   window.kingdomChatAlerts?.handle(previous, next);
 }
 socket.on('state',applyServerState);
 fetch('/api/rules', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => { rules = { ...data, neutralJobs: data.neutralJobs || {} }; renderRules(); if (!replaced) render(); }).catch(() => toast('카드 정보를 불러오지 못했습니다. 새로고침해주세요.'));
-fetch('/api/ai').then(r => r.json()).then(data => { aiInfo = data; if (state?.status === 'lobby') render(); }).catch(() => { aiInfo = { available: false }; });
+async function refreshAIInfo(){
+ try{const r=await fetch('/api/ai',{cache:'no-store'});if(!r.ok)throw Error('ai_status_unavailable');aiInfo=await r.json();}
+ catch{aiInfo={available:false,loadError:'status_unavailable'};}
+ if(state?.status==='lobby')render();
+}
+void refreshAIInfo();
 
 function render() {
+  const position={x:window.scrollX,y:window.scrollY},minimum=app.style.minHeight;
+  const stableNodes=[...app.querySelectorAll('.action-panel,.hand-submit-controls,.phase-track,.game-heading')].map(node=>({node,html:node.outerHTML,selector:'.'+[...node.classList][0]}));
+  app.style.minHeight=`${app.getBoundingClientRect().height}px`;
+  try{
+    renderContent();
+    // Keep identical controls alive through polling updates, including their
+    // native :hover/focus state, rather than restarting the highlight each time.
+    for(const saved of stableNodes){const next=app.querySelector(saved.selector);if(next&&next!==saved.node&&next.outerHTML===saved.html)next.replaceWith(saved.node);}
+  }finally{app.style.minHeight=minimum;window.scrollTo({left:position.x,top:position.y,behavior:'instant'});}
+}
+function renderContent() {
+  updateAccountButton();
+  const renderPosition={x:window.scrollX,y:window.scrollY};
+  const oldNotes=$('.notes-scroll');
+  const notesTop=oldNotes?.scrollTop||0;
+  const notesOwner=oldNotes?.dataset.owner;
+  const noteAnchor=oldNotes&&notesTop>0?[...oldNotes.querySelectorAll('[data-note-id]')].find(el=>el.getBoundingClientRect().bottom>oldNotes.getBoundingClientRect().top):null;
+  const notePosition=noteAnchor?{id:noteAnchor.dataset.noteId,offset:noteAnchor.getBoundingClientRect().top-oldNotes.getBoundingClientRect().top}:null;
+  const previousChat=$('.chat-messages'),previousChatTop=previousChat?.scrollTop||0;
+  const chatPinned=!previousChat||previousChat.scrollHeight-previousChat.scrollTop-previousChat.clientHeight<40;
   if(state?.status==='lobby')window.kingdomRoleReveal?.show(state);
   if(!state||state.status!=='playing'||state.me.spectator||state.device&&!state.device.active)window.kingdomRoleReveal?.hide();
   window.kingdomMusic?.update(state?.status);
   window.kingdomBackground?.update(state?.game);
   const handScroll = $('.hand-grid')?.scrollLeft || 0;
   const handOwner = $('.hand-grid')?.dataset.owner;
+  const previousHand=$('.hand-grid');
+  const handSignature=state?JSON.stringify({owner:[state.code,state.me.id],hand:state.me.hand,selected:[...selected],phase:state.game?.phase,pending:state.game?.pending,round:state.game?.round,canAct:state.me.canAct,mode:actionMode,health:state.me.health}):'';
   if (replaced) return;
   if(rules)renderRules();
   if (!state) { renderHome(); return; }
   if (!rules) { app.innerHTML = '<div class="loading">카드 정보를 불러오는 중…</div>'; return; }
+  if(state.device?.revealing&&state.device.active&&state.status==='playing'){
+   const seat=state.device.players.find(p=>p.id===state.device.active);
+   app.innerHTML=`<section class="handoff-panel"><p>플레이어 ${seat.number} · ${esc(seat.name)}</p><h1 style="${state.me.role==='rebel'?'color:#f07171':''}">${esc(rules.citizenJobs?.[state.me.job]||rules.neutralJobs?.[state.me.job]||rules.rebelJobs?.[state.me.job]||rules.roles[state.me.role]||state.me.job||'참가자')}</h1><p>직업을 확인했다면 화면을 가리고 다음 사람에게 넘겨주세요.</p><button class="primary full" data-cmd="lockSeat">확인 완료 · 화면 가리기</button></section>`;
+   return;
+  }
   if(state.me.spectator){renderSpectator();return;}
   if (state.device && state.status !== 'lobby' && !state.device.active) {
     if (typeof renderDeviceGate === 'function') renderDeviceGate();
@@ -163,49 +239,64 @@ function render() {
   else renderGame();
   if(state.status==='playing'&&!state.me.spectator)window.kingdomRoleReveal?.show(state);
   window.finishLobbyUI?.();
-  const hand = $('.hand-grid');
-  if(hand){
+  decorateCardCosts();
+  let hand = $('.hand-grid');
+  if(hand&&previousHand?.dataset.signature===handSignature){hand.replaceWith(previousHand);hand=previousHand;hand.scrollLeft=handScroll;}
+  if(hand&&hand===previousHand){const section=hand.closest('.hand-section'),controls=document.createElement('div');controls.className='hand-submit-controls';section.append(controls);document.querySelectorAll('.action-panel .card-submit-row').forEach(row=>controls.append(row));}
+  if(hand&&hand!==previousHand){
+    hand.dataset.signature=handSignature;
     hand.querySelectorAll('.card-stepper').forEach(el=>el.remove());
     hand.querySelectorAll('.card').forEach(el=>{
+      const face=document.createElement('div');face.className='card-face';while(el.firstChild)face.append(el.firstChild);el.append(face);
       const count=state.me.hand.filter(card=>card.type===el.dataset.cardType&&selected.has(card.id)).length;
-      if(count>1){const label=document.createElement('span');label.className='card-selected-count';label.textContent=`X${count}`;label.setAttribute('aria-label',`${count}장 선택`);el.append(label);}
+      el.querySelector('.card-owned-count')?.remove();
+       const owned=document.createElement('span');owned.className='card-owned-count';owned.textContent=String(state.me.hand.filter(card=>card.type===el.dataset.cardType).length);owned.setAttribute('aria-label',`보유 ${owned.textContent}장`);el.append(owned);
+      if(count>0){const label=document.createElement('span');label.className='card-selected-count';label.textContent=`X${count}`;label.setAttribute('aria-label',`${count}장 선택`);el.append(label);}
+      const tools=document.createElement('div');tools.className='card-quick-tools';tools.innerHTML=`<button type="button" data-ui="inspectCard" data-card="${el.dataset.cardType}" aria-label="${rules.cards[el.dataset.cardType].name} 크게보기">크게보기</button>${count?`<button type="button" data-ui="unselectCard" data-card="${el.dataset.cardType}" aria-label="${rules.cards[el.dataset.cardType].name} 한 장 선택 취소">− 취소</button>`:''}`;el.append(tools);
     });
     const section=hand.closest('.hand-section');
     let controls=section.querySelector('.hand-submit-controls');
     if(!controls){controls=document.createElement('div');controls.className='hand-submit-controls';section.append(controls);}
     document.querySelectorAll('.action-panel .card-submit-row').forEach(row=>controls.append(row));
-    document.querySelectorAll('.hand-tools [data-ui="selectAll"],.hand-tools [data-ui="clearSelection"]').forEach(el=>el.remove());
+    document.querySelectorAll('.hand-tools [data-ui="selectAll"]').forEach(el=>el.remove());
     hand.dataset.owner = `${state.code}/${state.me.id}`;
     window.kingdomHandCarousel?.init(hand,handOwner === hand.dataset.owner?handScroll:null);
     hand.setAttribute('tabindex','0');
     hand.setAttribute('aria-label','손패 카드 · 좌우로 스크롤');
   }
+  const updatedChat=$('.chat-messages');
+   if(hand)hand.querySelectorAll('.card').forEach(card=>{
+     const received=state.me.hand.some(c=>c.type===card.dataset.cardType&&(receivedCardUntil.get(c.id)||0)>Date.now());
+     card.classList.toggle('just-received',received);
+     card.classList.remove('hover-held');
+   });
+  if(updatedChat)updatedChat.scrollTop=chatPinned?updatedChat.scrollHeight:previousChatTop;
+  const updatedNotes=$('.notes-scroll');
+  if(updatedNotes){
+    updatedNotes.dataset.owner=`${state.code}/${state.me.id}`;
+    if(notesOwner===updatedNotes.dataset.owner){
+      updatedNotes.scrollTop=notesTop;
+      const anchor=notePosition&&[...updatedNotes.querySelectorAll('[data-note-id]')].find(el=>el.dataset.noteId===notePosition.id);
+      if(anchor)updatedNotes.scrollTop+=anchor.getBoundingClientRect().top-updatedNotes.getBoundingClientRect().top-notePosition.offset;
+    }
+  }
+  window.scrollTo({left:renderPosition.x,top:renderPosition.y,behavior:'instant'});
 }
-function renderHome() {
-  const params = new URLSearchParams(location.search);
-  const returnSession = savedSession(RETURN_STORAGE);
-  app.innerHTML = `
-    <section class="home-layout">
-      <div class="hero">
-        <h1 class="game-title" aria-label="Coup - Regnum and Treason"><span class="game-title-coup" aria-hidden="true">Coup</span><span class="game-title-subtitle" aria-hidden="true"><span class="game-title-dash">-</span> Regnum and Treason</span></h1>
-      </div>
-      <div class="entry-panel">
-        <span class="eyebrow">ENTER THE KINGDOM</span><h2>당신의 자리를 준비하세요.</h2><p class="muted">같은 방 코드로, 어디서든 함께.</p>
-        ${returnSession ? `<div class="return-room"><strong>이전 방 ${esc(returnSession.code)}</strong><p>복귀하면 원래 자리를 이어받습니다.</p><button class="secondary full" data-ui="returnRoom">원래 방으로 돌아가기 →</button><button class="quiet full" data-ui="forgetRoom">해당 방 삭제 · 내 기기에서만</button></div>` : ''}
-        ${typeof renderAccount==='function'?renderAccount():''}
-        <form id="entry-form">
-          ${typeof accountProfile!=='undefined'&&accountProfile?`<p>참가 닉네임: ${esc(accountProfile.name)}</p>`:`<label for="guest-nickname">게스트 닉네임</label><input id="guest-nickname" name="name" maxlength="16" autocomplete="nickname" placeholder="비워두면 자동 이름" value="${esc(localStorage.getItem('kingdom.guestNickname')||'')}">`}
-          <button type="button" class="quiet border" data-ui="guide">게임 설명 · 10페이지</button>
-          <div class="mode-controls main-mode-choice"><button type="submit" name="entry" value="create" class="primary full">온라인 왕국 만들기</button><button type="submit" name="entry" value="createOffline" class="secondary full">오프라인 · 한 기기로 만들기</button></div>
-          <div class="divider"><span>또는 초대받은 왕국에 입장</span></div>
-          <label for="room-code">방 코드</label><input id="room-code" name="code" maxlength="6" placeholder="6자리 코드 입력" class="code-input" value="${esc(params.get('room') || '')}" autocomplete="off">
-          <button type="submit" name="entry" value="join" class="secondary full">코드로 참가하기 <span>↗</span></button>
-          <button type="submit" name="entry" value="spectate" class="quiet full">이 방 관전하기</button>
-        </form>
-        <div class="entry-note"><span>◉</span><p>폰·PC 모두 플레이 가능 · 대화는 자유롭게<br>한 기기로 여러 명: 방 참가 → 이 기기의 플레이어 추가<br>혼자 플레이: 방 만들기 → AI 추가 2명 → 시작</p></div>
-      </div>
-    </section>
-    <footer class="home-footer"><span>Coup - Regnum and Treason</span></footer>`;
+function decorateCardCosts(){
+ if(!state?.game)return;
+ const p=state.game.pending,me=state.me,swords=me.hand.filter(c=>c.type==='sword').length;
+ document.querySelectorAll('[data-cmd="battle"],[data-cmd="battleAnswer"][data-accept="false"],[data-cmd="ambush"],[data-ui="roarAmbush"],[data-cmd="assassinate"]').forEach(button=>{
+  const roar=button.dataset.ui==='roarAmbush',need=roar?1:button.dataset.cmd==='battleAnswer'?1:button.dataset.cmd==='ambush'&&me.job==='werewolf'?(p?.extra||0):2;
+  const owned=roar?me.hand.filter(c=>c.type==='roar').length:swords;
+  const badge=document.createElement('strong');badge.className='card-cost';badge.textContent=`${roar?'포효':'칼'} ${Math.min(owned,need)}/${need}`;badge.setAttribute('aria-label',`${roar?'포효':'칼'} 보유 ${owned}장, 필요 ${need}장`);button.after(badge);
+ });
+ if(state.game.phase==='ambush'&&me.job==='werewolf'&&p?.current===me.id){const info=document.createElement('p');info.className='action-description';info.textContent=`이번 기습: 칼 ${p.extra||0}장 필요${p.extra?' · 포효 1장으로 비용 전부 대체 가능':''}. 현재 누적 공격력 보너스: 카드마다 +${p.roarBonus||0}.`;document.querySelector('.action-panel h2')?.after(info);}
+ document.querySelectorAll('.full-moon-banner > span').forEach(icon=>{icon.textContent='';const img=document.createElement('img');img.src='/assets/full-moon-icon.svg';img.alt='';img.className='pixel-moon';icon.append(img);});
+}
+function renderHome(){
+ const session=savedSession(RETURN_STORAGE),room=new URLSearchParams(location.search).get('room')||'';
+ updateAccountButton();
+ app.innerHTML=`<section class="home-layout confirmed-home"><div class="hero"><h1 class="game-title"><span class="game-title-coup">Coup</span><span class="game-title-subtitle">Regnum and Treason</span></h1>${session?`<section class="return-room"><div><strong>이어하기 · ${esc(session.code)}</strong><p>이전 왕국의 자리를 이어갑니다.</p></div><button class="secondary" data-ui="returnRoom">이어하기 →</button><button class="quiet" data-ui="forgetRoom">삭제</button></section>`:''}</div><div class="entry-panel">${homeView!=='menu'?renderHomeAccount():`<form id="entry-form"><label for="guest-nickname">닉네임</label><input id="guest-nickname" name="name" maxlength="16" autocomplete="nickname" placeholder="비워두면 자동 이름" value="${esc(localStorage.getItem('kingdom.guestNickname')||accountProfile?.name||'')}"><button type="button" class="primary full" data-online-menu aria-expanded="${onlineMenuOpen}">${onlineMenuOpen?'뒤로가기':'온라인 게임'}</button><div class="online-options" ${onlineMenuOpen?'':'hidden'}><button type="submit" name="entry" value="create" class="secondary full">방 만들기</button><label for="room-code">방 코드</label><input id="room-code" name="code" maxlength="6" value="${esc(room)}" placeholder="6자리 방 코드"><button type="submit" name="entry" value="join" class="secondary full">코드 참가</button><button type="submit" name="entry" value="spectate" class="quiet full">관전</button></div>${onlineMenuOpen?'':'<button type="submit" name="entry" value="createOffline" class="secondary full">오프라인 게임</button><button type="button" class="quiet border full" data-ui="guide">게임 가이드</button>'}</form>`}</div></section><span class="studio-logo">2Gpiece Studio</span>`;
 }
 function renderLobby() {
   const isHost = state.host === state.me.id;
@@ -230,7 +321,8 @@ function renderLobby() {
         <p class="config-summary ${valid ? '' : 'warn'}">진영 합계 ${total}명 · 참가자 ${state.players.length}명${!valid ? ' — 인원과 필수 진영을 확인하세요.' : ''}</p>
         ${isHost ? `<button class="primary full" data-cmd="start" ${valid ? '' : 'disabled'}>왕국의 첫날 시작하기 <span>→</span></button>` : '<div class="waiting-box">방장이 게임을 시작하면 입장합니다.</div>'}
         <div class="neutral-job-settings"><h3>중립 직업 선택</h3><p class="small muted">선택한 직업 중 무작위 배정 · 같은 직업은 최대 1명. 선택한 직업보다 중립 인원이 많으면 나머지는 일반 중립입니다.</p>${Object.entries(rules.neutralJobs || {}).map(([job, label]) => `<label><input type="checkbox" data-neutral-job="${job}" ${(state.neutralJobs || []).includes(job) ? 'checked' : ''} ${!isHost || state.players.length < 4 ? 'disabled' : ''}> ${label}</label>`).join('')}</div>
-        <div class="neutral-job-settings"><h3>시민 직업 선택 · 시민 ${state.config.citizen}명</h3><p class="small muted">선택하지 않으면 일반 시민입니다. 시민 인원 이내에서 중복 없이 배정합니다.</p>${Object.entries(rules.citizenJobs||{}).map(([job,label])=>`<label><input type="checkbox" data-citizen-job="${job}" ${(state.citizenJobs||[]).includes(job)?'checked':''} ${!isHost?'disabled':''}> ${label}</label>`).join('')}</div>
+        <div class="neutral-job-settings"><h3>반란군 직업 선택 · 각 최대 1명</h3>${state.config.rebel<2?'<p class="small">늑대인간 선택: 위 진영 구성에서 반란군을 2명 이상으로 설정하세요.</p>':''}${Object.entries(rules.rebelJobs||{}).map(([job,label])=>`<label><input type="checkbox" data-rebel-job="${job}" ${(state.rebelJobs||[]).includes(job)?'checked':''} ${!isHost||job==='werewolf'&&state.config.rebel<2?'disabled':''}> ${label}${job==='werewolf'&&state.config.rebel<2?' · 반란군 2명 이상 필요':''}</label>`).join('')}</div>
+        <div class="neutral-job-settings"><h3>시민 직업 선택 · 시민 ${state.config.citizen}명</h3><p class="small muted">선택하지 않으면 일반 시민입니다. 시민 인원 이내에서 중복 없이 배정합니다. 감시자는 반란군 2명 이상·시민 1명 이상이 필요합니다.${state.config.rebel<2?' 위 진영 구성에서 반란군을 2명 이상으로 설정하세요.':''}</p>${Object.entries(rules.citizenJobs||{}).map(([job,label])=>`<label><input type="checkbox" data-citizen-job="${job}" ${(state.citizenJobs||[]).includes(job)?'checked':''} ${!isHost||job==='watcher'&&(state.config.rebel<2||state.config.citizen<1)?'disabled':''}> ${label}${job==='watcher'&&state.config.rebel<2?' · 반란군 2명 이상 필요':''}${job==='watcher'&&state.config.citizen<1?' · 시민 1명 이상 필요':''}</label>`).join('')}</div>
         <p class="small muted">${state.players.length >= 5 ? '5인의 추가 자리는 시민·반란군·중립 중 선택 가능합니다. 주교·상인 직업은 중복 배정되지 않습니다.' : '3인: 왕·시민·반란군 / 4인: 중립 추가'}<br>3인 게임에는 중립 직업이 없습니다.</p>
       </section>
     </div>
@@ -247,8 +339,9 @@ function renderGame() {
   const acting = g.current === me.id || (g.phase === 'morning' && g.king === me.id) || (g.phase === 'executionVote' && !g.pending.myDone);
   app.innerHTML = `
     ${typeof deviceToolbar === 'function' ? deviceToolbar() : ''}
-    <div class="game-heading"><div><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions">${state.host===me.id&&state.mode!=='offline'?'<button class="quiet border compact-spectator" data-cmd="addSpectator">관전 초대</button>':''}${typeof renderVoteRequests==='function'?renderVoteRequests():''}<button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
+    <div class="game-heading"><div><p class="king-order">♛ 왕: ${esc(nameOf(g.king))} · 내 순서: ${g.myTurnOrder||'—'}번째</p><span class="eyebrow">KINGDOM <span class="dot">/</span> ${state.code}</span><h1>${ended ? '왕국의 이야기가 끝났습니다.' : `${g.day}일 차, ${phase}의 왕국`}</h1></div><div class="game-heading-actions">${state.host===me.id&&state.mode!=='offline'?'<button class="quiet border compact-spectator" data-cmd="addSpectator">관전 초대</button>':''}${typeof renderVoteRequests==='function'?renderVoteRequests():''}<button class="quiet border" data-cmd="leave">방 나가기 ↗</button><div class="day-count"><strong>${String(g.day).padStart(2, '0')}</strong><span>/ ${String(g.maxDays).padStart(2, '0')}<small>DAY</small></span></div></div></div>
     <div class="game-layout">
+      ${g.fullMoon&&!ended?'<section class="full-moon-banner" role="status"><span aria-hidden="true">🌕</span><div>오늘 밤은 보름달입니다<small>늑대인간이 보름달의 힘을 받습니다.</small></div></section>':''}
       <div class="game-main">
         <div class="phase-track">${['아침', '낮', '저녁', '밤'].map((p, i) => `<div class="phase-step ${phase === p ? 'active' : ''}"><span class="phase-icon">${['☀', '◉', '◒', '☾'][i]}</span><span>${p}</span>${p === '낮' && g.phase === 'day' ? `<small>${g.round}/3 바퀴</small>` : ''}</div>`).join('')}<div class="score-tracks">${state.neutralJobs.includes('bishop') ? `<div class="rebellion-track religion-track"><span>✝ 종교반란 성공</span>${Array.from({length:g.religiousGoal},(_,i)=>i+1).map(n => `<i class="${g.religiousSuccesses >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.religiousSuccesses}/${g.religiousGoal}</b></div>` : ''}<div class="rebellion-track"><span>반란 성공</span>${Array.from({length:g.revoltGoal},(_,i)=>i+1).map(n => `<i class="${g.successes >= n ? 'filled' : ''}"></i>`).join('')}<b>${g.successes}/${g.revoltGoal}</b></div></div></div>
         ${renderRevoltBanner()}
@@ -260,7 +353,7 @@ function renderGame() {
         <section class="action-panel ${acting ? 'your-turn' : ''}"><div class="action-kicker"><span class="eyebrow">${ended ? 'THE FINAL CHAPTER' : acting ? 'YOUR MOVE' : 'THE KINGDOM MOVES'}</span>${g.revolt !== null && g.revolt > 0 ? `<span class="revolt-alert">⚑ 반란력 ${g.revolt}</span>` : ''}</div>${renderAssistance()}${renderAction()}</section>
         <section class="hand-section"><div class="hand-heading"><div><span class="eyebrow">FOR YOUR EYES ONLY</span><h2>${ended ? '종료 시 나의 손패' : '나의 손패'} <span>${me.hand.length}</span></h2></div><div class="hand-tools">${selectionContext() ? '<button class="quiet" data-ui="selectAll">가능한 카드 모두 선택</button><button class="quiet" data-ui="clearSelection">선택 해제</button>' : '<span class="private-label">◈ 나에게만 공개</span>'}</div></div>${me.hand.length > (me.handLimit||30) && !ended ? `<div class="hand-warning">다음 아침에 ${me.handLimit||30}장까지 줄어듭니다. 자원 → 나머지 일반 카드 → 보호되는 교단·전도 순서로 버립니다.</div>` : ''}<div class="hand-grid">${renderHand()}</div>${selectionContext() ? renderSelectionSummary() : '<p class="hand-hint">행동에 사용할 카드는 해당 행동을 선택한 뒤 고를 수 있습니다.</p>'}</section>
       </div>
-      <aside class="game-sidebar"><section class="panel identity-panel ${me.role}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'merchant' ? '◆' : me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'merchant' ? '돈 100점을 모으면 승리합니다.<br>비밀거래 불가 · 원정 자동 0장 · 돈으로 중재.' : me.job === 'bishop' ? `종교반란을 ${g.religiousGoal}일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.` : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일${state.neutralJobs.includes('bishop') ? `,<br>종교반란 ${g.religiousGoal}일` : ''} 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : me.job==='merchant'?`<div class="money-counter"><span>나에게만 공개 · 보유 돈</span><strong>${me.money} / 100점</strong></div>`:''}</section>
+      <aside class="game-sidebar"><section class="panel identity-panel ${me.role} ${me.job||''}"><span class="eyebrow">YOUR ALLEGIANCE</span><div class="identity-title"><span>${me.job === 'merchant' ? '◆' : me.job === 'bishop' ? '✝' : roleIcon(me.role)}</span><h2>${playerLabel(me)}</h2><span class="pill">${me.role === 'king' ? '공개' : '비공개'}</span></div><p>${me.job === 'merchant' ? '돈 100점을 모으면 승리합니다.<br>비밀거래 불가 · 원정 자동 0장 · 돈으로 중재.' : me.job === 'bishop' ? `종교반란을 ${g.religiousGoal}일 성공시키세요.<br>반란군 행동 후 밤 행동이 가능합니다.` : me.role === 'rebel' ? `반란을 ${g.revoltGoal}일 성공시키세요.<br>동료 반란군의 진영은 서로 보입니다.` : me.role === 'neutral' ? '철혈의 검 획득으로 승리하세요.' : `마지막 날까지 일반 반란 ${g.revoltGoal}일${state.neutralJobs.includes('bishop') ? `,<br>종교반란 ${g.religiousGoal}일` : ''} 성공을 막으세요.`}</p>${me.job === 'bishop' ? `<div class="influence-counter"><span>교단영향력 · 나에게만 공개</span><strong>${me.churchInfluence}점</strong></div>` : me.job==='merchant'?`<div class="money-counter"><span>나에게만 공개 · 보유 돈</span><strong>${me.money} / 100점</strong></div>`:''}</section>
          ${typeof renderSocial==='function'?renderSocial():''}
         <section class="panel personal-notes"><div class="panel-heading"><h2>나의 비밀 기록</h2><span class="live-label">PRIVATE</span></div><div class="notes-scroll">${[...me.notes].reverse().map(renderNote).join('') || '<p class="muted">아직 기록이 없습니다.</p>'}</div></section>
         <div class="sidebar-foot">방 코드 <button class="quiet" data-ui="copyCode">${state.code} ⧉</button><span>대화는 디스코드에서</span></div>
@@ -269,10 +362,11 @@ function renderGame() {
 }
 function renderRevoltBanner() {
   const g = state.game;
-  if (g.revolt !== null) return `<section class="revolt-banner ${g.revolt ? 'danger' : 'peace'}" aria-label="아침 반란점수"><div class="revolt-emblem">${g.revolt ? '⚑' : '☀'}</div><div><span class="eyebrow">DAY ${g.day} · MORNING REPORT</span><h2>${g.revolt ? '밤사이 반란이 일어났습니다' : '발생한 반란이 없습니다'}</h2><p>${g.revolt ? '이 점수 이상의 중재력이 필요합니다. 동점이면 방어 성공.' : '왕이 오늘의 아침 행동을 선택합니다.'}</p></div><div class="revolt-number"><strong>${g.revolt}</strong><span>반란점수</span></div></section>`;
+  const bombMarkers=`<div class="bomb-markers">${Array.from({length:g.bombs||0},(_,i)=>`<span class="${i<(g.giantBombs||0)?'giant-bomb-marker':''}" aria-label="${i<(g.giantBombs||0)?'거대폭탄':'폭탄'}">●</span>`).join('')}</div>`;
+  if (g.revolt !== null) return `<section class="revolt-banner ${g.revolt ? 'danger' : 'peace'}" aria-label="아침 반란점수">${bombMarkers}<div class="revolt-emblem">${g.revolt ? '⚑' : '☀'}</div><div><span class="eyebrow">DAY ${g.day} · MORNING REPORT</span><h2>${g.revolt ? '밤사이 반란이 일어났습니다' : '발생한 반란이 없습니다'}</h2><p>${g.revolt ? '이 점수 이상의 중재력이 필요합니다. 동점이면 방어 성공.' : '왕이 오늘의 아침 행동을 선택합니다.'}</p></div><div class="revolt-number"><strong>${g.revolt}</strong><span>반란점수</span></div></section>`;
   const result = g.lastRevolt;
   if (result?.day !== g.day) return '';
-  return `<section class="revolt-result ${result.blocked ? 'blocked' : 'breached'}"><span>${result.blocked ? '♜' : '⚑'}</span><div><h2>${result.blocked ? '반란을 막았습니다!' : '반란을 막지 못했습니다!'}</h2><p>반란력 ${result.revolt} · ${result.strength === null ? '중재 미선택' : `중재력 ${result.strength}`} · 지원 ${result.helperCount || 0}명(왕 제외) · 반란 성공 누적 ${g.successes}/${g.revoltGoal}일${result.bombs ? ` · 폭탄 ${result.bombs}장 ${result.blocked ? '폭발 저지' : '폭발 — 왕·시민 손패 몰수'}` : ''}</p></div></section>`;
+  return `<section class="revolt-result ${result.blocked ? 'blocked' : 'breached'}"><span>${result.blocked ? '♜' : '⚑'}</span><div><h2>${result.blocked ? '반란을 막았습니다!' : '반란을 막지 못했습니다!'}</h2><p>반란력 ${result.revolt} · ${result.strength === null ? '중재 미선택' : `중재력 ${result.strength}`} · 지원 ${result.helperCount || 0}명(왕 제외) · 반란 성공 누적 ${g.successes}/${g.revoltGoal}일${result.giantBombs?` · 거대폭탄 ${result.giantBombs}장 발동`:''}${result.bombs ? ` · 폭탄 ${result.bombs}장 ${result.blocked ? '발동' : '일반폭탄 불발'}` : ''}</p></div></section>`;
 }
 function renderTheftAlert() {
   const unread=state.me.notes.filter(n=>n.effect==='stolen'&&!acknowledgedThefts.has(n.id));
@@ -289,15 +383,17 @@ function renderReligiousBanner() {
 }
 function renderAssistance() {
   const g=state.game,p=g.pending;
+  if(p?.kind==='battle')return `<div class="assistance-counter"><b>전투 카드 제출</b><span>${p.myDone?'제출 완료 · 상대를 기다립니다.':'전투에 사용할 카드를 선택하세요.'}</span></div>`;
+  if(p?.kind==='battleLoot')return '';
   if(['mediationSupport','mediationKing'].includes(g.phase))return `<div class="assistance-counter"><b>중재 지원 ${p.helperCount || 0}명</b><span>왕 제외 · 카드 또는 돈으로 지원한 사람</span></div>`;
   if(g.phase==='expeditionCards')return `<div class="assistance-counter"><b>원정 카드 제출 ${p.contributorCount || 0}명</b><span>왕 포함 · 0장 제출 제외 · 참가자 ${p.participantCount}명</span></div>`;
   if(g.lastExpedition?.day===g.day)return `<div class="assistance-counter"><b>원정 카드 제출 ${g.lastExpedition.contributorCount}명</b><span>참가자 ${g.lastExpedition.participantCount}명 · 카드 종류·수량은 비공개</span></div>`;
   return '';
 }
 function renderNote(n) {
-  if (n.details?.kind !== 'hand') return `<p>${esc(n.text)}</p>`;
+  if (n.details?.kind !== 'hand') return `<p data-note-id="${esc(n.id)}">${esc(n.text)}</p>`;
   const d=n.details, groups={}; d.cardTypes.forEach(t=>{groups[t]=(groups[t]||0)+1;});
-  return `<div class="private-inspection"><p>${esc(d.name)} · ${d.day}일 차 확인 당시 손패 ${d.cardTypes.length}장</p><button class="secondary" data-ui="inspectNote" data-note="${n.id}">손패 크게 보기</button><div class="private-cards">${Object.entries(groups).map(([t,count])=>`<span>${rules.cards[t].icon} ${rules.cards[t].name} ×${count}</span>`).join('') || '<span>손패 없음</span>'}</div></div>`;
+  return `<div class="private-inspection" data-note-id="${esc(n.id)}"><p>${esc(d.name)} · ${d.day}일 차 확인 당시 손패 ${d.cardTypes.length}장</p><button class="secondary" data-ui="inspectNote" data-note="${n.id}">손패 크게 보기</button><div class="private-cards">${Object.entries(groups).map(([t,count])=>`<span>${rules.cards[t].icon} ${rules.cards[t].name} ×${count}</span>`).join('') || '<span>손패 없음</span>'}</div></div>`;
 }
 function renderMajorResults() {
   const g = state.game;
@@ -336,17 +432,29 @@ function targetSelect(label = '대상 선택', candidates = null) {
 }
 function wait(title, description) { return `<h2>${esc(title)}</h2><p class="action-description">${description}</p><div class="wait-indicator"><i></i><i></i><i></i><span>다른 플레이어의 선택을 기다리고 있습니다.</span></div>`; }
 function renderAction() {
+  if(state.game.phase==='assassinNight')return state.me.job==='assassin'?`<h2>암살자 · 밤의 추가 행동</h2><p>칼 2장을 소모합니다. 대상은 다음 날 중재에 참여할 수 없습니다.</p>${targetSelect('암살 대상',state.players.filter(p=>p.id!==state.me.id&&p.id!==state.game.king&&!p.surrendered))}<button class="primary" data-cmd="assassinate" data-target="true">암살 · 칼 2장</button><button class="secondary" data-cmd="assassinSkip">건너뛰기</button>`:wait('밤 행동 진행 중','다른 참가자의 선택을 기다립니다.');
+  if(state.me.mediationBlocked&&['mediationSupport','mediationKing'].includes(state.game.phase))return wait('암살을 당해 오늘 중재에 참여할 수 없습니다','다른 플레이어들의 중재를 기다립니다.');
+
+  if(state.game.pending?.kind==='battleLoot'){
+    const loot=state.game.pending;
+    if(loot.winner!==state.me.id)return wait('전투 보상 선택 중','승자가 가져갈 카드를 고르고 있습니다.');
+    const key=`${state.code}/${state.me.id}/${loot.cards.map(c=>c.id).sort().join(',')}`;
+    if(lootKey!==key){lootKey=key;lootSelected.clear();}
+    const groups=loot.cards.reduce((groups,c)=>{(groups[c.type]||=[]).push(c);return groups;},{});
+    return `<h2>전투 보상 · 최대 ${loot.limit}장 선택</h2><div class="loot-choices pixel-loot">${Object.entries(groups).map(([type,cards])=>{const count=cards.filter(c=>lootSelected.has(c.id)).length;return `<article class="loot-card"><div class="loot-art">${window.kingdomPixelArt.card(type)}</div><h3>${esc(rules.cards[type].name)}</h3><p>보유 ${cards.length}장</p><div class="loot-stepper"><button type="button" data-ui="lootMinus" data-card="${type}" ${count?'':'disabled'} aria-label="${rules.cards[type].name} 줄이기">−</button><strong>${count} / ${cards.length}</strong><button type="button" data-ui="lootPlus" data-card="${type}" ${count===cards.length||lootSelected.size>=loot.limit?'disabled':''} aria-label="${rules.cards[type].name} 늘리기">＋</button></div></article>`;}).join('')}</div><div class="card-submit-row"><button class="primary" data-cmd="claimBattleLoot">선택한 카드 가져오기</button><strong>${lootSelected.size}/${loot.limit}</strong></div>`;
+  }
+
   const g = state.game, p = g.pending, me = state.me, isKing = g.king === me.id;
   if(g.phase==='eveningDuel'){
     if(p?.kind==='battle'){
       if(!p.accepted)return p.to===me.id?`<h2>결투 신청을 받았습니다.</h2><p>거절 시 칼 1장을 소모합니다.</p><button class="primary" data-cmd="battleAnswer" data-accept="true">수락</button><button class="secondary" data-cmd="battleAnswer" data-accept="false" ${me.hand.some(c=>c.type==='sword')?'':'disabled'}>거절 · 칼 1장</button>`:wait('결투 응답 대기','상대가 선택하고 있습니다.');
       return p.myDone?wait('제출 완료','상대의 제출을 기다립니다.'):`<h2>결투 카드 선택</h2>${submitCards('battleSubmit','결투 확정')}`;
     }
-    return p?.current===me.id?`<h2>저녁 결투 신청</h2><p>신청 시 칼 2장을 소모합니다.</p>${targetSelect('결투 대상')}<button class="primary" data-cmd="battle" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=2?'':'disabled'}>결투 신청 · 칼 2장</button><button class="secondary" data-cmd="duelSkip">건너뛰기</button>`:wait('저녁 결투 신청 단계','다른 참가자의 선택을 기다립니다.');
+    return p?.current===me.id?`<h2>저녁 결투 신청</h2><p>${me.job==='werewolf'?'늑대인간은 결투를 신청할 수 없습니다.':'신청 시 칼 2장을 소모합니다.'}</p>${me.job==='werewolf'?'':`${targetSelect('결투 대상')}<button class="primary" data-cmd="battle" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=2?'':'disabled'}>결투 신청 · 칼 2장</button>`}<button class="secondary" data-cmd="duelSkip">건너뛰기</button>`:wait('저녁 결투 신청 단계','다른 참가자의 선택을 기다립니다.');
   }
   if(g.phase==='ambush'){
     if(p?.kind==='battle')return p.myDone?wait('기습 전투 카드를 확정했습니다.','상대의 제출을 기다립니다.'):`<h2>기습 전투</h2><p>기습은 거절할 수 없습니다. 전투 카드를 선택하세요.</p>${submitCards('battleSubmit','전투 확정')}`;
-    return p?.current===me.id?`<h2>기습하시겠습니까?</h2>${targetSelect('기습 대상')}<div class="button-row"><button class="primary" data-cmd="ambush" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=2?'':'disabled'}>습격 · 칼 2장</button><button class="secondary" data-cmd="ambushSkip">건너뛰기</button></div>`:wait('반란군의 저녁 준비를 기다립니다.','습격 단계가 끝나면 상인 준비와 밤으로 진행합니다.');
+    return p?.current===me.id?`<h2>${p.extra?'추가 기습하시겠습니까?':'기습하시겠습니까?'}</h2><p>이미 기습한 대상은 다시 선택할 수 없습니다.</p>${targetSelect('기습 대상')}<div class="button-row"><button class="primary" data-cmd="ambush" data-target="true" ${me.hand.filter(c=>c.type==='sword').length>=(me.job==='werewolf'?(p.extra||0):2)?'':'disabled'}>습격 · ${me.job==='werewolf'?(p.extra?`칼 ${p.extra}장`:'무료'):'칼 2장'}</button>${me.job==='werewolf'&&p.extra&&me.hand.some(c=>c.type==='roar')?'<button class="secondary" data-ui="roarAmbush">포효로 추가 기습 · 카드 공격력 +1</button>':''}<button class="secondary" data-cmd="ambushSkip">건너뛰기</button></div>`:wait('반란군의 저녁 준비를 기다립니다.','습격 단계가 끝나면 상인 준비와 밤으로 진행합니다.');
   }
   if (state.status === 'finished') {
     const won = g.winner.players.includes(me.id);
@@ -441,7 +549,7 @@ function renderAction() {
   }
   if (g.phase === 'night') {
     if (me.role !== 'rebel' || p.myDone) return wait('왕국이 잠든 밤.', '밤의 행동은 비공개입니다. 쌓인 반란점수는 다음 날 아침에 공개됩니다.');
-    return `<h2>어둠 속에서 반란을 준비하세요.</h2><p class="action-description">반란력이 있는 카드를 제출하세요. 폭탄은 +5점이며 왕이 반란을 막지 못하면 왕·시민의 보호 카드 외 손패를 전부 버립니다. 설치 여부는 판정 전까지 비공개입니다. 영구 카드는 제출 후 유지됩니다.</p>${submitCards('revolt', '밤의 반란 카드 확정')}`;
+    return `<h2>어둠 속에서 반란을 준비하세요.</h2><p class="action-description">반란력이 있는 카드를 제출하세요. 일반 폭탄은 +5점이며 중재 성공 시 발동합니다. 거대폭탄은 +20점이며 중재 성공·실패·미선택 모두 발동합니다. 폭탄당 비반란군 1명에게 중복 없이 손패 몰수와 피해 1을 줍니다. 설치 여부는 판정 전까지 비공개입니다. 영구 카드는 제출 후 유지됩니다.</p>${submitCards('revolt', '밤의 반란 카드 확정')}`;
   }
   if (g.phase === 'bishopNight') {
     if (me.job !== 'bishop') return wait('왕국이 잠든 밤.', '밤의 행동은 비공개이며 다음 아침에 반란력이 공개됩니다.');
@@ -467,18 +575,18 @@ function selectionContext() {
   if(g.phase==='market'&&!p.myDone&&state.me.job!=='merchant')return marketSelection();
   if(g.phase==='merchantEvening'&&state.me.job==='merchant'&&actionMode==='display'&&p.kind!=='craft')return {allowed:()=>true,min:1,label:'진열할 카드'};
   if(state.me.job==='merchant'&&['mediationSupport','mediationKing','expeditionCards'].includes(g.phase))return null;
-  if ((state.me.role!=='rebel' || p?.revoltType === 'religion') && (g.phase === 'mediationSupport' && id !== g.king || g.phase === 'mediationKing' && id === g.king) && !p.myDone) return { allowed: t => clientMediationPower(t)>0, value:clientMediationPower, stat: 'mediation', label: '내 중재력' };
+  if (!state.me.mediationBlocked && (state.me.role!=='rebel' || p?.revoltType === 'religion') && (g.phase === 'mediationSupport' && id !== g.king || g.phase === 'mediationKing' && id === g.king) && !p.myDone) return { allowed: t => clientMediationPower(t)>0, value:clientMediationPower, stat: 'mediation', label: '내 중재력' };
   if (g.phase === 'expeditionCards' && p.isParticipant && !p.myDone) return { allowed: t => expeditionValue(t)!==null, stat: 'expedition', label: '내 원정 기여점수' };
   if (g.phase === 'day' && p?.kind === 'trade' && p.accepted && !p.myDone) return { allowed: () => true, label: '줄 카드' };
   if (g.phase === 'day' && g.current === id && g.round === 2 && actionMode === 'hunt') return { allowed: t => !!rules.cards[t].attack, stat: 'attack', label: '사냥 공격력' };
   if (g.phase === 'day' && g.current===id && g.round===3 && actionMode==='refresh') return {allowed:t=>!religionCard(t),label:'교체할 카드',max:5};
   if (g.phase === 'day' && p?.kind === 'royalSupport' && p.accepted && p.to === id) return {allowed:()=>true,label:'왕국지원 카드',min:3,max:5};
   if (g.phase === 'tax' && !p.myDone) return { allowed: () => true, label: '세금 카드', exact: Math.min(3, state.me.hand.length) };
-  if (g.phase === 'night' && state.me.role === 'rebel' && !p.myDone) return { allowed: t => !!rules.cards[t].revolt, stat: 'revolt', label: '내 반란력' };
+  if (g.phase === 'night' && state.me.role === 'rebel' && !p.myDone) return { allowed: t => !!rules.cards[t].revolt||state.me.job==='assassin'&&t==='sword', stat: 'revolt', label: '내 반란력' };
   return null;
 }
 function cardStats(def) {
-  return [def.attack ? `공격 ${def.attack}` : '', def.revolt ? `반란 ${def.revolt}` : '', def.mediation ? `중재 ${def.mediation}` : '', def.expedition ? `원정 ${def.expedition}` : '', def.sabotage ? `원정 방해 ${def.sabotage}` : '', def.bomb ? '방어 실패 시 왕·시민 몰수' : '', def.permanent ? '영구 · 재사용' : '', def.instantWin ? '획득 즉시 승리' : ''].filter(Boolean);
+  return [def.attack ? `공격 ${def.attack}` : '', def.revolt ? `반란 ${def.revolt}` : '', def.mediation ? `중재 ${def.mediation}` : '', def.expedition ? `원정 ${def.expedition}` : '', def.sabotage ? `원정 방해 ${def.sabotage}` : '', def.bomb ? (def.giantBomb?'중재 결과와 관계없이 발동':'중재 성공 시 발동') : '', def.permanent ? '영구 · 재사용' : '', def.instantWin ? '획득 즉시 승리' : ''].filter(Boolean);
 }
 function renderHand() {
   if (!state.me.hand.length) return '<div class="empty-hand"><span>◇</span><p>지금은 손패가 없습니다.<br><small>카드받기나 채집으로 다시 준비하세요.</small></p></div>';
@@ -487,7 +595,7 @@ function renderHand() {
     const cards = state.me.hand.filter(c => c.type === type), count = cards.filter(c => selected.has(c.id)).length;
     const allowed = context?.allowed(type);
     const newCount = cards.filter(c => freshCards.has(c.id)).length;
-    return `<div data-card-type="${type}" data-card-count="${cards.length}" class="card ${def.category} ${newCount ? 'new-card' : ''} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-symbol">${window.kingdomPixelArt.card(type)}</div><h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : ''}</div>`;
+    return `<div data-card-type="${type}" data-card-count="${cards.length}" class="card ${def.category} ${newCount ? 'new-card' : ''} ${count ? 'selected' : ''} ${context && !allowed ? 'unusable' : ''}"><div class="card-symbol">${window.kingdomPixelArt.card(type)}</div>${def.heal&&state.game.phase==='day'&&state.game.current===state.me.id&&state.me.health<=3&&state.me.health<state.me.maxHealth?`<button class="potion-use" data-potion="${cards[0].id}" aria-label="${def.name} 사용">＋ 사용</button>`:''}<h3>${def.name}</h3><div class="card-stats">${cardStats(def).map(s => `<span>${s}</span>`).join('') || '<span>제작 재료</span>'}</div>${allowed ? `<div class="card-stepper"><button data-ui="minusCard" data-card="${type}" aria-label="${def.name} 선택 줄이기" ${count ? '' : 'disabled'}>−</button><span>${count} / ${cards.length}</span><button data-ui="plusCard" data-card="${type}" aria-label="${def.name} 선택 늘리기" ${count === cards.length ? 'disabled' : ''}>＋</button></div>` : ''}</div>`;
   }).join('');
 }
 function selectionScore() {
@@ -503,7 +611,7 @@ function renderSelectionSummary() {
 }
 function submitCards(type, text) {
   const c = selectionContext(), disabled = c?.exact !== undefined && selected.size !== c.exact || c?.min !== undefined && selected.size < c.min;
-  return `<div class="card-submit-row"><button class="primary" data-cmd="${type}" data-cards="true" ${disabled ? 'disabled' : ''}>${text} →</button></div><p class="small muted">손패 카드를 클릭하면 한 장씩 선택됩니다. 선택한 카드는 취소할 수 없습니다.</p>`;
+   return `<div class="card-submit-row"><button class="primary" data-cmd="${type}" data-cards="true" ${disabled ? 'disabled' : ''}>${text} →</button>${c?.exact!==undefined||c?.min>0?`<strong class="tax-selection-count" role="status">${selected.size}/${c.exact??c.min}${c.exact===undefined?' 이상':''}</strong>`:''}</div><p class="small muted">카드를 클릭하면 한 장씩 선택됩니다. 카드의 − 취소 또는 선택 해제로 제출 전 취소할 수 있습니다.</p>`;
 }
 
 app.addEventListener('submit', async event => {
@@ -522,6 +630,7 @@ app.addEventListener('submit', async event => {
   await command({ type:type==='createOffline'?'create':type,mode:type==='createOffline'?'offline':'online', name, code: String(form.get('code')) });
 });
 app.addEventListener('change', async event => {
+ if(event.target.matches('[data-rebel-job]')){await command({type:'rebelJobs',jobs:[...document.querySelectorAll('[data-rebel-job]:checked')].map(e=>e.dataset.rebelJob)});return;}
   if(event.target.matches('[data-citizen-job]')){await command({type:'citizenJobs',jobs:[...document.querySelectorAll('[data-citizen-job]:checked')].map(el=>el.dataset.citizenJob)});return;}
   if(event.target.matches('[data-shop-quantity]')){
     const item=selectedShopItem(),quantity=Number(event.target.value);
@@ -548,7 +657,6 @@ app.addEventListener('change', async event => {
 app.addEventListener('click', async event => {
    const picked=event.target.closest('.hand-grid .card');
    if(picked&&!event.target.closest('button')){
-    if(busy)return;
     const context=selectionContext(),type=picked.dataset.cardType;
     if(!context?.allowed(type))return;
     const limit=context.exact??context.max;
@@ -558,9 +666,12 @@ app.addEventListener('click', async event => {
     selected.add(card.id);window.kingdomEffects?.cardClick();render();return;
    }
   const button = event.target.closest('button');
-  if (!button || button.disabled || (busy&&button.dataset.cmd!=='craft')) return;
+  if (!button || button.disabled || (busy&&button.dataset.cmd&&button.dataset.cmd!=='craft')) return;
   const ui = button.dataset.ui;
   if (ui) {
+    if(ui==='lootPlus'||ui==='lootMinus'){const cards=state.game.pending.cards.filter(c=>c.type===button.dataset.card);if(ui==='lootPlus'){const card=cards.find(c=>!lootSelected.has(c.id));if(card&&lootSelected.size<state.game.pending.limit)lootSelected.add(card.id);}else{const card=cards.findLast(c=>lootSelected.has(c.id));if(card)lootSelected.delete(card.id);}render();return;}
+    if(ui==='inspectCard'){window.kingdomResults.card(rules.cards[button.dataset.card]);return;}
+    if(ui==='unselectCard'){const card=[...state.me.hand].reverse().find(c=>c.type===button.dataset.card&&selected.has(c.id));if(card)selected.delete(card.id);render();return;}
     if(ui==='forgetRoom'){localStorage.removeItem(RETURN_STORAGE);render();toast('이 기기의 복귀 정보만 삭제했습니다. 실제 방은 유지됩니다.');return;}
     if(['login','register'].includes(ui)){await command({type:ui,loginId:$('#account-name').value.trim(),password:$('#account-password').value,nickname:$('#account-nickname').value.trim()});return;}
     if(ui==='setNickname'){await command({type:'setNickname',nickname:$('#account-nickname').value,token:localStorage.getItem(ACCOUNT_STORAGE)});return;}
@@ -572,6 +683,7 @@ app.addEventListener('click', async event => {
     if(ui==='suggestPayment'){suggestPayment();render();return;}
     if(ui==='merchantTab'){merchantTab=button.dataset.tab;actionMode=null;selected.clear();render();return;}
     if(ui==='displayMode'){actionMode='display';selected.clear();render();return;}
+    if(ui==='roarAmbush'){if(!targetPlayer){toast('기습 대상을 선택하세요.');return;}await command({type:'ambush',target:targetPlayer,roar:true});return;}
     if (ui === 'addLocalPlayer') {
       const name = $('#local-player-name').value.trim();
       if (!name&&typeof accountProfile!=='undefined'&&accountProfile) { toast('추가할 플레이어 이름을 입력하세요.'); return; }
@@ -592,8 +704,8 @@ app.addEventListener('click', async event => {
     } else if (ui === 'guide') $('#rules').showModal();
     else if (ui === 'hunt') { actionMode = 'hunt'; selected.clear(); render(); }
     else if (ui === 'refresh') { actionMode = 'refresh'; selected.clear(); render(); }
-     else if (ui === 'cancelMode') { if(selected.size){toast('선택한 카드가 있어 취소할 수 없습니다.');return;}actionMode = null; render(); }
-    else if (ui === 'clearSelection') { return; }
+     else if (ui === 'cancelMode') { selected.clear();actionMode = null; render(); }
+    else if (ui === 'clearSelection') { selected.clear();render();return; }
     else if (ui === 'selectAll') {
       const c = selectionContext();
       if (c) { const candidates = state.me.hand.filter(card => c.allowed(card.type)); selected = new Set(candidates.slice(0, c.exact ?? c.max ?? candidates.length).map(c => c.id)); render(); }
@@ -602,6 +714,8 @@ app.addEventListener('click', async event => {
     }
     return;
   }
+  if(button.dataset.cmd==='claimBattleLoot'){await command({type:'claimBattleLoot',cards:[...lootSelected]});return;}
+  if(button.dataset.potion){await command({type:'usePotion',card:button.dataset.potion});return;}
   const type = button.dataset.cmd;
   if (!type) return;
   const data = { type };
@@ -631,8 +745,7 @@ app.addEventListener('click', async event => {
   if (button.dataset.recipe !== undefined) {
     data.recipe = Number(button.dataset.recipe); data.count = Number($(`#recipe-count-${data.recipe}`).value);
   }
-  if(type==='craft'){void enqueueCraft(data);return;}
-  if(crafting&&['craftDone','merchantDone','leave'].includes(type)){toast('예약된 제작을 처리하고 있습니다.');return;}
+  if(type==='craft'){instantCraft(data);return;}
   await command(data);
 });
 document.addEventListener?.('visibilitychange', () => {

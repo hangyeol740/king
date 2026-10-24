@@ -30,15 +30,13 @@
     "exactDepiction": true
   },
   "sword": {
-    "source": "Free RPG asset Pack/separate files/sword_01.png",
-    "output": "/assets/source-icons/sword.png",
-    "sha256": "02de7e811773472ad5a27775685611af4c44a33f80cd0d2eb6e23a3d1a21f71b",
+    "source": "public/assets/sources/packs/32 Free Weapon Icons/Icons/Iicon_32_31.png",
+    "output": "/assets/source-icons/sword-31.png",
     "exactDepiction": true
   },
   "eternalSword": {
-    "source": "Free RPG asset Pack/separate files/sword_02.png",
-    "output": "/assets/source-icons/eternalSword.png",
-    "sha256": "cdcbb68e6f2019223e9d7ceb8c9c19e60f312fa11d42b8d75f6decb3069f5860",
+    "source": "public/assets/sources/packs/32 Free Weapon Icons/Icons/Iicon_32_18.png",
+    "output": "/assets/source-icons/sword-selected.png",
     "exactDepiction": true
   },
   "reinforcedSword": {
@@ -60,15 +58,13 @@
     "exactDepiction": true
   },
   "northSword": {
-    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Longsword_004.png",
-    "output": "/assets/source-icons/northSword.png",
-    "sha256": "e3441e4c0e05865f52c33ac830ff8d6d789bde8a52594f4fc4a1c037b2c2f7ec",
+    "source": "public/assets/sources/packs/32 Free Weapon Icons/Icons/Iicon_32_09.png",
+    "output": "/assets/source-icons/northSword-selected.png",
     "exactDepiction": true
   },
   "flameSword": {
-    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Sword_010.png",
-    "output": "/assets/source-icons/flameSword.png",
-    "sha256": "55942f378be6f310dcf6a5b2370af594831568f008a3ad101d146e01a0a5ee5c",
+    "source": "public/assets/sources/packs/32 Free Weapon Icons/Icons/Iicon_32_21.png",
+    "output": "/assets/source-icons/flameSword-21.png",
     "exactDepiction": true
   },
   "magic": {
@@ -90,15 +86,13 @@
     "exactDepiction": true
   },
   "infantry": {
-    "source": "Free RPG asset Pack/separate files/shield_01.png",
-    "output": "/assets/source-icons/infantry.png",
-    "sha256": "79ee7b3ea31ff87952a51e265a7ec849cc46595416ac6649a017e7987fda2d70",
+    "source": "public/assets/sources/packs/RPG Icons/Icon180.png",
+    "output": "/assets/source-icons/infantry-180.png",
     "exactDepiction": true
   },
   "officer": {
-    "source": "Free RPG asset Pack/separate files/headgear_02.png",
-    "output": "/assets/source-icons/officer.png",
-    "sha256": "5a9b82d41175811fdb87776799fb33308a6d48d6f4f74ffd1f1a7bf202d9744b",
+    "source": "public/assets/sources/packs/RPG Icons/Icon177.png",
+    "output": "/assets/source-icons/officer-177.png",
     "exactDepiction": true
   },
   "church": {
@@ -119,10 +113,19 @@
     "sha256": "8806dc794f3c55cc416624b9550c4efb8a39ec914f5352f2046fd0c84c7b8bf3",
     "exactDepiction": false
   },
+  "potion": {
+    "source": "public/assets/sources/packs/RPG Icons/Icon301.png",
+    "output": "/assets/source-icons/potion-301.png",
+    "exactDepiction": true
+  },
+  "giantPotion": {
+    "source": "public/assets/sources/packs/RPG Icons/Icon304.png",
+    "output": "/assets/source-icons/giantPotion-304.png",
+    "exactDepiction": true
+  },
   "huntingAxe": {
-    "source": "BigWander_WeaponsRack/IndividualSprites/WR_NightBoundSet _Axe_001.png",
-    "output": "/assets/source-icons/huntingAxe.png",
-    "sha256": "2872cb12ad30e62bd4c570e2e6da7802b5cc8eebed2ab73032cf7f2576c29faf",
+    "source": "public/assets/sources/packs/RPG Icons/Icon58.png",
+    "output": "/assets/source-icons/huntingAxe-58.png",
     "exactDepiction": true
   }
 }

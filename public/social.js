@@ -40,4 +40,3 @@ function renderGameVotes(){
 function renderSpectator(){
  app.innerHTML=`<section class="page-heading"><h1>관전 · ${state.code}</h1><button class="quiet border" data-cmd="leave">관전 나가기</button></section><p>관전자는 모든 참가자의 직업·손패를 볼 수 있습니다. 게임에 참가하거나 비밀채팅을 읽을 수 없습니다.</p><div class="spectator-grid">${state.players.map(p=>`<section class="panel"><h2>${esc(p.name)} · ${p.role?playerLabel(p):'배정 전'}</h2><div class="private-cards">${Object.entries(rules.cards).filter(([t])=>p.hand?.some(c=>c.type===t)).map(([t,d])=>`<span>${d.icon} ${d.name} ×${p.hand.filter(c=>c.type===t).length}</span>`).join('')}</div></section>`).join('')}</div>${renderMajorResults()}${renderSocial()}`;
 }
-document.addEventListener('dblclick',event=>{const card=event.target.closest('.card');if(!card||event.target.closest('button'))return;const name=card.querySelector('h3')?.textContent;const d=Object.values(rules.cards).find(d=>d.name===name);if(d)kingdomResults.card(d);});

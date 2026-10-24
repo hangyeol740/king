@@ -7,6 +7,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build:vercel": "node deploy/build-vercel.js",
+    "online": "node deploy/online.js start",
+    "online:status": "node deploy/online.js status",
+    "online:stop": "node deploy/online.js stop",
     "test": "node --test",
     "ai:train": "node ai/train-complete.js",
     "ai:evaluate": "node ai/evaluate-complete.js",

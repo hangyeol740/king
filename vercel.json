@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": null,
+  "fluid": true,
+  "regions": ["syd1"],
+  "buildCommand": "npm run build:vercel",
+  "installCommand": "npm ci --include=dev",
+  "outputDirectory": "public",
+  "functions": {
+    "api/server.js": {
+      "maxDuration": 300,
+      "includeFiles": "models/strategy-v10-robust2.json",
+      "excludeFiles": "{godot/**,asset-library/**,test/**,models/**/*.checkpoint.json}"
+    }
+  },
+  "rewrites": [
+    {"source": "/socket.io/:path*", "destination": "/api/server"},
+    {"source": "/api/:path*", "destination": "/api/server"},
+    {"source": "/health", "destination": "/api/server"}
+  ]
+}

@@ -7,7 +7,7 @@
   const play=()=>{if(enabled&&playingGame&&restart===null&&audio.paused)audio.play().catch(()=>{});};
   const stop=()=>{clearTimeout(restart);restart=null;audio.pause();audio.currentTime=0;};
   audio.addEventListener('ended',()=>{if(!enabled||!playingGame)return;restart=setTimeout(()=>{restart=null;audio.currentTime=0;play();},8000);});
-  window.kingdomMusic={update(status){const active=status==='playing';if(active===playingGame)return;playingGame=active;if(active)play();else stop();}};
+  window.kingdomMusic={update(status){const active=status==='playing';if(active===playingGame)return;playingGame=active;if(active){restart=setTimeout(()=>{restart=null;play();},2000);}else stop();}};
   button.onclick=()=>{enabled=!enabled;localStorage.setItem('kingdom.music',enabled?'on':'off');if(enabled)play();else stop();updateButton();};
   document.querySelector('.top-actions')?.append(button);updateButton();
   document.addEventListener('pointerdown',play,{passive:true});

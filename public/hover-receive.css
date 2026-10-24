@@ -1,0 +1,11 @@
+button:not(:disabled):hover{animation:none!important;transition:none!important}
+.hand-grid .card.new-card{animation:none!important;outline:none}
+.hand-grid .card-face{transform:none;transition:transform .15s ease-out}
+.hand-grid .card.hover-held:not(:hover) .card-face{transform:none!important}
+.hand-grid .card.just-received .card-face{transform:scale(1.12)!important}
+.hand-grid .card.just-received{z-index:12}
+@media(hover:hover){
+ .hand-grid .card:hover .card-face{transform:scale(1.4)!important}
+ .hand-grid .card:has(.card-quick-tools:hover) .card-face{transform:scale(1.4)!important}
+}
+@media(prefers-reduced-motion:reduce){.hand-grid .card-face{transition:none}}

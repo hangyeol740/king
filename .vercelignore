@@ -1,0 +1,45 @@
+.git
+.data
+.env*
+.playwright-mcp
+node_modules
+godot
+asset-library
+public/assets/sources
+public/assets/godot
+public/assets/asset-manifest.json
+test
+hooks
+objects
+refs
+branches
+info
+HEAD
+config
+description
+/*.zip
+/*.rar
+/*.7z
+/*.webp
+/*.png
+/*.mp3
+16x16*/
+32 Free*/
+48 Free*/
+BigWander*/
+FL_Houses*/
+Fantasy*/
+Free RPG*/
+Huntress/
+Lively*/
+Martial*/
+Medieval*/
+Minifolks*/
+Monsters*/
+Necromancer/
+Pixel*/
+RPG Icons/
+Undead*/
+Valley*/
+models/**
+!models/strategy-v10-robust2.json

@@ -4,6 +4,8 @@
   const colors = {gold:'#d5a64d', light:'#f7e1a0', metal:'#9eafb0', shade:'#4e6370', red:'#a44235', wood:'#725030', ink:'#17120f'};
   const art = {};
   const draw = (type, fn) => { let s=''; const r=(...a)=>{s+=rect(...a);}; fn(r); art[type]=s; };
+  draw('claw',r=>{for(const x of [7,14,21]){r(x,5,3,18,'#e4e9e9');r(x-2,20,4,5,'#a8bbc0');}r(6,26,20,4,'#783e48');});
+  draw('roar',r=>{r(8,10,16,17,'#7d879a');r(7,4,5,9,'#adb4c2');r(21,4,5,9,'#adb4c2');r(12,17,9,10,'#20202d');r(13,17,2,4,'#fff');r(18,17,2,4,'#fff');});
   const sword = (type, blade, edge, jewel, extra) => draw(type,r=>{
     r(14,5,4,18,blade);r(14,5,2,16,edge);r(15,3,2,2,edge);
     r(9,22,14,3,colors.gold);r(10,21,2,2,colors.light);r(20,21,2,2,colors.light);
@@ -41,7 +43,7 @@
   draw('evangelism',r=>{r(4,13,12,16,colors.wood);r(17,13,12,16,colors.wood);r(6,11,10,16,colors.light);r(17,11,10,16,'#c4ae7e');r(16,12,1,18,colors.gold);for(let y=15;y<25;y+=4){r(8,y,6,1,colors.wood);r(19,y,6,1,colors.wood);}r(14,3,5,6,colors.gold);});
   draw('huntingAxe',r=>{r(14,8,3,24,colors.wood);r(8,7,6,12,colors.shade);r(4,10,8,7,colors.metal);r(4,11,2,5,'#e6e6cc');r(17,8,7,9,colors.shade);r(21,10,5,5,colors.metal);});
   window.kingdomPixelArt = {
-    card(type){return `<img class="pixel-card-art full-card-image source-card-icon" src="/assets/source-icons/${Object.hasOwn(art,type)?type:'resource'}.png?v=original1" alt="" width="64" height="64" draggable="false">`;},
+    card(type){const selected={potion:'potion-301',giantPotion:'giantPotion-304',officer:'officer-177',infantry:'infantry-180',huntingAxe:'huntingAxe-58',northSword:'northSword-selected',eternalSword:'sword-selected',flameSword:'flameSword-21',sword:'sword-31'};return `<img class="pixel-card-art full-card-image source-card-icon" src="/assets/source-icons/${selected[type]||(Object.hasOwn(art,type)||['potion','giantPotion','giantBomb'].includes(type)?type:'resource')}.png?v=potion-mapping43" alt="" width="64" height="64" draggable="false">`;},
     forDefinition(d){const type=Object.keys(rules.cards).find(t=>rules.cards[t]===d);return this.card(type);}
   };
 })();
